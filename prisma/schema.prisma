@@ -87,6 +87,7 @@ model Property {
   createdBy   User      @relation(fields: [userId], references: [id])
   userId      String
   rooms       Room[]    // Relation to rooms
+  expenses    Expense[] // Relation to expenses
 }
 
 model Room {
@@ -195,4 +196,33 @@ enum PaymentType {
   utility
   maintenance
   other
+}
+
+enum ExpenseCategory {
+  electricity
+  water
+  maintenance
+  cleaning
+  security
+  internet
+  tax
+  insurance
+  salary
+  supplies
+  other
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  property    Property        @relation(fields: [propertyId], references: [id])
+  propertyId  String
+  category    ExpenseCategory
+  amount      Float
+  date        DateTime
+  description String?
+  receiptUrl  String?        // URL to stored receipt image
+  vendor      String?
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
