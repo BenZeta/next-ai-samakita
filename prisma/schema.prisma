@@ -119,8 +119,8 @@ model Tenant {
   name             String
   email            String
   phone            String
-  ktpNumber        String
-  ktpFile          String
+  ktpNumber        String?
+  ktpFile          String?
   kkFile           String?
   references       String[]
   status           TenantStatus     @default(ACTIVE)

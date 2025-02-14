@@ -64,24 +64,23 @@ export default function TenantDetailsPage() {
             <div className="flex items-center">
               <FileText className="mr-3 h-5 w-5 text-gray-400" />
               <div className="flex space-x-2">
-                <a
-                  href={tenant.ktpFile}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-900">
-                  View KTP
-                </a>
+                {tenant.ktpFile && (
+                  <a
+                    href={tenant.ktpFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-900">
+                    View KTP
+                  </a>
+                )}
                 {tenant.kkFile && (
-                  <>
-                    <span>|</span>
-                    <a
-                      href={tenant.kkFile}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-900">
-                      View KK
-                    </a>
-                  </>
+                  <a
+                    href={tenant.kkFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-900">
+                    View KK
+                  </a>
                 )}
               </div>
             </div>

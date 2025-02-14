@@ -11,7 +11,7 @@ const tenantFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
-  ktpNumber: z.string().min(1, "KTP number is required"),
+  ktpNumber: z.string().optional(),
   rentAmount: z.number().min(1, "Rent amount is required"),
   depositAmount: z.number().min(1, "Deposit amount is required"),
   startDate: z.string().min(1, "Start date is required"),
@@ -48,7 +48,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       setIsSubmitting(true);
 
       // Upload KTP file if provided
-      let ktpFileUrl = "";
+      let ktpFileUrl = undefined;
       if (ktpFile) {
         const formData = new FormData();
         formData.append("file", ktpFile);
@@ -61,7 +61,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       }
 
       // Upload KK file if provided
-      let kkFileUrl = "";
+      let kkFileUrl = undefined;
       if (kkFile) {
         const formData = new FormData();
         formData.append("file", kkFile);

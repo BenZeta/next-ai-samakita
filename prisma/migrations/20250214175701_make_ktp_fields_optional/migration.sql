@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Tenant" ALTER COLUMN "ktpNumber" DROP NOT NULL,
+ALTER COLUMN "ktpFile" DROP NOT NULL;
