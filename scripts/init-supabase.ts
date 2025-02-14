@@ -36,30 +36,40 @@ async function createBucketPolicies(bucketId: string) {
     return true;
   };
 
-  // Create policies for public read access and authenticated write access
+  // Create policies for public read access and authenticated/service role write access
   const policies = [
     `CREATE POLICY "Public Access" ON storage.objects
      FOR SELECT USING (bucket_id = '${bucketId}');`,
     
+    `CREATE POLICY "Service Role Access" ON storage.objects
+     FOR ALL USING (
+       bucket_id = '${bucketId}'
+       AND auth.role() = 'service_role'
+     );`,
+    
     `CREATE POLICY "Authenticated Upload" ON storage.objects
      FOR INSERT WITH CHECK (
        bucket_id = '${bucketId}'
-       AND auth.role() = 'authenticated'
+       AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
      );`,
     
     `CREATE POLICY "Authenticated Update" ON storage.objects
      FOR UPDATE USING (
        bucket_id = '${bucketId}'
-       AND auth.role() = 'authenticated'
+       AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
      );`,
     
     `CREATE POLICY "Authenticated Delete" ON storage.objects
      FOR DELETE USING (
        bucket_id = '${bucketId}'
-       AND auth.role() = 'authenticated'
+       AND (auth.role() = 'authenticated' OR auth.role() = 'service_role')
      );`
   ];
 
+  // First, enable RLS on the storage.objects table
+  await rpcCall(`ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;`);
+
+  // Then create the policies
   for (const policy of policies) {
     await rpcCall(policy);
   }
@@ -68,7 +78,7 @@ async function createBucketPolicies(bucketId: string) {
 async function initStorage() {
   try {
     // Create buckets
-    const buckets = ['files', 'properties'];
+    const buckets = ['files', 'properties', 'contracts'];
     
     for (const bucketName of buckets) {
       // Create bucket
@@ -90,7 +100,7 @@ async function initStorage() {
       // Update bucket settings
       const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
         public: true,
-        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
         fileSizeLimit: 52428800, // 50MB
       });
 

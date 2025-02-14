@@ -3,14 +3,23 @@
 import { api } from "@/lib/trpc/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { FileText, Home, Phone, Mail, CreditCard, ClipboardList } from "lucide-react";
+import { FileText, Home, Phone, Mail, CreditCard, ClipboardList, FileSignature } from "lucide-react";
 import { TenantStatus } from "@prisma/client";
+import { toast } from "react-toastify";
 
 export default function TenantDetailsPage() {
   const params = useParams();
   const tenantId = params.tenantId as string;
 
   const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
+  const generateContractMutation = api.tenant.generateContract.useMutation({
+    onSuccess: () => {
+      toast.success("Contract generated successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -20,12 +29,20 @@ export default function TenantDetailsPage() {
     return <div>Tenant not found</div>;
   }
 
+  const handleGenerateContract = async () => {
+    try {
+      await generateContractMutation.mutateAsync({ tenantId });
+    } catch (error) {
+      console.error("Failed to generate contract:", error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">{tenant.name}</h1>
-          <p className="mt-2 text-gray-600">KTP: {tenant.ktpNumber}</p>
+          <p className="mt-2 text-gray-600">{tenant.ktpNumber && `KTP: ${tenant.ktpNumber}`}</p>
         </div>
         <div className="flex space-x-4">
           <Link
@@ -36,7 +53,7 @@ export default function TenantDetailsPage() {
           </Link>
           <Link
             href={`/tenants/${tenant.id}/payments`}
-            className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+            className="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow hover:bg-gray-50">
             <CreditCard className="mr-2 h-5 w-5" />
             Payments
           </Link>
@@ -99,37 +116,87 @@ export default function TenantDetailsPage() {
         </div>
 
         <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Tenancy Details</h2>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Period</h3>
-              <p className="mt-1">
-                {tenant.startDate ? new Date(tenant.startDate).toLocaleDateString() : "Not set"} - {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : "Not set"}
-              </p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Status</h3>
-              <span
-                className={`mt-1 inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                  tenant.status === TenantStatus.ACTIVE ? "bg-green-100 text-green-800" : tenant.status === TenantStatus.INACTIVE ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
-                }`}>
-                {tenant.status}
-              </span>
+          <div className="mb-6">
+            <h2 className="mb-4 text-xl font-semibold">Contract Status</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600">Contract Status</span>
+                <span className={`rounded-full px-3 py-1 text-sm ${tenant.contractSigned ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                  {tenant.contractSigned ? "Signed" : "Pending"}
+                </span>
+              </div>
+              {tenant.contractFile ? (
+                <div className="flex items-center justify-between">
+                  <a
+                    href={tenant.contractFile}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-900">
+                    View Contract
+                  </a>
+                  {!tenant.contractSigned && (
+                    <Link
+                      href={`/contracts/sign?tenantId=${tenant.id}`}
+                      className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">
+                      <FileSignature className="mr-2 h-4 w-4" />
+                      Sign Contract
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateContract}
+                  disabled={generateContractMutation.isLoading}
+                  className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
+                  {generateContractMutation.isLoading ? "Generating..." : "Generate Contract"}
+                </button>
+              )}
             </div>
           </div>
 
-          <h3 className="mt-6 mb-4 text-lg font-medium">Check-in Items</h3>
+          <div className="border-t pt-6">
+            <h2 className="mb-4 text-xl font-semibold">Tenancy Details</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Period</h3>
+                <p className="mt-1">
+                  {tenant.startDate ? new Date(tenant.startDate).toLocaleDateString() : "Not set"} - {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : "Not set"}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Monthly Rent</h3>
+                <p className="mt-1">Rp {tenant.rentAmount?.toLocaleString() ?? "Not set"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Deposit</h3>
+                <p className="mt-1">Rp {tenant.depositAmount?.toLocaleString() ?? "Not set"}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                <span
+                  className={`mt-1 inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                    tenant.status === TenantStatus.ACTIVE ? "bg-green-100 text-green-800" : tenant.status === TenantStatus.INACTIVE ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
+                  }`}>
+                  {tenant.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-white p-6 shadow lg:col-span-2">
+          <h2 className="mb-4 text-xl font-semibold">Check-in Items</h2>
           {tenant.checkInItems.length > 0 ? (
-            <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenant.checkInItems.map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-lg border border-gray-200 p-3">
+                  className="rounded-lg border border-gray-200 p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{item.itemName}</span>
                     <span className="text-sm text-gray-500">{item.condition}</span>
                   </div>
-                  {item.notes && <p className="mt-1 text-sm text-gray-600">{item.notes}</p>}
+                  {item.notes && <p className="mt-2 text-sm text-gray-600">{item.notes}</p>}
                 </div>
               ))}
             </div>
