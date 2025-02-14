@@ -1,0 +1,33 @@
+"use client";
+
+import { CheckInForm } from "@/components/tenant/CheckInForm";
+import { api } from "@/lib/trpc/react";
+import { useParams } from "next/navigation";
+
+export default function TenantCheckInPage() {
+  const params = useParams();
+  const tenantId = params.tenantId as string;
+
+  const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
+
+  if (isLoading) {
+    return <div className="text-center">Loading tenant details...</div>;
+  }
+
+  if (!tenant) {
+    return <div className="text-center">Tenant not found</div>;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">Check-in: {tenant.name}</h1>
+        <p className="mt-2 text-gray-600">Room {tenant.room.number}</p>
+      </div>
+
+      <div className="mx-auto max-w-3xl">
+        <CheckInForm tenantId={tenantId} />
+      </div>
+    </div>
+  );
+}

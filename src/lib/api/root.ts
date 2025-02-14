@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "./trpc";
 import { authRouter } from "./routers/auth";
 import { propertyRouter } from "./routers/property";
 import { roomRouter } from "./routers/room";
+import { tenantRouter } from "./routers/tenant";
 // import all routers here
 
 /**
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   property: propertyRouter,
   room: roomRouter,
+  tenant: tenantRouter,
   // add routers here
 });
 

@@ -100,9 +100,96 @@ model Room {
   propertyId String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  tenants    Tenant[]
+}
+
+model Tenant {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String
+  ktpNumber     String    @unique // Indonesian ID number
+  ktpFile       String    // URL to KTP file
+  kkFile        String?   // URL to family card file
+  references    String[]  // Array of reference contact info
+  room          Room      @relation(fields: [roomId], references: [id])
+  roomId        String
+  contractFile  String?   // URL to signed contract file
+  startDate     DateTime
+  endDate       DateTime
+  status        TenantStatus @default(active)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  checkInItems  CheckInItem[]
+  payments      Payment[]
+  serviceRequests ServiceRequest[]
+}
+
+model CheckInItem {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  itemName    String
+  condition   String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ServiceRequest {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  type        String
+  description String
+  status      ServiceRequestStatus @default(pending)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  amount      Float
+  dueDate     DateTime
+  paidAt      DateTime?
+  status      PaymentStatus @default(pending)
+  type        PaymentType
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum RoomType {
   standard
   vip
+}
+
+enum TenantStatus {
+  active
+  inactive
+  pending
+}
+
+enum ServiceRequestStatus {
+  pending
+  inProgress
+  resolved
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  overdue
+  cancelled
+}
+
+enum PaymentType {
+  rent
+  deposit
+  utility
+  maintenance
+  other
 }
