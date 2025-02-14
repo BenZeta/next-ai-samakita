@@ -7,6 +7,9 @@ import { z } from "zod";
 import { toast } from "react-toastify";
 import { api } from "@/lib/trpc/react";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z
@@ -16,6 +19,11 @@ const registerSchema = z.object({
   phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, "Invalid Indonesian phone number"),
   name: z.string().min(1, "Name is required"),
   address: z.string().min(1, "Address is required"),
+  ktpFile: z
+    .custom<FileList>()
+    .refine((files) => files?.length === 1, "KTP file is required")
+    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, "Max file size is 5MB")
+    .refine((files) => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type), "Only .jpg, .png, and .pdf files are accepted"),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -42,7 +50,39 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await registerMutation.mutateAsync(data);
+      // First, get a presigned URL for the KTP file
+      const file = data.ktpFile[0];
+      const response = await fetch("/api/upload/ktp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get upload URL");
+      }
+
+      const { presignedUrl, fileUrl } = await response.json();
+
+      // Upload the file to S3
+      await fetch(presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      // Register the user with the file URL
+      await registerMutation.mutateAsync({
+        ...data,
+        ktpFile: fileUrl,
+      });
+    } catch (error) {
+      toast.error("Failed to upload KTP file");
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +164,23 @@ export function RegisterForm() {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
         {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>}
+      </div>
+
+      <div>
+        <label
+          htmlFor="ktpFile"
+          className="block text-sm font-medium text-gray-700">
+          KTP/Identification File
+        </label>
+        <input
+          type="file"
+          id="ktpFile"
+          accept=".jpg,.jpeg,.png,.pdf"
+          {...register("ktpFile")}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        />
+        <p className="mt-1 text-sm text-gray-500">Upload your KTP or identification document (max 5MB, .jpg, .png, or .pdf)</p>
+        {errors.ktpFile && <p className="mt-1 text-sm text-red-600">{errors.ktpFile.message}</p>}
       </div>
 
       <button

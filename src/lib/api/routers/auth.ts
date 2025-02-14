@@ -22,10 +22,11 @@ export const authRouter = createTRPCRouter({
         phone: phoneSchema,
         name: z.string().min(1),
         address: z.string().min(1),
+        ktpFile: z.string().url(),
       })
     )
     .mutation(async ({ input }) => {
-      const { email, password, phone, name, address } = input;
+      const { email, password, phone, name, address, ktpFile } = input;
 
       // Check if user already exists
       const existingUser = await db.user.findUnique({
@@ -50,6 +51,7 @@ export const authRouter = createTRPCRouter({
           name,
           phone,
           address,
+          ktpFile,
         },
       });
 
