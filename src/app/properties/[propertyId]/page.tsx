@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { RoomList } from "@/components/room/RoomList";
 import { Building2, Plus, Calendar } from "lucide-react";
+import { ImageGallery } from "@/components/property/ImageGallery";
 
 export default function PropertyDetailsPage() {
   const params = useParams();
@@ -47,6 +48,10 @@ export default function PropertyDetailsPage() {
             Bulk Add Rooms
           </Link>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <ImageGallery images={property.images} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

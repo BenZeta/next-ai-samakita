@@ -13,3 +13,4 @@
 - Created expense router with list and create procedures, including summary statistics and pagination
 - Created ExpenseList component with filtering, pagination, and summary cards
 - Fixed type errors in the expense list component by adding proper type guards and initializing state correctly
+- Added ImageGallery component with lightbox feature for property images
