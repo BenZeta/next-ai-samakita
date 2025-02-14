@@ -131,9 +131,6 @@ model Tenant {
   rentAmount       Float?
   depositAmount    Float?
   contractFile     String?
-  contractSigned   Boolean          @default(false)
-  contractSignedAt DateTime?
-  signature        String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   payments         Payment[]

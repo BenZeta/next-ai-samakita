@@ -1,13 +1,12 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
-import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType } from "@prisma/client";
+import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType, Prisma } from "@prisma/client";
 import { generateContract } from "@/lib/contract";
 import { sendContractEmail } from "@/lib/email";
-import { prisma } from "@/lib/db";
 import { propertySchema, userSchema } from "@/lib/contracts";
-import { Prisma } from "@prisma/client";
+import { supabase } from "@/lib/supabase";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -491,74 +490,62 @@ export const tenantRouter = createTRPCRouter({
       });
     }
 
+    const property = tenant.room.property;
     const contractUrl = await generateContract({
-      user: userSchema.parse({
+      user: {
         id: tenant.id,
         name: tenant.name,
         email: tenant.email,
         phone: tenant.phone,
         ktpNumber: tenant.ktpNumber,
-        image: null,
-        hashedPassword: null,
-        emailVerified: null,
-        role: "user",
-      }),
-      property: tenant.room.property,
+      },
+      property: {
+        name: property.name,
+        description: property.description,
+        address: property.address,
+        city: property.city || "Unknown",
+        province: property.province || "Unknown",
+        postalCode: property.postalCode || "Unknown",
+        facilities: property.facilities,
+      },
       transaction: {
         id: tenant.id,
-        userId: tenant.room.property.userId,
-        propertyId: tenant.room.property.id,
-        status: "PENDING",
-        contractUrl: null,
         amount: tenant.rentAmount || 0,
         createdAt: tenant.createdAt,
-        updatedAt: tenant.updatedAt,
       },
     });
 
-    await db.tenant.update({
+    // Update tenant with contract URL
+    const updatedTenant = await db.tenant.update({
       where: { id: input.tenantId },
       data: {
         contractFile: contractUrl,
-        contractSigned: false,
+      },
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
       },
     });
 
-    // Send email to tenant with contract
-    await sendContractEmail(tenant.email, contractUrl);
+    try {
+      // Try to send email but don't fail if it doesn't work
+      await sendContractEmail(
+        updatedTenant.email,
+        contractUrl,
+        updatedTenant.name,
+        updatedTenant.room.property.name,
+        updatedTenant.id
+      );
+    } catch (error) {
+      console.error("Failed to send contract email:", error);
+      // Don't throw the error - we still want to return the contract URL
+    }
 
-    return { contractUrl };
+    return updatedTenant;
   }),
-
-  signContract: protectedProcedure
-    .input(
-      z.object({
-        tenantId: z.string(),
-        signature: z.string(),
-        signedDate: z.date(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const { tenantId, signature, signedDate } = input;
-
-      const tenant = await db.tenant.update({
-        where: { id: tenantId },
-        data: {
-          contractSigned: true,
-          contractSignedAt: signedDate,
-          signature,
-        },
-        include: {
-          room: {
-            include: {
-              property: true,
-            },
-          },
-        },
-      });
-
-      return tenant;
-    }),
 
   getOverview: protectedProcedure
     .input(
@@ -572,7 +559,7 @@ export const tenantRouter = createTRPCRouter({
       const now = new Date();
 
       // Get tenants with filtering
-      const tenants = await prisma.tenant.findMany({
+      const tenants = await db.tenant.findMany({
         where: {
           room: {
             propertyId: propertyId,
@@ -599,14 +586,14 @@ export const tenantRouter = createTRPCRouter({
 
       // Get tenant statistics
       const stats = {
-        total: await prisma.tenant.count({
+        total: await db.tenant.count({
           where: {
             room: {
               propertyId: propertyId,
             },
           },
         }),
-        active: await prisma.tenant.count({
+        active: await db.tenant.count({
           where: {
             room: {
               propertyId: propertyId,
@@ -614,7 +601,7 @@ export const tenantRouter = createTRPCRouter({
             status: "ACTIVE",
           },
         }),
-        inactive: await prisma.tenant.count({
+        inactive: await db.tenant.count({
           where: {
             room: {
               propertyId: propertyId,
@@ -622,7 +609,7 @@ export const tenantRouter = createTRPCRouter({
             status: "INACTIVE",
           },
         }),
-        upcomingMoveIns: await prisma.lease.count({
+        upcomingMoveIns: await db.lease.count({
           where: {
             tenant: {
               room: {
@@ -634,7 +621,7 @@ export const tenantRouter = createTRPCRouter({
             },
           },
         }),
-        upcomingMoveOuts: await prisma.lease.count({
+        upcomingMoveOuts: await db.lease.count({
           where: {
             tenant: {
               room: {
@@ -663,5 +650,74 @@ export const tenantRouter = createTRPCRouter({
         })),
         stats,
       };
+    }),
+
+  uploadContract: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.string(),
+        file: z.string(), // base64 encoded PDF
+      })
+    )
+    .mutation(async ({ input }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      if (!tenant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tenant not found",
+        });
+      }
+
+      // Convert base64 to buffer
+      const fileBuffer = Buffer.from(input.file, "base64");
+      const contractKey = `${tenant.id}-${Date.now()}-signed.pdf`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("contracts")
+        .upload(contractKey, fileBuffer, {
+          contentType: "application/pdf",
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to upload contract: ${uploadError.message}`,
+        });
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("contracts")
+        .getPublicUrl(contractKey);
+
+      // Update tenant with the signed contract URL
+      const updatedTenantWithSignedContract = await db.tenant.update({
+        where: { id: input.tenantId },
+        data: {
+          contractFile: publicUrl,
+        },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      return updatedTenantWithSignedContract;
     }),
 });

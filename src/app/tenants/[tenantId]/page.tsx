@@ -3,9 +3,10 @@
 import { api } from "@/lib/trpc/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { FileText, Home, Phone, Mail, CreditCard, ClipboardList, FileSignature } from "lucide-react";
+import { FileText, Home, Phone, Mail, CreditCard, ClipboardList, FileSignature, Upload } from "lucide-react";
 import { TenantStatus } from "@prisma/client";
 import { toast } from "react-toastify";
+import { format } from "date-fns";
 
 export default function TenantDetailsPage() {
   const params = useParams();
@@ -120,35 +121,48 @@ export default function TenantDetailsPage() {
             <h2 className="mb-4 text-xl font-semibold">Contract Status</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Contract Status</span>
-                <span className={`rounded-full px-3 py-1 text-sm ${tenant.contractSigned ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                  {tenant.contractSigned ? "Signed" : "Pending"}
+                <span className="text-gray-600">Status</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-sm ${
+                    tenant.contractFile
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {tenant.contractFile ? "Contract Generated" : "No Contract"}
                 </span>
               </div>
-              {tenant.contractFile ? (
-                <div className="flex items-center justify-between">
+
+              {tenant.contractFile && (
+                <div className="flex flex-col space-y-2">
                   <a
                     href={tenant.contractFile}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-900">
+                    className="flex items-center text-indigo-600 hover:text-indigo-900"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
                     View Contract
                   </a>
-                  {!tenant.contractSigned && (
-                    <Link
-                      href={`/contracts/sign?tenantId=${tenant.id}`}
-                      className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">
-                      <FileSignature className="mr-2 h-4 w-4" />
-                      Sign Contract
-                    </Link>
-                  )}
+                  <Link
+                    href={`/contracts/upload?tenantId=${tenant.id}`}
+                    className="flex items-center rounded-md bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload Signed Contract
+                  </Link>
                 </div>
-              ) : (
+              )}
+
+              {!tenant.contractFile && (
                 <button
                   onClick={handleGenerateContract}
                   disabled={generateContractMutation.isLoading}
-                  className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50">
-                  {generateContractMutation.isLoading ? "Generating..." : "Generate Contract"}
+                  className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {generateContractMutation.isLoading
+                    ? "Generating..."
+                    : "Generate Contract"}
                 </button>
               )}
             </div>
@@ -204,6 +218,34 @@ export default function TenantDetailsPage() {
             <p className="text-gray-500">No check-in items recorded yet.</p>
           )}
         </div>
+      </div>
+
+      {/* Contract Details */}
+      <div className="mt-6">
+        <h3 className="text-lg font-medium text-gray-900">Contract Details</h3>
+        <dl className="mt-2 divide-y divide-gray-200">
+          <div className="flex justify-between py-3">
+            <dt className="text-sm font-medium text-gray-500">Contract Status</dt>
+            <dd className="text-sm text-gray-900">
+              {tenant.contractFile ? "Generated" : "Not Generated"}
+            </dd>
+          </div>
+          {tenant.contractFile && (
+            <div className="flex justify-between py-3">
+              <dt className="text-sm font-medium text-gray-500">Contract File</dt>
+              <dd className="text-sm text-gray-900">
+                <a
+                  href={tenant.contractFile}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:text-indigo-500"
+                >
+                  View Contract
+                </a>
+              </dd>
+            </div>
+          )}
+        </dl>
       </div>
     </div>
   );

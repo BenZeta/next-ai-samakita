@@ -1,20 +1,14 @@
-import nodemailer from "nodemailer";
+import { Resend } from 'resend';
+import { createElement } from 'react';
+import { ContractEmail } from './email/templates/ContractEmail';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM || 'noreply@benzeta.shop',
     to: email,
     subject: "Verify your email address",
     html: `
@@ -28,19 +22,24 @@ export async function sendVerificationEmail(email: string, token: string) {
   });
 }
 
-export async function sendContractEmail(email: string, contractUrl: string) {
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM,
-    to: email,
-    subject: "Your Rental Agreement",
-    html: `
-      <div>
-        <h1>Rental Agreement</h1>
-        <p>Your rental agreement is ready for review and signature.</p>
-        <p>Please click the link below to view and sign your contract:</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/contracts/sign?url=${encodeURIComponent(contractUrl)}">View Contract</a>
-        <p>This contract will expire in 7 days if not signed.</p>
-      </div>
-    `,
-  });
+export async function sendContractEmail(email: string, contractUrl: string, tenantName: string, propertyName: string, tenantId: string) {
+  try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@benzeta.shop',
+      to: email,
+      subject: `Perjanjian Sewa Kos - ${propertyName}`,
+      react: createElement(ContractEmail, {
+        tenantName,
+        propertyName,
+        contractUrl,
+        baseUrl,
+        tenantId,
+      }),
+    });
+  } catch (error) {
+    console.error('Error sending contract email:', error);
+    // Don't throw the error - we don't want to fail contract generation if email fails
+  }
 }

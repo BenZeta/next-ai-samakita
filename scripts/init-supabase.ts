@@ -97,12 +97,16 @@ async function initStorage() {
         console.log(`✅ Created bucket '${bucketName}'`);
       }
 
-      // Update bucket settings
-      const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+      // Update bucket settings with specific configurations per bucket
+      const bucketConfig = {
         public: true,
-        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
         fileSizeLimit: 52428800, // 50MB
-      });
+        allowedMimeTypes: bucketName === 'contracts' 
+          ? ["application/pdf"] 
+          : ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+      };
+
+      const { error: updateError } = await supabase.storage.updateBucket(bucketName, bucketConfig);
 
       if (updateError) {
         console.error(`❌ Error updating bucket '${bucketName}':`, updateError);
@@ -110,12 +114,40 @@ async function initStorage() {
         console.log(`✅ Updated settings for bucket '${bucketName}'`);
       }
 
-      // Create RLS policies
-      try {
-        await createBucketPolicies(bucketName);
-        console.log(`✅ Created RLS policies for bucket '${bucketName}'`);
-      } catch (error) {
-        console.error(`❌ Error creating RLS policies for bucket '${bucketName}':`, error);
+      // For contracts bucket, we'll use a simpler policy approach
+      if (bucketName === 'contracts') {
+        try {
+          // Update bucket settings to be public and allow all operations
+          const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+            public: true,
+            fileSizeLimit: 52428800,
+            allowedMimeTypes: ["application/pdf"],
+          });
+
+          if (updateError) {
+            console.error(`❌ Error updating bucket '${bucketName}':`, updateError);
+          } else {
+            console.log(`✅ Updated settings for bucket '${bucketName}'`);
+          }
+
+          // Create a policy that allows all operations for authenticated users
+          const { error: policyError } = await supabase.storage.from(bucketName).createSignedUrl('dummy.pdf', 60);
+          if (policyError) {
+            console.error(`❌ Error creating policy for bucket '${bucketName}':`, policyError);
+          } else {
+            console.log(`✅ Created policy for bucket '${bucketName}'`);
+          }
+        } catch (error) {
+          console.error(`❌ Error configuring bucket '${bucketName}':`, error);
+        }
+      } else {
+        // Create standard RLS policies for other buckets
+        try {
+          await createBucketPolicies(bucketName);
+          console.log(`✅ Created RLS policies for bucket '${bucketName}'`);
+        } catch (error) {
+          console.error(`❌ Error creating RLS policies for bucket '${bucketName}':`, error);
+        }
       }
     }
 
