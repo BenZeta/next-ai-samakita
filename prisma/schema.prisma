@@ -25,6 +25,7 @@ model User {
   isAdmin        Boolean   @default(false)
   accounts       Account[]
   sessions       Session[]
+  properties     Property[]
 }
 
 model Account {
@@ -71,4 +72,37 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Property {
+  id          String    @id @default(cuid())
+  name        String
+  description String    @db.Text
+  address     String
+  location    Json      // Stores latitude and longitude
+  facilities  String[]  // Array of facility names
+  images      String[]  // Array of image URLs
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   User      @relation(fields: [userId], references: [id])
+  userId      String
+  rooms       Room[]    // Relation to rooms
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  number     String   // Room number
+  type       RoomType
+  size       Float    // Size in square meters
+  amenities  String[] // Array of amenity names
+  price      Float    // Base price
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum RoomType {
+  standard
+  vip
 }
