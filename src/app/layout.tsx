@@ -1,8 +1,6 @@
 import { Inter } from "next/font/google";
-import { ToastContainer } from "react-toastify";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { TRPCReactProvider } from "@/components/providers/TrpcProvider";
-import { SessionProvider } from "next-auth/react";
+import { Providers } from "@/components/providers/Providers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,15 +26,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className={inter.className}>
-        <SessionProvider session={session}>
-          <TRPCReactProvider>
-            <div className="flex h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-gray-100 p-8">{children}</main>
-            </div>
-            <ToastContainer position="bottom-right" />
-          </TRPCReactProvider>
-        </SessionProvider>
+        <Providers session={session}>
+          <div className="flex h-screen">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto bg-gray-100 p-8">{children}</main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

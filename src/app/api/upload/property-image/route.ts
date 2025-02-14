@@ -1,16 +1,7 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { supabase } from "@/lib/supabase";
 import crypto from "crypto";
 import sharp from "sharp";
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
 
 export async function POST(req: Request) {
   try {
@@ -21,9 +12,47 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // TODO: Implement actual file upload logic
-    // For now, return a mock response
-    return NextResponse.json({ url: "https://example.com/mock-image.jpg" });
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      return NextResponse.json({ error: "Invalid file type. Only JPEG, PNG, and WebP are allowed" }, { status: 400 });
+    }
+
+    // Read file as buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Process image with sharp
+    const processedImage = await sharp(buffer)
+      .resize(1920, 1080, {
+        // Resize to max dimensions while maintaining aspect ratio
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 80 }) // Convert to WebP for better compression
+      .toBuffer();
+
+    // Generate unique filename
+    const uniqueFilename = `${crypto.randomUUID()}.webp`;
+    const filePath = `property-images/${uniqueFilename}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage.from("properties").upload(filePath, processedImage, {
+      contentType: "image/webp",
+      cacheControl: "31536000", // Cache for 1 year
+      upsert: false,
+    });
+
+    if (error) {
+      console.error("Supabase storage error:", error);
+      return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
+    }
+
+    // Get the public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("properties").getPublicUrl(filePath);
+
+    return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error("Error in property image upload API:", error);
     return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });

@@ -1,16 +1,8 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import crypto from "crypto";
 import { createWorker } from "tesseract.js";
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
 
 export async function POST(request: Request) {
   try {
@@ -36,26 +28,30 @@ export async function POST(request: Request) {
 
     // Generate a unique filename
     const uniqueFilename = `${crypto.randomUUID()}.jpg`;
-    const key = `receipts/${uniqueFilename}`;
+    const filePath = `receipts/${uniqueFilename}`;
 
-    // Upload to S3
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: process.env.BUCKET_NAME!,
-        Key: key,
-        Body: compressedBuffer,
-        ContentType: "image/jpeg",
-      })
-    );
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage.from("receipts").upload(filePath, compressedBuffer, {
+      contentType: "image/jpeg",
+      cacheControl: "31536000",
+    });
 
-    const fileUrl = `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    if (error) {
+      console.error("Supabase storage error:", error);
+      return NextResponse.json({ error: "Failed to upload receipt" }, { status: 500 });
+    }
+
+    // Get the public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("receipts").getPublicUrl(filePath);
 
     // Extract potential amount and date from OCR text
     const amountMatch = text.match(/(?:Rp|IDR)\s*[\d,.]+/i);
     const dateMatch = text.match(/\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/);
 
     return NextResponse.json({
-      url: fileUrl,
+      url: publicUrl,
       extractedText: text,
       extractedData: {
         amount: amountMatch ? amountMatch[0].replace(/[^\d.]/g, "") : null,

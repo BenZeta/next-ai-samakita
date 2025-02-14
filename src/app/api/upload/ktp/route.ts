@@ -1,46 +1,46 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { supabase } from "@/lib/supabase";
 import crypto from "crypto";
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION!,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
 
 export async function POST(request: Request) {
   try {
-    const { filename, contentType } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
 
-    if (!filename || !contentType) {
-      return NextResponse.json({ error: "Filename and content type are required" }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Generate a unique filename
-    const fileExtension = filename.split(".").pop();
-    const uniqueFilename = `${crypto.randomUUID()}.${fileExtension}`;
-    const key = `ktp/${uniqueFilename}`;
+    const uniqueFilename = `${crypto.randomUUID()}.${file.name.split(".").pop()}`;
+    const filePath = `documents/${uniqueFilename}`;
 
-    // Create the presigned URL
-    const putObjectCommand = new PutObjectCommand({
-      Bucket: process.env.BUCKET_NAME!,
-      Key: key,
-      ContentType: contentType,
+    // Convert File to Buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Upload directly to Supabase Storage
+    const { data, error } = await supabase.storage.from("documents").upload(filePath, buffer, {
+      contentType: file.type,
+      cacheControl: "31536000",
+      upsert: false,
     });
 
-    const presignedUrl = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 3600, // URL expires in 1 hour
-    });
+    if (error) {
+      console.error("Error uploading file:", error);
+      return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    }
+
+    // Get the public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("documents").getPublicUrl(filePath);
 
     return NextResponse.json({
-      presignedUrl,
-      fileUrl: `https://${process.env.BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
+      path: filePath,
+      publicUrl,
     });
   } catch (error) {
-    console.error("Error generating presigned URL:", error);
-    return NextResponse.json({ error: "Failed to generate upload URL" }, { status: 500 });
+    console.error("Error processing KTP upload:", error);
+    return NextResponse.json({ error: "Failed to process KTP upload" }, { status: 500 });
   }
 }

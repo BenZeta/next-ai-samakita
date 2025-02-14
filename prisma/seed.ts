@@ -10,6 +10,7 @@ async function main() {
     data: {
       name: "Test User",
       email: "test@example.com",
+      hashedPassword,
       emailVerified: new Date(),
     },
   });

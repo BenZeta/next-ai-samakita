@@ -3,9 +3,11 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType } from "@prisma/client";
-import { generateContract } from "@/lib/contracts";
+import { generateContract } from "@/lib/contract";
 import { sendContractEmail } from "@/lib/email";
 import { prisma } from "@/lib/db";
+import { propertySchema, userSchema } from "@/lib/contracts";
+import { Prisma } from "@prisma/client";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -47,130 +49,174 @@ const contractSigningSchema = z.object({
 });
 
 export const tenantRouter = createTRPCRouter({
-  create: protectedProcedure.input(tenantSchema).mutation(async ({ input, ctx }) => {
-    const room = await db.room.findUnique({
-      where: { id: input.roomId },
-      include: {
-        property: true,
-        tenants: {
-          where: {
-            status: TenantStatus.ACTIVE,
-            endDate: {
-              gt: new Date(),
-            },
-          },
+  create: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string(),
+        propertyId: z.string(),
+        amount: z.number().min(1),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { userId, propertyId, amount } = input;
+
+      // Get user details
+      const user = await db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          hashedPassword: true,
+          emailVerified: true,
+          role: true,
         },
-      },
-    });
-
-    if (!room) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Room not found",
       });
-    }
 
-    if (room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to add tenants to this room",
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Get property details
+      const propertyResult = await db.property.findUnique({
+        where: { id: propertyId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          address: true,
+          city: true,
+          province: true,
+          postalCode: true,
+          location: true,
+          facilities: true,
+          images: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+        },
       });
-    }
 
-    if (room.tenants.length > 0) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Room is currently occupied",
+      if (!propertyResult) {
+        throw new Error("Property not found");
+      }
+
+      const property = propertySchema.parse(propertyResult);
+
+      // Create transaction and generate contract
+      const result = await db.$transaction(async (tx) => {
+        const newTransaction = await tx.transaction.create({
+          data: {
+            userId,
+            propertyId,
+            amount,
+            status: "PENDING",
+          },
+        });
+
+        // Generate contract
+        const contractUrl = await generateContract({
+          user: userSchema.parse(user),
+          property,
+          transaction: newTransaction,
+        });
+
+        // Update transaction with contract URL
+        return await tx.transaction.update({
+          where: { id: newTransaction.id },
+          data: { contractUrl },
+        });
       });
-    }
 
-    const tenant = await db.tenant.create({
-      data: {
-        ...input,
-        status: TenantStatus.ACTIVE,
-      },
-    });
-
-    return tenant;
-  }),
+      return result;
+    }),
 
   list: protectedProcedure
     .input(
       z.object({
         roomId: z.string().optional(),
-        status: z.nativeEnum(TenantStatus).optional(),
+        status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
         search: z.string().optional(),
       })
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const { roomId, status, search } = input;
 
+      const where: Prisma.TenantWhereInput = {
+        ...(roomId ? { roomId } : {}),
+        ...(status ? { status } : {}),
+        ...(search
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  phone: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {}),
+      };
+
       const tenants = await db.tenant.findMany({
-        where: {
-          ...(roomId ? { roomId } : {}),
-          ...(status ? { status } : {}),
-          ...(search
-            ? {
-                OR: [
-                  { name: { contains: search, mode: "insensitive" } },
-                  { email: { contains: search, mode: "insensitive" } },
-                  { phone: { contains: search, mode: "insensitive" } },
-                  { ktpNumber: { contains: search, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-          room: {
-            property: {
-              userId: ctx.session.user.id,
-            },
-          },
-        },
+        where,
         include: {
           room: {
             include: {
-              property: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
+              property: true,
             },
           },
+        },
+        orderBy: {
+          createdAt: "desc",
         },
       });
 
       return tenants;
     }),
 
-  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
-    const tenant = await db.tenant.findUnique({
-      where: { id: input.id },
-      include: {
-        room: {
-          include: {
-            property: true,
+  get: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.id },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
           },
+          checkInItems: true,
         },
-        checkInItems: true,
-      },
-    });
-
-    if (!tenant) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
       });
-    }
 
-    if (tenant.room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to view this tenant",
-      });
-    }
+      if (!tenant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tenant not found",
+        });
+      }
 
-    return tenant;
-  }),
+      return tenant;
+    }),
 
   update: protectedProcedure
     .input(
@@ -428,9 +474,28 @@ export const tenantRouter = createTRPCRouter({
     }
 
     const contractUrl = await generateContract({
-      tenant,
-      room: tenant.room,
+      user: userSchema.parse({
+        id: tenant.id,
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone,
+        ktpNumber: tenant.ktpNumber,
+        image: null,
+        hashedPassword: null,
+        emailVerified: null,
+        role: "user",
+      }),
       property: tenant.room.property,
+      transaction: {
+        id: tenant.id,
+        userId: tenant.room.property.userId,
+        propertyId: tenant.room.property.id,
+        status: "PENDING",
+        contractUrl: null,
+        amount: tenant.rentAmount || 0,
+        createdAt: tenant.createdAt,
+        updatedAt: tenant.updatedAt,
+      },
     });
 
     await db.tenant.update({
@@ -447,36 +512,35 @@ export const tenantRouter = createTRPCRouter({
     return { contractUrl };
   }),
 
-  signContract: protectedProcedure.input(contractSigningSchema).mutation(async ({ input }) => {
-    const tenant = await db.tenant.findUnique({
-      where: { id: input.tenantId },
-    });
+  signContract: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.string(),
+        signature: z.string(),
+        signedDate: z.date(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { tenantId, signature, signedDate } = input;
 
-    if (!tenant) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
+      const tenant = await db.tenant.update({
+        where: { id: tenantId },
+        data: {
+          contractSigned: true,
+          contractSignedAt: signedDate,
+          signature,
+        },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
       });
-    }
 
-    if (!tenant.contractFile) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "No contract found for signing",
-      });
-    }
-
-    await db.tenant.update({
-      where: { id: input.tenantId },
-      data: {
-        contractSigned: true,
-        contractSignedAt: input.signedDate,
-        signature: input.signature,
-      },
-    });
-
-    return { success: true };
-  }),
+      return tenant;
+    }),
 
   getOverview: protectedProcedure
     .input(

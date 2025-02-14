@@ -26,6 +26,7 @@ model User {
   accounts       Account[]
   sessions       Session[]
   properties     Property[]
+  transactions   Transaction[]
 }
 
 model Account {
@@ -93,6 +94,7 @@ model Property {
   maintenanceRequests MaintenanceRequest[]
   facilities          String[]             @default([])
   images              String[]             @default([])
+  transactions        Transaction[]
 }
 
 model Room {
@@ -269,4 +271,23 @@ model Lease {
   updatedAt  DateTime @updatedAt
   tenantId   String
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  propertyId  String
+  amount      Float
+  status      TransactionStatus @default(PENDING)
+  contractUrl String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
