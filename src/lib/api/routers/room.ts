@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { RoomType } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
 const roomSchema = z.object({
   number: z.string().min(1, "Room number is required"),
@@ -57,67 +58,89 @@ export const roomRouter = createTRPCRouter({
   list: protectedProcedure
     .input(
       z.object({
-        propertyId: z.string(),
-        type: z.nativeEnum(RoomType).optional(),
-        sortBy: z.enum(["number", "price", "type"]).optional(),
-        sortOrder: z.enum(["asc", "desc"]).optional(),
+        propertyId: z.string().optional(),
+        status: z.enum(["available", "occupied", "maintenance"]).optional(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      const { propertyId, type, sortBy = "number", sortOrder = "asc" } = input;
-
-      // Check if user has access to the property
-      const property = await db.property.findUnique({
-        where: { id: propertyId },
-      });
-
-      if (!property) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Property not found",
-        });
-      }
-
-      if (property.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to view rooms in this property",
-        });
-      }
-
-      return db.room.findMany({
+    .query(async ({ input }) => {
+      return prisma.room.findMany({
         where: {
-          propertyId,
-          ...(type ? { type } : {}),
+          propertyId: input.propertyId,
+          ...(input.status === "available" && {
+            tenants: {
+              none: {
+                endDate: {
+                  gt: new Date(),
+                },
+              },
+            },
+          }),
+          ...(input.status === "occupied" && {
+            tenants: {
+              some: {
+                endDate: {
+                  gt: new Date(),
+                },
+              },
+            },
+          }),
         },
-        orderBy: { [sortBy]: sortOrder },
+        include: {
+          tenants: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          property: {
+            select: {
+              name: true,
+              address: true,
+            },
+          },
+        },
       });
     }),
 
-  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
-    const room = await db.room.findUnique({
-      where: { id: input.id },
-      include: {
-        property: true,
-      },
-    });
-
-    if (!room) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Room not found",
+  get: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+      })
+    )
+    .query(async ({ input }) => {
+      const room = await prisma.room.findUnique({
+        where: { id: input.id },
+        include: {
+          tenants: {
+            select: {
+              id: true,
+              name: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          property: {
+            select: {
+              name: true,
+              address: true,
+              description: true,
+              location: true,
+              facilities: true,
+              images: true,
+            },
+          },
+        },
       });
-    }
 
-    if (room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to view this room",
-      });
-    }
+      if (!room) {
+        throw new Error("Room not found");
+      }
 
-    return room;
-  }),
+      return room;
+    }),
 
   update: protectedProcedure
     .input(

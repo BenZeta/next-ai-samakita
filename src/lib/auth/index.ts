@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         host: "smtp.resend.com",
         port: 465,
         auth: {
-          user: "noreply@benzeta.shop",
+          user: "resend",
           pass: process.env.EMAIL_SERVER_PASSWORD,
         },
       },
