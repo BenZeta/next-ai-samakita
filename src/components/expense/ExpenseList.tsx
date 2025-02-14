@@ -1,25 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { api } from "@/lib/trpc/react";
-import { ExpenseCategory } from "@prisma/client";
 import { toast } from "react-toastify";
-import { TRPCClientErrorLike } from "@trpc/client";
-import { AppRouter } from "@/lib/api/root";
+import { api } from "@/lib/trpc/react";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@/lib/api/root";
+import { ExpenseCategory } from "@prisma/client";
+import { Plus, Filter, X } from "lucide-react";
 
 interface ExpenseListProps {
   propertyId: string;
-}
-
-interface Expense {
-  id: string;
-  category: ExpenseCategory;
-  amount: number;
-  date: Date;
-  description?: string | null;
-  vendor?: string | null;
-  notes?: string | null;
-  receiptUrl?: string | null;
 }
 
 export function ExpenseList({ propertyId }: ExpenseListProps) {
@@ -29,6 +19,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
   const [minAmount, setMinAmount] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<string>("");
   const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [newExpense, setNewExpense] = useState({
     category: "",
     amount: "",
@@ -107,7 +98,6 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
 
       const { url, extractedData } = await response.json();
 
-      // Auto-fill form with extracted data
       if (extractedData.amount) {
         setNewExpense((prev) => ({ ...prev, amount: extractedData.amount }));
       }
@@ -115,7 +105,6 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
         setNewExpense((prev) => ({ ...prev, date: extractedData.date }));
       }
 
-      // Create expense with receipt URL
       await createMutation.mutateAsync({
         propertyId,
         ...newExpense,
@@ -156,74 +145,94 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex flex-wrap gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Category</label>
-            <select
-              value={selectedCategory || ""}
-              onChange={(e) => setSelectedCategory(e.target.value ? (e.target.value as ExpenseCategory) : undefined)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-              <option value="">All Categories</option>
-              {categoryOptions.map((category) => (
-                <option
-                  key={category}
-                  value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Min Amount</label>
-            <input
-              type="number"
-              value={minAmount}
-              onChange={(e) => setMinAmount(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Max Amount</label>
-            <input
-              type="number"
-              value={maxAmount}
-              onChange={(e) => setMaxAmount(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
+        <h2 className="text-2xl font-bold text-gray-900">Expenses</h2>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+            <Filter className="h-4 w-4" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </button>
+          <button
+            onClick={() => setIsAddingExpense(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            <Plus className="h-4 w-4" />
+            Add Expense
+          </button>
         </div>
-
-        <button
-          onClick={() => setIsAddingExpense(true)}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
-          Add Expense
-        </button>
       </div>
 
-      {isAddingExpense && (
+      {showFilters && (
         <div className="rounded-lg border bg-white p-4 shadow">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <select
+                value={selectedCategory || ""}
+                onChange={(e) => setSelectedCategory(e.target.value ? (e.target.value as ExpenseCategory) : undefined)}
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">All Categories</option>
+                {categoryOptions.map((category) => (
+                  <option
+                    key={category}
+                    value={category}>
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Amount Range</label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <span className="text-gray-500">-</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxAmount}
+                  onChange={(e) => setMaxAmount(e.target.value)}
+                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAddingExpense && (
+        <div className="relative rounded-lg border bg-white p-6 shadow">
+          <button
+            onClick={() => setIsAddingExpense(false)}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500">
+            <X className="h-5 w-5" />
+          </button>
           <h3 className="mb-4 text-lg font-medium">Add New Expense</h3>
           <form
             onSubmit={handleSubmit}
@@ -235,7 +244,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   required
                   value={newExpense.category}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, category: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                   <option value="">Select Category</option>
                   {categoryOptions.map((category) => (
                     <option
@@ -254,7 +263,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   required
                   value={newExpense.amount}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, amount: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
@@ -265,7 +274,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   required
                   value={newExpense.date}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, date: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
@@ -275,7 +284,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   type="text"
                   value={newExpense.vendor}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, vendor: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
@@ -285,7 +294,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   type="text"
                   value={newExpense.description}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, description: e.target.value }))}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
@@ -295,7 +304,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   value={newExpense.notes}
                   onChange={(e) => setNewExpense((prev) => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
               </div>
 
@@ -306,23 +315,23 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   accept="image/*"
                   onChange={handleFileUpload}
                   disabled={isUploading}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-lg border border-gray-300 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-indigo-600 hover:file:bg-indigo-100"
                 />
                 <p className="mt-1 text-sm text-gray-500">Upload a receipt image for automatic data extraction</p>
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsAddingExpense(false)}
-                className="rounded-md border px-4 py-2 text-gray-600 hover:bg-gray-50">
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isUploading}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50">
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
                 {isUploading ? "Uploading..." : "Save Expense"}
               </button>
             </div>
@@ -331,12 +340,12 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
       )}
 
       {data?.summary && (
-        <div className="rounded-lg bg-white p-4 shadow">
-          <h3 className="text-lg font-medium">Summary</h3>
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="text-lg font-medium text-gray-900">Summary</h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-500">Total Expenses</p>
-              <p className="mt-1 text-2xl font-semibold">Rp {data.summary.total.toLocaleString()}</p>
+              <p className="mt-1 text-2xl font-semibold text-gray-900">Rp {data.summary.total.toLocaleString()}</p>
             </div>
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-500">Categories</p>
@@ -345,8 +354,8 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                   <div
                     key={category}
                     className="flex justify-between">
-                    <span className="capitalize">{category.toLowerCase()}</span>
-                    <span>Rp {amount.toLocaleString()}</span>
+                    <span className="capitalize text-gray-700">{category.toLowerCase()}</span>
+                    <span className="font-medium text-gray-900">Rp {amount.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -355,43 +364,33 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border bg-white shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vendor</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Receipt</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {data?.expenses.map((expense: Expense) => (
-              <tr key={expense.id}>
+            {data?.expenses.map((expense) => (
+              <tr
+                key={expense.id}
+                className="hover:bg-gray-50">
                 <td className="whitespace-nowrap px-6 py-4">
-                  <span className="capitalize">{expense.category.toLowerCase()}</span>
+                  <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800">
+                    {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
+                  </span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">Rp {expense.amount.toLocaleString()}</td>
-                <td className="whitespace-nowrap px-6 py-4">{new Date(expense.date).toLocaleDateString()}</td>
-                <td className="px-6 py-4">{expense.description || "-"}</td>
-                <td className="px-6 py-4">{expense.vendor || "-"}</td>
-                <td className="px-6 py-4">
-                  {expense.receiptUrl ? (
-                    <a
-                      href={expense.receiptUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-900">
-                      View Receipt
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4">
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">Rp {expense.amount.toLocaleString()}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{new Date(expense.date).toLocaleDateString()}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{expense.vendor || "-"}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{expense.description || "-"}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                   <button
                     onClick={() => handleDelete(expense.id)}
                     className="text-red-600 hover:text-red-900">
@@ -402,8 +401,6 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
             ))}
           </tbody>
         </table>
-
-        {(!data?.expenses || data.expenses.length === 0) && <div className="py-8 text-center text-gray-500">No expenses found for the selected filters.</div>}
       </div>
     </div>
   );
