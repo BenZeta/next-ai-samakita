@@ -61,10 +61,9 @@ AI
 - Use `generateChatCompletion` in `src/lib/aiClient.ts` for all AI calls.
 - Prefer `O1` model with high reasoning effort for all AI calls.
 
-Storybook
+Pages
 
-- Place stories in `src/stories` with `.stories.tsx` extension.
-- One story file per component, matching component name.
+- One page file per component, matching component name.
 - Use autodocs for automatic documentation.
 - Include multiple variants and sizes in stories.
 - Test interactive features with actions.

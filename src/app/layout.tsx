@@ -1,36 +1,26 @@
-import React from "react";
 import "@/app/globals.css";
 import "react-toastify/dist/ReactToastify.css";
-import { TRPCReactProvider } from "@/lib/trpc/react";
+import { TRPCReactProvider } from "@/components/providers/TrpcProvider";
 import { Metadata } from "next";
 import ClientProvider from "@/components/ClientProvider";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { ThemeAwareToast } from "@/components/theme/ThemeAwareToast";
+import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
-  title: "",
-  description: "",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  title: "Next.js AI Template",
+  description: "Next.js AI Template",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <ClientProvider>
-            <TRPCReactProvider>
-              {children}
-              <ThemeAwareToast />
-            </TRPCReactProvider>
-          </ClientProvider>
-        </ThemeProvider>
+        <TRPCReactProvider>
+          <ThemeProvider>
+            <ClientProvider>{children}</ClientProvider>
+            <ToastContainer />
+          </ThemeProvider>
+        </TRPCReactProvider>
       </body>
     </html>
   );
