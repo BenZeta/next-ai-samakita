@@ -14,6 +14,27 @@ const roomSchema = z.object({
   propertyId: z.string().min(1, "Property ID is required"),
 });
 
+const bulkRoomSchema = z.object({
+  startNumber: z.string().min(1, "Starting room number is required"),
+  count: z.number().min(1, "Number of rooms must be at least 1").max(50, "Maximum 50 rooms at once"),
+  type: z.nativeEnum(RoomType),
+  size: z.number().min(1, "Size must be greater than 0"),
+  amenities: z.array(z.string()).min(1, "At least one amenity is required"),
+  price: z.number().min(0, "Price must be greater than or equal to 0"),
+  propertyId: z.string(),
+  numberingPrefix: z.string().optional(),
+  numberingSuffix: z.string().optional(),
+  startingFloor: z.number().optional(),
+});
+
+const maintenanceSchema = z.object({
+  roomId: z.string(),
+  startDate: z.date(),
+  endDate: z.date(),
+  description: z.string().min(1, "Description is required"),
+  type: z.enum(["cleaning", "repair", "inspection", "other"]),
+});
+
 export const roomRouter = createTRPCRouter({
   create: protectedProcedure.input(roomSchema).mutation(async ({ input, ctx }) => {
     // Check if property exists and user has access
@@ -53,6 +74,55 @@ export const roomRouter = createTRPCRouter({
     return db.room.create({
       data: input,
     });
+  }),
+
+  createBulk: protectedProcedure.input(bulkRoomSchema).mutation(async ({ input, ctx }) => {
+    const { startNumber, count, type, size, amenities, price, propertyId, numberingPrefix = "", numberingSuffix = "", startingFloor = 1 } = input;
+
+    // Check if user has access to the property
+    const property = await db.property.findUnique({
+      where: { id: propertyId },
+    });
+
+    if (!property) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Property not found",
+      });
+    }
+
+    if (property.userId !== ctx.session.user.id) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to create rooms for this property",
+      });
+    }
+
+    // Generate room numbers based on the starting number and count
+    const rooms = Array.from({ length: count }, (_, index) => {
+      const floor = Math.floor(index / 10) + startingFloor;
+      const roomNum = (index % 10) + 1;
+      const paddedRoomNum = roomNum.toString().padStart(2, "0");
+      const number = `${numberingPrefix}${floor}${paddedRoomNum}${numberingSuffix}`;
+
+      return {
+        number,
+        type,
+        size,
+        amenities,
+        price,
+        propertyId,
+      };
+    });
+
+    // Create all rooms in a transaction
+    return db.$transaction(
+      rooms.map((room) =>
+        db.room.create({
+          data: room,
+        })
+      )
+    );
   }),
 
   list: protectedProcedure
@@ -205,4 +275,149 @@ export const roomRouter = createTRPCRouter({
 
     return { success: true };
   }),
+
+  scheduleMaintenance: protectedProcedure.input(maintenanceSchema).mutation(async ({ input, ctx }) => {
+    const room = await db.room.findUnique({
+      where: { id: input.roomId },
+      include: {
+        property: true,
+      },
+    });
+
+    if (!room) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Room not found",
+      });
+    }
+
+    if (room.property.userId !== ctx.session.user.id) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You do not have permission to schedule maintenance for this room",
+      });
+    }
+
+    // Check for scheduling conflicts
+    const existingMaintenance = await db.maintenance.findFirst({
+      where: {
+        roomId: input.roomId,
+        OR: [
+          {
+            AND: [{ startDate: { lte: input.startDate } }, { endDate: { gte: input.startDate } }],
+          },
+          {
+            AND: [{ startDate: { lte: input.endDate } }, { endDate: { gte: input.endDate } }],
+          },
+        ],
+      },
+    });
+
+    if (existingMaintenance) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "There is already maintenance scheduled for this time period",
+      });
+    }
+
+    return db.maintenance.create({
+      data: input,
+    });
+  }),
+
+  getMaintenanceSchedule: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string().optional(),
+        propertyId: z.string().optional(),
+        startDate: z.date(),
+        endDate: z.date(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { roomId, propertyId, startDate, endDate } = input;
+
+      if (!roomId && !propertyId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Either roomId or propertyId must be provided",
+        });
+      }
+
+      // If propertyId is provided, verify access
+      if (propertyId) {
+        const property = await db.property.findUnique({
+          where: { id: propertyId },
+        });
+
+        if (!property) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Property not found",
+          });
+        }
+
+        if (property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to view maintenance schedules for this property",
+          });
+        }
+      }
+
+      // If roomId is provided, verify access through property
+      if (roomId) {
+        const room = await db.room.findUnique({
+          where: { id: roomId },
+          include: {
+            property: true,
+          },
+        });
+
+        if (!room) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Room not found",
+          });
+        }
+
+        if (room.property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have permission to view maintenance schedules for this room",
+          });
+        }
+      }
+
+      return db.maintenance.findMany({
+        where: {
+          ...(roomId ? { roomId } : {}),
+          ...(propertyId
+            ? {
+                room: {
+                  propertyId,
+                },
+              }
+            : {}),
+          startDate: {
+            gte: startDate,
+          },
+          endDate: {
+            lte: endDate,
+          },
+        },
+        include: {
+          room: {
+            select: {
+              number: true,
+              property: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    }),
 });

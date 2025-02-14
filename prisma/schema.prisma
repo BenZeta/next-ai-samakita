@@ -102,6 +102,7 @@ model Room {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   tenants    Tenant[]
+  maintenance Maintenance[]
 }
 
 model Tenant {
@@ -225,4 +226,16 @@ model Expense {
   notes       String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+}
+
+model Maintenance {
+  id          String   @id @default(cuid())
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId      String
+  startDate   DateTime
+  endDate     DateTime
+  description String
+  type        String   // "cleaning", "repair", "inspection", "other"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

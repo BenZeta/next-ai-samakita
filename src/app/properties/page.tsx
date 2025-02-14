@@ -20,6 +20,8 @@ export default function PropertiesPage() {
     perPage,
   });
 
+  console.log(data?.properties);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(1);
