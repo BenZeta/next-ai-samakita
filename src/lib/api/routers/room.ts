@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
-import { RoomType } from "@prisma/client";
+import { RoomType, TenantStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 const roomSchema = z.object({
@@ -34,6 +34,11 @@ const maintenanceSchema = z.object({
   description: z.string().min(1, "Description is required"),
   type: z.enum(["cleaning", "repair", "inspection", "other"]),
 });
+
+interface OccupancyHistoryItem {
+  rate: number;
+  label: string;
+}
 
 export const roomRouter = createTRPCRouter({
   create: protectedProcedure.input(roomSchema).mutation(async ({ input, ctx }) => {
@@ -419,5 +424,192 @@ export const roomRouter = createTRPCRouter({
           },
         },
       });
+    }),
+
+  getOccupancyStats: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        timeRange: z.enum(["week", "month", "year"]),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { propertyId, timeRange } = input;
+
+      // Get total rooms
+      const totalRoomsQuery = db.room.count({
+        where: {
+          ...(propertyId ? { propertyId } : {}),
+          property: {
+            userId: ctx.session.user.id,
+          },
+        },
+      });
+
+      // Get occupied rooms (rooms with active tenants)
+      const occupiedRoomsQuery = db.room.count({
+        where: {
+          ...(propertyId ? { propertyId } : {}),
+          property: {
+            userId: ctx.session.user.id,
+          },
+          tenants: {
+            some: {
+              status: TenantStatus.active,
+            },
+          },
+        },
+      });
+
+      const [totalRooms, occupiedRooms] = await Promise.all([totalRoomsQuery, occupiedRoomsQuery]);
+
+      const currentRate = totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+
+      // Calculate historical data
+      const now = new Date();
+      let historyPoints: { date: Date; label: string }[] = [];
+
+      if (timeRange === "week") {
+        // Last 7 days
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          historyPoints.push({
+            date,
+            label: date.toLocaleDateString("en-US", { weekday: "short" }),
+          });
+        }
+      } else if (timeRange === "month") {
+        // Last 4 weeks
+        for (let i = 3; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i * 7);
+          historyPoints.push({
+            date,
+            label: `Week ${4 - i}`,
+          });
+        }
+      } else {
+        // Last 12 months
+        for (let i = 11; i >= 0; i--) {
+          const date = new Date(now);
+          date.setMonth(date.getMonth() - i);
+          historyPoints.push({
+            date,
+            label: date.toLocaleDateString("en-US", { month: "short" }),
+          });
+        }
+      }
+
+      // Get historical occupancy rates
+      const history: OccupancyHistoryItem[] = await Promise.all(
+        historyPoints.map(async ({ date, label }) => {
+          const totalRooms = await db.room.count({
+            where: {
+              ...(propertyId ? { propertyId } : {}),
+              property: {
+                userId: ctx.session.user.id,
+              },
+              createdAt: {
+                lte: date,
+              },
+            },
+          });
+
+          const occupiedRooms = await db.room.count({
+            where: {
+              ...(propertyId ? { propertyId } : {}),
+              property: {
+                userId: ctx.session.user.id,
+              },
+              createdAt: {
+                lte: date,
+              },
+              tenants: {
+                some: {
+                  status: TenantStatus.active,
+                  startDate: {
+                    lte: date,
+                  },
+                  OR: [
+                    {
+                      endDate: undefined,
+                    },
+                    {
+                      endDate: {
+                        gt: date,
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          });
+
+          return {
+            rate: totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0,
+            label,
+          };
+        })
+      );
+
+      // Get previous period rate for comparison
+      const previousPeriodStart = new Date(now);
+      if (timeRange === "week") {
+        previousPeriodStart.setDate(previousPeriodStart.getDate() - 14);
+      } else if (timeRange === "month") {
+        previousPeriodStart.setMonth(previousPeriodStart.getMonth() - 1);
+      } else {
+        previousPeriodStart.setFullYear(previousPeriodStart.getFullYear() - 1);
+      }
+
+      const previousOccupiedRooms = await db.room.count({
+        where: {
+          ...(propertyId ? { propertyId } : {}),
+          property: {
+            userId: ctx.session.user.id,
+          },
+          tenants: {
+            some: {
+              status: TenantStatus.active,
+              startDate: {
+                lte: previousPeriodStart,
+              },
+              OR: [
+                {
+                  endDate: undefined,
+                },
+                {
+                  endDate: {
+                    gt: previousPeriodStart,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      });
+
+      const previousTotalRooms = await db.room.count({
+        where: {
+          ...(propertyId ? { propertyId } : {}),
+          property: {
+            userId: ctx.session.user.id,
+          },
+          createdAt: {
+            lte: previousPeriodStart,
+          },
+        },
+      });
+
+      const previousRate = previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
+
+      return {
+        currentRate,
+        previousRate,
+        totalRooms,
+        occupiedRooms,
+        history,
+      };
     }),
 });

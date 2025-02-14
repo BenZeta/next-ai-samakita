@@ -4,6 +4,7 @@ import { propertyRouter } from "./routers/property";
 import { roomRouter } from "./routers/room";
 import { tenantRouter } from "./routers/tenant";
 import { billingRouter } from "./routers/billing";
+import { financeRouter } from "./routers/finance";
 import { expenseRouter } from "./routers/expense";
 // import all routers here
 
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   room: roomRouter,
   tenant: tenantRouter,
   billing: billingRouter,
+  finance: financeRouter,
   expense: expenseRouter,
   // add routers here
 });

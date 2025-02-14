@@ -34,14 +34,12 @@ export const propertyRouter = createTRPCRouter({
     .input(
       z.object({
         search: z.string().optional(),
-        sortBy: z.enum(["createdAt", "name"]).optional(),
-        sortOrder: z.enum(["asc", "desc"]).optional(),
-        page: z.number().min(1).default(1),
-        perPage: z.number().min(1).max(100).default(10),
+        page: z.number().min(1).optional(),
+        limit: z.number().min(1).max(100).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { search, sortBy = "createdAt", sortOrder = "desc", page, perPage } = input;
+      const { search, page = 1, limit = 10 } = input;
 
       const where: Prisma.PropertyWhereInput = {
         userId: ctx.session.user.id,
@@ -55,17 +53,16 @@ export const propertyRouter = createTRPCRouter({
       const [properties, total] = await Promise.all([
         db.property.findMany({
           where,
-          orderBy: { [sortBy]: sortOrder },
-          skip: (page - 1) * perPage,
-          take: perPage,
           include: {
             rooms: {
-              select: {
-                id: true,
-                type: true,
+              include: {
+                tenants: true,
               },
             },
           },
+          orderBy: { createdAt: "desc" },
+          skip: (page - 1) * limit,
+          take: limit,
         }),
         db.property.count({ where }),
       ]);
@@ -75,8 +72,8 @@ export const propertyRouter = createTRPCRouter({
         pagination: {
           total,
           page,
-          perPage,
-          totalPages: Math.ceil(total / perPage),
+          limit,
+          totalPages: Math.ceil(total / limit),
         },
       };
     }),

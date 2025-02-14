@@ -10,3 +10,6 @@
 - Implemented Tenant Management System with tenant CRUD operations, check-in items management, and tenant details view
 - Implemented Payment Management System with payment creation, listing, and status management features
 - Fixed dynamic route parameter inconsistency by standardizing to use [roomId] across all routes
+- Created expense router with list and create procedures, including summary statistics and pagination
+- Created ExpenseList component with filtering, pagination, and summary cards
+- Fixed type errors in the expense list component by adding proper type guards and initializing state correctly

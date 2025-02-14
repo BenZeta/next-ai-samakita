@@ -6,18 +6,16 @@ import { api } from "@/lib/trpc/react";
 import type { TRPCClientErrorLike } from "@trpc/client";
 import type { AppRouter } from "@/lib/api/root";
 import { ExpenseCategory } from "@prisma/client";
-import { Plus, Filter, X } from "lucide-react";
+import { Plus, Filter, X, Receipt } from "lucide-react";
 
 interface ExpenseListProps {
-  propertyId: string;
+  propertyId?: string;
 }
 
 export function ExpenseList({ propertyId }: ExpenseListProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | undefined>();
+  const [category, setCategory] = useState<ExpenseCategory | undefined>();
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [minAmount, setMinAmount] = useState<string>("");
-  const [maxAmount, setMaxAmount] = useState<string>("");
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [newExpense, setNewExpense] = useState({
@@ -29,14 +27,16 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
     notes: "",
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const { data, refetch } = api.expense.list.useQuery({
+  const { data, isLoading, refetch } = api.expense.list.useQuery({
     propertyId,
-    category: selectedCategory,
+    category,
     startDate: startDate ? new Date(startDate) : undefined,
     endDate: endDate ? new Date(endDate) : undefined,
-    minAmount: minAmount ? parseFloat(minAmount) : undefined,
-    maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
+    page,
+    limit,
   });
 
   const createMutation = api.expense.create.useMutation({
@@ -105,6 +105,11 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
         setNewExpense((prev) => ({ ...prev, date: extractedData.date }));
       }
 
+      if (!propertyId) {
+        toast.error("Please select a property first");
+        return;
+      }
+
       await createMutation.mutateAsync({
         propertyId,
         ...newExpense,
@@ -125,6 +130,10 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!propertyId) {
+      toast.error("Please select a property first");
+      return;
+    }
     try {
       await createMutation.mutateAsync({
         propertyId,
@@ -133,7 +142,6 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
         date: new Date(newExpense.date),
         description: newExpense.description || undefined,
         vendor: newExpense.vendor || undefined,
-        notes: newExpense.notes || undefined,
       });
     } catch (error) {
       console.error("Failed to create expense:", error);
@@ -141,6 +149,30 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
   };
 
   const categoryOptions = Object.values(ExpenseCategory);
+
+  if (!propertyId) {
+    return (
+      <div className="rounded-lg bg-white p-6 shadow">
+        <div className="flex items-center justify-center">
+          <p className="text-gray-500">Please select a property to view expenses.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-[400px] rounded-lg bg-white p-6 shadow">
+        <div className="flex h-full items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const expenses = data?.expenses ?? [];
+  const { total, totalPages } = data?.pagination ?? { total: 0, totalPages: 0 };
+  const summary = data?.summary ?? { total: 0, byCategory: {} };
 
   return (
     <div className="space-y-6">
@@ -168,15 +200,15 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
             <div>
               <label className="block text-sm font-medium text-gray-700">Category</label>
               <select
-                value={selectedCategory || ""}
-                onChange={(e) => setSelectedCategory(e.target.value ? (e.target.value as ExpenseCategory) : undefined)}
+                value={category ?? "all"}
+                onChange={(e) => setCategory(e.target.value === "all" ? undefined : (e.target.value as ExpenseCategory))}
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">All Categories</option>
-                {categoryOptions.map((category) => (
+                <option value="all">All Categories</option>
+                {Object.values(ExpenseCategory).map((cat) => (
                   <option
-                    key={category}
-                    value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    key={cat}
+                    value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
                   </option>
                 ))}
               </select>
@@ -200,27 +232,6 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                 onChange={(e) => setEndDate(e.target.value)}
                 className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Amount Range</label>
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={minAmount}
-                  onChange={(e) => setMinAmount(e.target.value)}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-                <span className="text-gray-500">-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={maxAmount}
-                  onChange={(e) => setMaxAmount(e.target.value)}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -350,14 +361,17 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-500">Categories</p>
               <div className="mt-2 space-y-1 text-sm">
-                {Object.entries(data.summary.byCategory).map(([category, amount]) => (
-                  <div
-                    key={category}
-                    className="flex justify-between">
-                    <span className="capitalize text-gray-700">{category.toLowerCase()}</span>
-                    <span className="font-medium text-gray-900">Rp {amount.toLocaleString()}</span>
-                  </div>
-                ))}
+                {Object.entries(data.summary.byCategory)
+                  .sort(([, a], [, b]) => (b as number) - (a as number))
+                  .slice(0, 3)
+                  .map(([category, amount]) => (
+                    <div
+                      key={category}
+                      className="flex justify-between">
+                      <span className="capitalize text-gray-700">{category.toLowerCase()}</span>
+                      <span className="font-medium text-gray-900">Rp {(amount as number).toLocaleString()}</span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -368,28 +382,26 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Vendor</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Property</th>
               <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {data?.expenses.map((expense) => (
+            {expenses.map((expense) => (
               <tr
                 key={expense.id}
                 className="hover:bg-gray-50">
-                <td className="whitespace-nowrap px-6 py-4">
-                  <span className="inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5 text-blue-800">
-                    {expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">Rp {expense.amount.toLocaleString()}</td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{new Date(expense.date).toLocaleDateString()}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{expense.vendor || "-"}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">{expense.description || "-"}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  <span className="capitalize">{expense.category.toLowerCase()}</span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">{expense.description}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">Rp {expense.amount.toLocaleString()}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{expense.property.name}</td>
                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                   <button
                     onClick={() => handleDelete(expense.id)}
@@ -402,6 +414,28 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
           </tbody>
         </table>
       </div>
+
+      {expenses.length === 0 && <div className="py-8 text-center text-gray-500">No expenses found for the selected filters.</div>}
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center space-x-2">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            Previous
+          </button>
+          <span className="flex items-center text-sm text-gray-500">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
