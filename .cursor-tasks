@@ -1,4 +1,4 @@
-- [ ] Automated Billing System
+- [x] Automated Billing System
   - [x] Payment schema and database setup
   - [x] Payment creation and management
   - [x] Payment status tracking

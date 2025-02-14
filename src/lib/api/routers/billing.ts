@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { PaymentStatus, PaymentType } from "@prisma/client";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
 const paymentSchema = z.object({
   tenantId: z.string().min(1, "Tenant ID is required"),
@@ -185,4 +186,84 @@ export const billingRouter = createTRPCRouter({
 
     return invoices;
   }),
+
+  getStats: protectedProcedure
+    .input(
+      z.object({
+        timeRange: z.enum(["week", "month", "year"]),
+      })
+    )
+    .query(async ({ input }) => {
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date;
+
+      switch (input.timeRange) {
+        case "week":
+          startDate = startOfWeek(now);
+          endDate = endOfWeek(now);
+          break;
+        case "month":
+          startDate = startOfMonth(now);
+          endDate = endOfMonth(now);
+          break;
+        case "year":
+          startDate = startOfYear(now);
+          endDate = endOfYear(now);
+          break;
+      }
+
+      const [totalRevenue, pendingPayments, dueThisWeek, overduePayments] = await Promise.all([
+        // Total revenue in the selected time range
+        db.payment
+          .aggregate({
+            where: {
+              status: PaymentStatus.paid,
+              paidAt: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+            _sum: {
+              amount: true,
+            },
+          })
+          .then((result) => result._sum.amount || 0),
+
+        // Count of pending payments
+        db.payment.count({
+          where: {
+            status: PaymentStatus.pending,
+          },
+        }),
+
+        // Count of payments due this week
+        db.payment.count({
+          where: {
+            status: PaymentStatus.pending,
+            dueDate: {
+              gte: startOfWeek(now),
+              lte: endOfWeek(now),
+            },
+          },
+        }),
+
+        // Count of overdue payments
+        db.payment.count({
+          where: {
+            status: PaymentStatus.pending,
+            dueDate: {
+              lt: now,
+            },
+          },
+        }),
+      ]);
+
+      return {
+        totalRevenue,
+        pendingPayments,
+        dueThisWeek,
+        overduePayments,
+      };
+    }),
 });
