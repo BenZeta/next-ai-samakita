@@ -1,10 +1,6 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/db";
-import {
-  getServerSession,
-  type NextAuthOptions,
-  type DefaultSession,
-} from "next-auth";
+import { getServerSession, type NextAuthOptions, type DefaultSession } from "next-auth";
 import EmailProvider from "next-auth/providers/email";
 
 export enum UserRole {
@@ -65,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         host: "smtp.resend.com",
         port: 465,
         auth: {
-          user: "resend",
+          user: "noreply@benzeta.shop",
           pass: process.env.EMAIL_SERVER_PASSWORD,
         },
       },

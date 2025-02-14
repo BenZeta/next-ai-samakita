@@ -28,6 +28,16 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
   const [endDate, setEndDate] = useState<string>("");
   const [minAmount, setMinAmount] = useState<string>("");
   const [maxAmount, setMaxAmount] = useState<string>("");
+  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState({
+    category: "",
+    amount: "",
+    date: "",
+    description: "",
+    vendor: "",
+    notes: "",
+  });
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data, refetch } = api.expense.list.useQuery({
     propertyId,
@@ -36,6 +46,25 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
     endDate: endDate ? new Date(endDate) : undefined,
     minAmount: minAmount ? parseFloat(minAmount) : undefined,
     maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
+  });
+
+  const createMutation = api.expense.create.useMutation({
+    onSuccess: () => {
+      toast.success("Expense added successfully!");
+      setIsAddingExpense(false);
+      setNewExpense({
+        category: "",
+        amount: "",
+        date: "",
+        description: "",
+        vendor: "",
+        notes: "",
+      });
+      refetch();
+    },
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
+      toast.error(error.message);
+    },
   });
 
   const deleteMutation = api.expense.delete.useMutation({
@@ -58,68 +87,248 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/receipt", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload receipt");
+      }
+
+      const { url, extractedData } = await response.json();
+
+      // Auto-fill form with extracted data
+      if (extractedData.amount) {
+        setNewExpense((prev) => ({ ...prev, amount: extractedData.amount }));
+      }
+      if (extractedData.date) {
+        setNewExpense((prev) => ({ ...prev, date: extractedData.date }));
+      }
+
+      // Create expense with receipt URL
+      await createMutation.mutateAsync({
+        propertyId,
+        ...newExpense,
+        amount: parseFloat(newExpense.amount),
+        date: new Date(newExpense.date),
+        category: newExpense.category as ExpenseCategory,
+        receiptUrl: url,
+      });
+
+      toast.success("Receipt uploaded and expense created successfully!");
+    } catch (error) {
+      console.error("Error uploading receipt:", error);
+      toast.error("Failed to upload receipt");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createMutation.mutateAsync({
+        propertyId,
+        category: newExpense.category as ExpenseCategory,
+        amount: parseFloat(newExpense.amount),
+        date: new Date(newExpense.date),
+        description: newExpense.description || undefined,
+        vendor: newExpense.vendor || undefined,
+        notes: newExpense.notes || undefined,
+      });
+    } catch (error) {
+      console.error("Failed to create expense:", error);
+    }
+  };
+
   const categoryOptions = Object.values(ExpenseCategory);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Category</label>
-          <select
-            value={selectedCategory || ""}
-            onChange={(e) => setSelectedCategory(e.target.value ? (e.target.value as ExpenseCategory) : undefined)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="">All Categories</option>
-            {categoryOptions.map((category) => (
-              <option
-                key={category}
-                value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <select
+              value={selectedCategory || ""}
+              onChange={(e) => setSelectedCategory(e.target.value ? (e.target.value as ExpenseCategory) : undefined)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+              <option value="">All Categories</option>
+              {categoryOptions.map((category) => (
+                <option
+                  key={category}
+                  value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Min Amount</label>
+            <input
+              type="number"
+              value={minAmount}
+              onChange={(e) => setMinAmount(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Max Amount</label>
+            <input
+              type="number"
+              value={maxAmount}
+              onChange={(e) => setMaxAmount(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Min Amount</label>
-          <input
-            type="number"
-            value={minAmount}
-            onChange={(e) => setMinAmount(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Max Amount</label>
-          <input
-            type="number"
-            value={maxAmount}
-            onChange={(e) => setMaxAmount(e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
+        <button
+          onClick={() => setIsAddingExpense(true)}
+          className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+          Add Expense
+        </button>
       </div>
+
+      {isAddingExpense && (
+        <div className="rounded-lg border bg-white p-4 shadow">
+          <h3 className="mb-4 text-lg font-medium">Add New Expense</h3>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <select
+                  required
+                  value={newExpense.category}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, category: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                  <option value="">Select Category</option>
+                  {categoryOptions.map((category) => (
+                    <option
+                      key={category}
+                      value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Amount</label>
+                <input
+                  type="number"
+                  required
+                  value={newExpense.amount}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, amount: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
+                <input
+                  type="date"
+                  required
+                  value={newExpense.date}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, date: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Vendor</label>
+                <input
+                  type="text"
+                  value={newExpense.vendor}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, vendor: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <input
+                  type="text"
+                  value={newExpense.description}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, description: e.target.value }))}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea
+                  value={newExpense.notes}
+                  onChange={(e) => setNewExpense((prev) => ({ ...prev, notes: e.target.value }))}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Receipt</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+                <p className="mt-1 text-sm text-gray-500">Upload a receipt image for automatic data extraction</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setIsAddingExpense(false)}
+                className="rounded-md border px-4 py-2 text-gray-600 hover:bg-gray-50">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50">
+                {isUploading ? "Uploading..." : "Save Expense"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {data?.summary && (
         <div className="rounded-lg bg-white p-4 shadow">
