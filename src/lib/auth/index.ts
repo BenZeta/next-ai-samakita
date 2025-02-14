@@ -94,19 +94,17 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.sub,
-          role: token.role,
-          isAdmin: token.isAdmin,
-        },
-      };
+      if (token) {
+        session.user.id = token.sub!;
+        session.user.role = token.role as UserRole | undefined;
+        session.user.isAdmin = token.isAdmin as boolean | undefined;
+      }
+      return session;
     },
     async jwt({ token, user }) {
       if (user) {

@@ -30,11 +30,6 @@ export default function NewTenantPage() {
       <div className="mx-auto max-w-3xl">
         <TenantForm
           roomId={roomId}
-          initialData={{
-            propertyId,
-            userId: "",
-            amount: 0,
-          }}
           onSuccess={() => {
             // Handle success (e.g., redirect to property details)
             window.location.href = `/properties/${propertyId}`;

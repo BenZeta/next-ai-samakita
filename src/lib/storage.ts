@@ -1,23 +1,22 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+import { supabase } from "./supabase";
 
 export async function uploadFile(
   key: string,
   body: Buffer | Uint8Array | Blob | string,
 ) {
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: process.env.BUCKET_NAME!,
-      Key: key,
-      Body: body,
-    }),
-  );
-  return `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  const { data, error } = await supabase.storage
+    .from("files")
+    .upload(key, body, {
+      upsert: true,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data: publicUrl } = supabase.storage
+    .from("files")
+    .getPublicUrl(data.path);
+
+  return publicUrl.publicUrl;
 }

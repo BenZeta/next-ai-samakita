@@ -1,13 +1,12 @@
 import type { Config } from "tailwindcss";
 
-export default {
-  darkMode: ["class"],
+const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-
   theme: {
     container: {
       center: true,
@@ -138,30 +137,10 @@ export default {
           900: "#14532D",
         },
         primary: {
-          50: "#F0F7FF",
-          100: "#E0EFFF",
-          200: "#B8DBFF",
-          300: "#8FC7FF",
-          400: "#66B3FF",
-          500: "#3D9FFF",
-          600: "#147AFF",
-          700: "#0056D6",
-          800: "#003E99",
-          900: "#00265C",
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
-          50: "#F5F3FF",
-          100: "#EDE9FE",
-          200: "#DDD6FE",
-          300: "#C4B5FD",
-          400: "#A78BFA",
-          500: "#8B5CF6",
-          600: "#7C3AED",
-          700: "#6D28D9",
-          800: "#5B21B6",
-          900: "#4C1D95",
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
@@ -291,8 +270,8 @@ export default {
         },
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
@@ -303,5 +282,7 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+  plugins: [],
+};
+
+export default config;

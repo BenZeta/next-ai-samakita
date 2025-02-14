@@ -1,15 +1,29 @@
 "use client";
 
+import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { loggerLink, unstable_httpBatchStreamLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
-import { useState } from "react";
 import type { ReactNode } from "react";
 import SuperJSON from "superjson";
+import type { HTTPHeaders } from "@trpc/client";
 
-import { type AppRouter } from "@/lib/api/root";
+import { type AppRouter } from "../api/root";
 
-const createQueryClient = () => new QueryClient();
+const createQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 1000,
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error: any) => {
+        if (error?.data?.code === "UNAUTHORIZED") {
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+  },
+});
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -28,17 +42,24 @@ export function TRPCReactProvider(props: { children: ReactNode }) {
 
   const [trpcClient] = useState(() =>
     api.createClient({
+      transformer: SuperJSON,
       links: [
         loggerLink({
           enabled: (op) => process.env.NODE_ENV === "development" || (op.direction === "down" && op.result instanceof Error),
         }),
         unstable_httpBatchStreamLink({
-          transformer: SuperJSON,
           url: getBaseUrl() + "/api/trpc",
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
-            return headers;
+            headers.set("content-type", "application/json");
+            return Object.fromEntries(headers.entries()) as HTTPHeaders;
+          },
+          fetch: (url, options) => {
+            return fetch(url, {
+              ...options,
+              credentials: "include",
+            });
           },
         }),
       ],

@@ -1,0 +1,118 @@
+import { createClient } from "@supabase/supabase-js";
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+
+// Load environment variables from .env file
+dotenv.config({ path: resolve(process.cwd(), ".env") });
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("Missing env.NEXT_PUBLIC_SUPABASE_URL");
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("Missing env.SUPABASE_SERVICE_ROLE_KEY - Get this from your Supabase project settings");
+}
+
+// Create a Supabase client with the service role key
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
+
+async function createBucketPolicies(bucketId: string) {
+  const rpcCall = async (command: string) => {
+    const { error } = await supabase.rpc('exec_sql', {
+      query: command
+    });
+    if (error && !error.message.includes('already exists')) {
+      console.error(`Error executing SQL: ${error.message}`);
+      return false;
+    }
+    return true;
+  };
+
+  // Create policies for public read access and authenticated write access
+  const policies = [
+    `CREATE POLICY "Public Access" ON storage.objects
+     FOR SELECT USING (bucket_id = '${bucketId}');`,
+    
+    `CREATE POLICY "Authenticated Upload" ON storage.objects
+     FOR INSERT WITH CHECK (
+       bucket_id = '${bucketId}'
+       AND auth.role() = 'authenticated'
+     );`,
+    
+    `CREATE POLICY "Authenticated Update" ON storage.objects
+     FOR UPDATE USING (
+       bucket_id = '${bucketId}'
+       AND auth.role() = 'authenticated'
+     );`,
+    
+    `CREATE POLICY "Authenticated Delete" ON storage.objects
+     FOR DELETE USING (
+       bucket_id = '${bucketId}'
+       AND auth.role() = 'authenticated'
+     );`
+  ];
+
+  for (const policy of policies) {
+    await rpcCall(policy);
+  }
+}
+
+async function initStorage() {
+  try {
+    // Create buckets
+    const buckets = ['files', 'properties'];
+    
+    for (const bucketName of buckets) {
+      // Create bucket
+      const { data: bucket, error } = await supabase.storage.createBucket(bucketName, {
+        public: true,
+        fileSizeLimit: 52428800, // 50MB
+      });
+
+      if (error) {
+        if (error.message.includes("already exists")) {
+          console.log(`✅ Bucket '${bucketName}' already exists`);
+        } else {
+          throw error;
+        }
+      } else {
+        console.log(`✅ Created bucket '${bucketName}'`);
+      }
+
+      // Update bucket settings
+      const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+        public: true,
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+        fileSizeLimit: 52428800, // 50MB
+      });
+
+      if (updateError) {
+        console.error(`❌ Error updating bucket '${bucketName}':`, updateError);
+      } else {
+        console.log(`✅ Updated settings for bucket '${bucketName}'`);
+      }
+
+      // Create RLS policies
+      try {
+        await createBucketPolicies(bucketName);
+        console.log(`✅ Created RLS policies for bucket '${bucketName}'`);
+      } catch (error) {
+        console.error(`❌ Error creating RLS policies for bucket '${bucketName}':`, error);
+      }
+    }
+
+  } catch (error) {
+    console.error("❌ Error initializing storage:", error);
+    process.exit(1);
+  }
+}
+
+initStorage(); 

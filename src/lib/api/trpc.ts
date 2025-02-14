@@ -11,8 +11,9 @@ import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { getServerSession } from "next-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
-
-import { getServerAuthSession, UserRole } from "../auth";
+import { db } from "@/lib/db";
+import { getServerAuthSession } from "../auth";
+import { TRPCError } from "@trpc/server";
 
 /**
  * 1. CONTEXT
@@ -32,15 +33,18 @@ type CreateContextOptions = {
 
 const createInnerTRPCContext = async (opts: CreateContextOptions) => {
   return {
+    db,
     headers: opts.headers,
   };
 };
 
 export const createTRPCContext = async (opts: CreateContextOptions) => {
   const session = await getServerAuthSession();
+  const innerContext = await createInnerTRPCContext(opts);
+  
   return {
+    ...innerContext,
     session,
-    ...(await createInnerTRPCContext(opts)),
   };
 };
 
@@ -105,11 +109,15 @@ export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(
   t.middleware(({ ctx, next }) => {
     if (!ctx.session?.user) {
-      throw new Error("Not authenticated");
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You must be logged in to access this resource",
+      });
     }
     return next({
       ctx: {
-        session: ctx.session,
+        ...ctx,
+        session: { ...ctx.session, user: ctx.session.user },
       },
     });
   })

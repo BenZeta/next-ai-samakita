@@ -12,6 +12,8 @@ export default function NewTenantPage() {
 
   const { data: properties, isLoading: propertiesLoading } = api.property.list.useQuery({
     search,
+    page: 1,
+    limit: 100,
   });
 
   const { data: rooms, isLoading: roomsLoading } = api.room.list.useQuery(

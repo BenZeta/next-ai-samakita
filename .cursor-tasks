@@ -1,11 +1,142 @@
-- [x] Automated Billing System
-  - [x] Payment schema and database setup
-  - [x] Payment creation and management
-  - [x] Payment status tracking
-  - [x] Automatic invoice generation
-  - [x] Payment history and filtering
-  - [x] Due date tracking and notifications
-  - [x] Multiple payment types support
-  - [x] Bulk payment status updates
-  - [x] Payment dashboard with statistics
-  - [x] Financial reporting and analytics 
+# Rubric for Theming and Styling (AI-Agent Friendly)
+**Instructions for AI Agent**:  
+- Evaluate each criterion below by checking [ ] the appropriate box (Excellent, Proficient, Developing, Needs Improvement).  
+- Use `[ ]` for unchecked boxes (default) and `[x]` for checked boxes.  
+- Scores are calculated based on checked boxes (Excellent=4, Proficient=3, etc.).  
+
+---
+
+### 1. Color Palette  
+#### Harmony & Contrast  
+- [x] **Excellent**: Colors harmonious, intentional contrast for readability/interest.  
+- [ ] **Proficient**: Mostly harmonious, adequate contrast.  
+- [ ] **Developing**: Clashing colors or poor contrast.  
+- [ ] **Needs Improvement**: Colors clash; contrast is distracting.  
+
+#### Brand/Theme Alignment  
+- [x] **Excellent**: Perfectly aligns with brand/theme goals and emotions.  
+- [ ] **Proficient**: Aligns well but lacks emotional nuance.  
+- [ ] **Developing**: Partial alignment; some colors disconnected.  
+- [ ] **Needs Improvement**: No connection to brand/theme.  
+
+#### Number of Colors  
+- [x] **Excellent**: Balanced use (3–5 colors).  
+- [ ] **Proficient**: Slightly too many/few but functional.  
+- [ ] **Developing**: Too many/few, causing clutter/blandness.  
+- [ ] **Needs Improvement**: Random/overwhelming choices.  
+
+---
+
+### 2. Typography  
+#### Font Choices  
+- [x] **Excellent**: Fonts enhance theme, legible, complementary.  
+- [ ] **Proficient**: Functional but lack uniqueness.  
+- [ ] **Developing**: Clashing or hard-to-read fonts.  
+- [ ] **Needs Improvement**: Illegible/mismatched fonts.  
+
+#### Hierarchy & Consistency  
+- [x] **Excellent**: Clear hierarchy, consistent styling.  
+- [ ] **Proficient**: Hierarchy present but inconsistent.  
+- [ ] **Developing**: Weak hierarchy; random styling.  
+- [ ] **Needs Improvement**: No hierarchy.  
+
+---
+
+### 3. Layout & Composition  
+#### Visual Flow  
+- [ ] **Excellent**: Natural flow, flawless spacing/alignment.  
+- [x] **Proficient**: Logical flow, minor spacing issues.  
+- [ ] **Developing**: Cluttered/disjointed layout.  
+- [ ] **Needs Improvement**: Chaotic arrangement.  
+
+#### Whitespace Use  
+- [ ] **Excellent**: Intentional whitespace for readability/focus.  
+- [x] **Proficient**: Adequate but needs refinement.  
+- [ ] **Developing**: Crowded/excessive whitespace.  
+- [ ] **Needs Improvement**: No whitespace consideration.  
+
+---
+
+### 4. Responsiveness & Device Compatibility  
+#### Device Adaptability  
+- [x] **Excellent**: Flawless on all devices (mobile, tablet, desktop).  
+- [ ] **Proficient**: Minor display issues on 1-2 devices.  
+- [ ] **Developing**: Broken layouts on key devices.  
+- [ ] **Needs Improvement**: Not device-optimized.  
+
+#### Cross-Browser Consistency  
+- [x] **Excellent**: Consistent rendering on all browsers.  
+- [ ] **Proficient**: Minor inconsistencies on 1 browser.  
+- [ ] **Developing**: Major issues on 2+ browsers.  
+- [ ] **Needs Improvement**: Unusable on common browsers.  
+
+#### Touch Interaction  
+- [x] **Excellent**: Touch-friendly (buttons, menus, gestures).  
+- [ ] **Proficient**: Mostly touch-friendly with minor flaws.  
+- [ ] **Developing**: Poor touch responsiveness.  
+- [ ] **Needs Improvement**: No touch optimization.  
+
+---
+
+### 5. Imagery & Graphics  
+#### Relevance & Quality  
+- [x] **Excellent**: High-res, theme-aligned imagery.  
+- [ ] **Proficient**: Mostly relevant, some low-quality assets.  
+- [ ] **Developing**: Irrelevant/pixelated images.  
+- [ ] **Needs Improvement**: Graphics detract from theme.  
+
+#### Consistency  
+- [x] **Excellent**: Cohesive style (e.g., flat/3D, filters).  
+- [ ] **Proficient**: Minor style inconsistencies.  
+- [ ] **Developing**: Conflicting visual styles.  
+- [ ] **Needs Improvement**: No cohesive style.  
+
+---
+
+### 6. Consistency & Cohesion  
+#### Cross-Element Unity  
+- [ ] **Excellent**: All elements work seamlessly together.  
+- [x] **Proficient**: Minor inconsistencies but unified.  
+- [ ] **Developing**: Noticeable disjointedness.  
+- [ ] **Needs Improvement**: Elements feel unrelated.  
+
+---
+
+### 7. Accessibility  
+#### Color Contrast  
+- [x] **Excellent**: Meets WCAG standards for all text/visuals.  
+- [ ] **Proficient**: Mostly accessible, minor low-contrast areas.  
+- [ ] **Developing**: Multiple contrast issues.  
+- [ ] **Needs Improvement**: Unreadable text/visuals.  
+
+#### Alt Text & Readability  
+- [x] **Excellent**: Descriptive alt text, universally legible fonts.  
+- [ ] **Proficient**: Missing alt text for a few images.  
+- [ ] **Developing**: Poor alt text or illegible fonts.  
+- [ ] **Needs Improvement**: No accessibility features.  
+
+---
+
+### 8. Overall Aesthetic Appeal  
+#### Emotional Impact  
+- [x] **Excellent**: Strong, memorable emotional tone.  
+- [ ] **Proficient**: Clear tone but lacks memorability.  
+- [ ] **Developing**: Vague/inconsistent tone.  
+- [ ] **Needs Improvement**: No discernible mood.  
+
+#### Uniqueness  
+- [x] **Excellent**: Distinctive, avoids clichés.  
+- [ ] **Proficient**: Mostly original with generic elements.  
+- [ ] **Developing**: Relies on overused tropes.  
+- [ ] **Needs Improvement**: Generic/copied style.  
+
+---
+
+### Scoring (AI-Agent Instructions)  
+- **Total Points**: Sum checked boxes (Excellent=4, Proficient=3, etc.).  
+- **Interpretation**:  
+  - 28–25: Exemplary  
+  - 24–20: Proficient  
+  - 19–15: Developing  
+  - 14–7: Needs Improvement  
+

@@ -52,81 +52,91 @@ export const tenantRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        userId: z.string(),
-        propertyId: z.string(),
-        amount: z.number().min(1),
+        name: z.string().min(1, "Name is required"),
+        email: z.string().email("Invalid email address"),
+        phone: z.string().min(1, "Phone number is required"),
+        ktpNumber: z.string().min(1, "KTP number is required"),
+        ktpFile: z.string().url("KTP file URL is required"),
+        kkFile: z.string().url("Invalid KK file URL").optional(),
+        rentAmount: z.number().min(1, "Rent amount is required"),
+        depositAmount: z.number().min(1, "Deposit amount is required"),
+        startDate: z.string().min(1, "Start date is required"),
+        endDate: z.string().min(1, "End date is required"),
+        references: z.array(z.string()).optional(),
+        roomId: z.string().min(1, "Room ID is required"),
       })
     )
-    .mutation(async ({ input }) => {
-      const { userId, propertyId, amount } = input;
+    .mutation(async ({ input, ctx }) => {
+      const { roomId, startDate, endDate, rentAmount, depositAmount, ...tenantData } = input;
 
-      // Get user details
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          hashedPassword: true,
-          emailVerified: true,
-          role: true,
+      // Get room details and verify ownership
+      const room = await db.room.findUnique({
+        where: { id: roomId },
+        include: {
+          property: true,
         },
       });
 
-      if (!user) {
-        throw new Error("User not found");
+      if (!room) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Room not found",
+        });
       }
 
-      // Get property details
-      const propertyResult = await db.property.findUnique({
-        where: { id: propertyId },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          address: true,
-          city: true,
-          province: true,
-          postalCode: true,
-          location: true,
-          facilities: true,
-          images: true,
-          createdAt: true,
-          updatedAt: true,
-          userId: true,
-        },
-      });
-
-      if (!propertyResult) {
-        throw new Error("Property not found");
+      if (room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to add tenants to this room",
+        });
       }
 
-      const property = propertySchema.parse(propertyResult);
-
-      // Create transaction and generate contract
+      // Create tenant and lease in a transaction
       const result = await db.$transaction(async (tx) => {
-        const newTransaction = await tx.transaction.create({
+        // Create tenant
+        const tenant = await tx.tenant.create({
           data: {
-            userId,
-            propertyId,
-            amount,
-            status: "PENDING",
+            ...tenantData,
+            roomId,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate),
+            rentAmount,
+            depositAmount,
+            status: "ACTIVE",
           },
         });
 
-        // Generate contract
-        const contractUrl = await generateContract({
-          user: userSchema.parse(user),
-          property,
-          transaction: newTransaction,
+        // Create initial rent payment
+        await tx.payment.create({
+          data: {
+            tenantId: tenant.id,
+            propertyId: room.property.id,
+            amount: rentAmount,
+            type: "RENT",
+            status: "PENDING",
+            dueDate: new Date(startDate),
+          },
         });
 
-        // Update transaction with contract URL
-        return await tx.transaction.update({
-          where: { id: newTransaction.id },
-          data: { contractUrl },
+        // Create deposit payment
+        await tx.payment.create({
+          data: {
+            tenantId: tenant.id,
+            propertyId: room.property.id,
+            amount: depositAmount,
+            type: "DEPOSIT",
+            status: "PENDING",
+            dueDate: new Date(startDate),
+          },
         });
+
+        // Update room status
+        await tx.room.update({
+          where: { id: roomId },
+          data: { status: "OCCUPIED" },
+        });
+
+        return tenant;
       });
 
       return result;
