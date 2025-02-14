@@ -12,7 +12,6 @@ const tenantFormSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
   ktpNumber: z.string().optional(),
-  rentAmount: z.number().min(1, "Rent amount is required"),
   depositAmount: z.number().min(1, "Deposit amount is required"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
@@ -31,6 +30,9 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [kkFile, setKkFile] = useState<File | null>(null);
   const createMutation = api.tenant.create.useMutation();
+  
+  // Fetch room details to get the price
+  const { data: room } = api.room.get.useQuery({ id: roomId });
 
   const {
     register,
@@ -46,6 +48,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const onSubmit = async (data: TenantFormData) => {
     try {
       setIsSubmitting(true);
+
+      if (!room) {
+        toast.error("Room details not found");
+        return;
+      }
 
       // Upload KTP file if provided
       let ktpFileUrl = undefined;
@@ -73,10 +80,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         kkFileUrl = result.url;
       }
 
-      // Create tenant with file URLs
+      // Create tenant with file URLs and room price
       await createMutation.mutateAsync({
         ...data,
         roomId,
+        rentAmount: room.price,
         ktpFile: ktpFileUrl,
         kkFile: kkFileUrl,
       });
@@ -135,7 +143,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
 
         <div>
           <label htmlFor="ktpNumber" className="block text-sm font-medium text-gray-700">
-            KTP Number
+            KTP Number (Optional)
           </label>
           <input
             type="text"
@@ -146,18 +154,16 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
           {errors.ktpNumber && <p className="mt-1 text-sm text-red-600">{errors.ktpNumber.message}</p>}
         </div>
 
-        <div>
-          <label htmlFor="rentAmount" className="block text-sm font-medium text-gray-700">
-            Rent Amount
-          </label>
-          <input
-            type="number"
-            id="rentAmount"
-            {...register("rentAmount", { valueAsNumber: true })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-          {errors.rentAmount && <p className="mt-1 text-sm text-red-600">{errors.rentAmount.message}</p>}
-        </div>
+        {room && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Rent Amount (from room price)
+            </label>
+            <p className="mt-1 text-lg font-medium text-gray-900">
+              Rp {room.price.toLocaleString()}
+            </p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="depositAmount" className="block text-sm font-medium text-gray-700">
@@ -200,7 +206,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
 
         <div>
           <label htmlFor="ktpFile" className="block text-sm font-medium text-gray-700">
-            KTP File
+            KTP File (Optional)
           </label>
           <input
             type="file"
@@ -228,7 +234,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       <div>
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !room}
           className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
           {isSubmitting ? "Creating..." : "Create Tenant"}
         </button>

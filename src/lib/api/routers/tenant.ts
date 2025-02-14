@@ -58,7 +58,7 @@ export const tenantRouter = createTRPCRouter({
         ktpNumber: z.string().optional(),
         ktpFile: z.string().url("Invalid KTP file URL").optional(),
         kkFile: z.string().url("Invalid KK file URL").optional(),
-        rentAmount: z.number().min(1, "Rent amount is required"),
+        rentAmount: z.number(),
         depositAmount: z.number().min(1, "Deposit amount is required"),
         startDate: z.string().min(1, "Start date is required"),
         endDate: z.string().min(1, "End date is required"),
@@ -88,6 +88,14 @@ export const tenantRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You do not have permission to add tenants to this room",
+        });
+      }
+
+      // Verify that the provided rent amount matches the room price
+      if (rentAmount !== room.price) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Rent amount must match the room price",
         });
       }
 

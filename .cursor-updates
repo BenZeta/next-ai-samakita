@@ -40,3 +40,4 @@
 - Fixed type errors in RoomForm by using RoomStatus enum, corrected expense description type mismatch, and updated maintenance request query to use createdAt/updatedAt fields.
 - Fixed type error in tenant creation page by removing unused initialData prop from TenantForm component.
 - Made KTP number, KTP file, and KK file optional in tenant creation flow, updated schema and fixed related type errors.
+- Modified tenant creation flow to use room price as rent amount instead of requiring manual input.
