@@ -91,18 +91,19 @@ model Property {
 }
 
 model Room {
-  id         String   @id @default(cuid())
-  number     String   // Room number
-  type       RoomType
-  size       Float    // Size in square meters
-  amenities  String[] // Array of amenity names
-  price      Float    // Base price
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  propertyId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  tenants    Tenant[]
+  id          String   @id @default(cuid())
+  number      String
+  type        RoomType
+  size        Int
+  amenities   String[]
+  price       Float
+  layout      Json?    // Store room layout as JSON
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId  String
+  tenants     Tenant[]
   maintenance Maintenance[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Tenant {

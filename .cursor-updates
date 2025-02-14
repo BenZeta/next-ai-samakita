@@ -20,3 +20,6 @@
   - Tenant management with check-in process
   - Financial tracking with expense management
   - Build verification completed successfully
+- Implemented drag-and-drop room layout planner with react-beautiful-dnd
+- Updated Room schema to include layout field and modified size field type
+- Created and applied migration for room layout changes
