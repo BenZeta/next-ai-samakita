@@ -2,144 +2,121 @@
 
 import { useState } from "react";
 import { api } from "@/lib/trpc/react";
+import { TenantStatus } from "@prisma/client";
 import Link from "next/link";
+import { Search, UserPlus } from "lucide-react";
 
 interface TenantListProps {
-  roomId: string;
+  roomId?: string;
+  showAddButton?: boolean;
 }
 
-type TenantStatus = "active" | "inactive" | "pending";
-
-interface Tenant {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  ktpNumber: string;
-  status: TenantStatus;
-  startDate: Date;
-  endDate: Date;
-  references: string[];
-  room: {
-    property: {
-      id: string;
-    };
-  };
-}
-
-export function TenantList({ roomId }: TenantListProps) {
-  const [selectedStatus, setSelectedStatus] = useState<TenantStatus | undefined>();
+export function TenantList({ roomId, showAddButton = true }: TenantListProps) {
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<TenantStatus | "all">("all");
 
   const { data: tenants, isLoading } = api.tenant.list.useQuery({
     roomId,
-    status: selectedStatus,
-    search,
+    status: status === "all" ? undefined : status,
+    search: search || undefined,
   });
 
   if (isLoading) {
-    return <div className="text-center">Loading tenants...</div>;
+    return <div>Loading...</div>;
   }
 
-  const statusOptions: TenantStatus[] = ["active", "inactive", "pending"];
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Search tenants..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:w-96"
-          />
-
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search tenants..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
           <select
-            value={selectedStatus || ""}
-            onChange={(e) => setSelectedStatus(e.target.value as TenantStatus | undefined)}
+            value={status}
+            onChange={(e) => setStatus(e.target.value as TenantStatus | "all")}
             className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="">All Status</option>
-            {statusOptions.map((status) => (
+            <option value="all">All Status</option>
+            {Object.values(TenantStatus).map((s) => (
               <option
-                key={status}
-                value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                key={s}
+                value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
               </option>
             ))}
           </select>
         </div>
-
-        <Link
-          href={`/properties/${roomId}/tenants/new`}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
-          Add Tenant
-        </Link>
+        {showAddButton && roomId && (
+          <Link
+            href={`/rooms/${roomId}/tenants/new`}
+            className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
+            <UserPlus className="mr-2 h-5 w-5" />
+            Add Tenant
+          </Link>
+        )}
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {tenants?.map((tenant: Tenant) => (
-          <div
-            key={tenant.id}
-            className="overflow-hidden rounded-lg border bg-white shadow-sm">
-            <div className="p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{tenant.name}</h3>
-                <span
-                  className={`rounded-full px-2 py-1 text-sm capitalize ${
-                    tenant.status === "active" ? "bg-green-100 text-green-800" : tenant.status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
-                  }`}>
-                  {tenant.status.toLowerCase()}
-                </span>
-              </div>
-              <div className="mb-4 space-y-2 text-sm text-gray-600">
-                <p>Email: {tenant.email}</p>
-                <p>Phone: {tenant.phone}</p>
-                <p>KTP: {tenant.ktpNumber}</p>
-                <p>
-                  Period: {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">References:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {tenant.references.map((reference, index) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                      {reference}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="mt-4 flex justify-end space-x-2">
-                <Link
-                  href={`/properties/${roomId}/tenants/${tenant.id}/edit`}
-                  className="rounded px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50">
-                  Edit
-                </Link>
-                <Link
-                  href={`/properties/${roomId}/tenants/${tenant.id}/check-in`}
-                  className="rounded px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50">
-                  Check-in
-                </Link>
-                <Link
-                  href={`/properties/${roomId}/tenants/${tenant.id}/service-requests`}
-                  className="rounded px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50">
-                  Service Requests
-                </Link>
-                <Link
-                  href={`/properties/${roomId}/tenants/${tenant.id}/payments`}
-                  className="rounded px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50">
-                  Payments
-                </Link>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {tenants?.map((tenant) => (
+              <tr
+                key={tenant.id}
+                className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">{tenant.name}</div>
+                  <div className="text-sm text-gray-500">{tenant.ktpNumber}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">Room {tenant.room.number}</div>
+                  <div className="text-sm text-gray-500">{tenant.room.property.name}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{tenant.email}</div>
+                  <div className="text-sm text-gray-500">{tenant.phone}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                      tenant.status === "active" ? "bg-green-100 text-green-800" : tenant.status === "inactive" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
+                    }`}>
+                    {tenant.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <Link
+                    href={`/tenants/${tenant.id}`}
+                    className="text-indigo-600 hover:text-indigo-900">
+                    View Details
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {tenants?.length === 0 && <div className="text-center text-gray-500">No tenants found. Add your first tenant!</div>}
     </div>
   );
 }

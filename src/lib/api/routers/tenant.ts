@@ -8,10 +8,10 @@ const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, "Invalid Indonesian phone number"),
-  ktpNumber: z.string().min(16, "Invalid KTP number").max(16, "Invalid KTP number"),
-  ktpFile: z.string().url("Invalid KTP file URL"),
+  ktpNumber: z.string().min(1, "KTP number is required"),
+  ktpFile: z.string().url("KTP file URL is required"),
   kkFile: z.string().url("Invalid KK file URL").optional(),
-  references: z.array(z.string()).min(1, "At least one reference is required"),
+  references: z.array(z.string()),
   roomId: z.string().min(1, "Room ID is required"),
   startDate: z.date(),
   endDate: z.date(),
@@ -39,14 +39,16 @@ const paymentSchema = z.object({
 
 export const tenantRouter = createTRPCRouter({
   create: protectedProcedure.input(tenantSchema).mutation(async ({ input, ctx }) => {
-    // Check if room exists and is available
     const room = await db.room.findUnique({
       where: { id: input.roomId },
       include: {
         property: true,
         tenants: {
           where: {
-            status: "active",
+            status: TenantStatus.active,
+            endDate: {
+              gt: new Date(),
+            },
           },
         },
       },
@@ -68,29 +70,19 @@ export const tenantRouter = createTRPCRouter({
 
     if (room.tenants.length > 0) {
       throw new TRPCError({
-        code: "CONFLICT",
-        message: "Room is already occupied",
+        code: "BAD_REQUEST",
+        message: "Room is currently occupied",
       });
     }
 
-    // Check if tenant with same KTP number already exists
-    const existingTenant = await db.tenant.findUnique({
-      where: { ktpNumber: input.ktpNumber },
-    });
-
-    if (existingTenant) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "Tenant with this KTP number already exists",
-      });
-    }
-
-    return db.tenant.create({
+    const tenant = await db.tenant.create({
       data: {
         ...input,
-        status: TenantStatus.pending,
+        status: TenantStatus.active,
       },
     });
+
+    return tenant;
   }),
 
   list: protectedProcedure
@@ -110,7 +102,12 @@ export const tenantRouter = createTRPCRouter({
           ...(status ? { status } : {}),
           ...(search
             ? {
-                OR: [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }, { phone: { contains: search } }, { ktpNumber: { contains: search } }],
+                OR: [
+                  { name: { contains: search, mode: "insensitive" } },
+                  { email: { contains: search, mode: "insensitive" } },
+                  { phone: { contains: search, mode: "insensitive" } },
+                  { ktpNumber: { contains: search, mode: "insensitive" } },
+                ],
               }
             : {}),
           room: {
@@ -122,7 +119,12 @@ export const tenantRouter = createTRPCRouter({
         include: {
           room: {
             include: {
-              property: true,
+              property: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -141,8 +143,6 @@ export const tenantRouter = createTRPCRouter({
           },
         },
         checkInItems: true,
-        serviceRequests: true,
-        payments: true,
       },
     });
 
@@ -229,7 +229,12 @@ export const tenantRouter = createTRPCRouter({
     }
 
     return db.checkInItem.create({
-      data: input,
+      data: {
+        tenantId: input.tenantId,
+        itemName: input.itemName,
+        condition: input.condition,
+        notes: input.notes,
+      },
     });
   }),
 
