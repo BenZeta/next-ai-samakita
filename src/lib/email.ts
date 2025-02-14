@@ -27,3 +27,20 @@ export async function sendVerificationEmail(email: string, token: string) {
     `,
   });
 }
+
+export async function sendContractEmail(email: string, contractUrl: string) {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Your Rental Agreement",
+    html: `
+      <div>
+        <h1>Rental Agreement</h1>
+        <p>Your rental agreement is ready for review and signature.</p>
+        <p>Please click the link below to view and sign your contract:</p>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/contracts/sign?url=${encodeURIComponent(contractUrl)}">View Contract</a>
+        <p>This contract will expire in 7 days if not signed.</p>
+      </div>
+    `,
+  });
+}

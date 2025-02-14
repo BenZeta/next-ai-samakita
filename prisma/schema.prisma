@@ -107,25 +107,28 @@ model Room {
 }
 
 model Tenant {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  phone         String
-  ktpNumber     String    @unique // Indonesian ID number
-  ktpFile       String    // URL to KTP file
-  kkFile        String?   // URL to family card file
-  references    String[]  // Array of reference contact info
-  room          Room      @relation(fields: [roomId], references: [id])
-  roomId        String
-  contractFile  String?   // URL to signed contract file
-  startDate     DateTime
-  endDate       DateTime
-  status        TenantStatus @default(active)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  checkInItems  CheckInItem[]
-  payments      Payment[]
+  id             String         @id @default(cuid())
+  name           String
+  email          String        @unique
+  phone          String
+  ktpNumber      String
+  ktpFile        String
+  kkFile         String?
+  references     String[]
+  status         TenantStatus  @default(pending)
+  room           Room          @relation(fields: [roomId], references: [id])
+  roomId         String
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  checkInItems   CheckInItem[]
   serviceRequests ServiceRequest[]
+  payments       Payment[]
+  contractUrl    String?
+  contractStatus ContractStatus? @default(pending)
+  contractSignedAt DateTime?
+  signature      String?
 }
 
 model CheckInItem {
@@ -239,4 +242,11 @@ model Maintenance {
   type        String   // "cleaning", "repair", "inspection", "other"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum ContractStatus {
+  pending
+  signed
+  rejected
+  expired
 }

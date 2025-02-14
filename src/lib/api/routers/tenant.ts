@@ -3,6 +3,8 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType } from "@prisma/client";
+import { generateContract } from "@/lib/contracts";
+import { sendContractEmail } from "@/lib/email";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -35,6 +37,12 @@ const paymentSchema = z.object({
   amount: z.number().min(0, "Amount must be greater than or equal to 0"),
   dueDate: z.date(),
   type: z.nativeEnum(PaymentType),
+});
+
+const contractSigningSchema = z.object({
+  tenantId: z.string(),
+  signature: z.string(),
+  signedDate: z.date(),
 });
 
 export const tenantRouter = createTRPCRouter({
@@ -397,4 +405,74 @@ export const tenantRouter = createTRPCRouter({
         },
       });
     }),
+
+  generateContract: protectedProcedure.input(z.object({ tenantId: z.string() })).mutation(async ({ input }) => {
+    const tenant = await db.tenant.findUnique({
+      where: { id: input.tenantId },
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
+      },
+    });
+
+    if (!tenant) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Tenant not found",
+      });
+    }
+
+    const contractUrl = await generateContract({
+      tenant,
+      room: tenant.room,
+      property: tenant.room.property,
+    });
+
+    await db.tenant.update({
+      where: { id: input.tenantId },
+      data: {
+        contractUrl,
+        contractStatus: "pending",
+      },
+    });
+
+    // Send email to tenant with contract
+    await sendContractEmail(tenant.email, contractUrl);
+
+    return { contractUrl };
+  }),
+
+  signContract: protectedProcedure.input(contractSigningSchema).mutation(async ({ input }) => {
+    const tenant = await db.tenant.findUnique({
+      where: { id: input.tenantId },
+    });
+
+    if (!tenant) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Tenant not found",
+      });
+    }
+
+    if (!tenant.contractUrl) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "No contract found for signing",
+      });
+    }
+
+    await db.tenant.update({
+      where: { id: input.tenantId },
+      data: {
+        contractStatus: "signed",
+        contractSignedAt: input.signedDate,
+        signature: input.signature,
+      },
+    });
+
+    return { success: true };
+  }),
 });
