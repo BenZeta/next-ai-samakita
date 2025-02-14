@@ -155,8 +155,11 @@ model Payment {
   amount      Float
   dueDate     DateTime
   paidAt      DateTime?
+  paidAmount  Float?
   status      PaymentStatus @default(pending)
   type        PaymentType
+  description String?
+  notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
