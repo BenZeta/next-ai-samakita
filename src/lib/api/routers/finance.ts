@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { PaymentStatus, PaymentType, ExpenseCategory } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
 interface MonthlyTrendItem {
   label: string;
@@ -11,87 +12,56 @@ interface MonthlyTrendItem {
 }
 
 export const financeRouter = createTRPCRouter({
-  getProfitLoss: protectedProcedure
+  getStats: protectedProcedure
     .input(
       z.object({
         propertyId: z.string().optional(),
-        timeRange: z.enum(["month", "quarter", "year"]),
+        timeRange: z.enum(["month", "quarter", "year"]).default("month"),
       })
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const { propertyId, timeRange } = input;
 
-      // Calculate date ranges
+      // Get date ranges
       const now = new Date();
       let startDate = new Date();
       let previousStartDate = new Date();
 
-      if (timeRange === "month") {
-        startDate.setMonth(now.getMonth(), 1);
-        previousStartDate.setMonth(now.getMonth() - 1, 1);
-      } else if (timeRange === "quarter") {
-        const quarterStart = Math.floor(now.getMonth() / 3) * 3;
-        startDate.setMonth(quarterStart, 1);
-        previousStartDate.setMonth(quarterStart - 3, 1);
-      } else {
-        startDate.setMonth(0, 1);
-        previousStartDate.setFullYear(now.getFullYear() - 1, 0, 1);
+      switch (timeRange) {
+        case "month":
+          startDate.setMonth(now.getMonth() - 1);
+          previousStartDate.setMonth(now.getMonth() - 2);
+          break;
+        case "quarter":
+          startDate.setMonth(now.getMonth() - 3);
+          previousStartDate.setMonth(now.getMonth() - 6);
+          break;
+        case "year":
+          startDate.setFullYear(now.getFullYear() - 1);
+          previousStartDate.setFullYear(now.getFullYear() - 2);
+          break;
       }
 
-      // Get current period income
-      const income = await db.payment.aggregate({
+      // Calculate total revenue (rent payments + other income)
+      const totalRevenue = await prisma.payment.aggregate({
         where: {
-          tenant: {
-            room: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
-            },
-          },
-          status: PaymentStatus.paid,
-          paidAt: {
+          propertyId: propertyId,
+          createdAt: {
             gte: startDate,
-            lt: now,
           },
+          status: "PAID",
         },
         _sum: {
           amount: true,
         },
       });
 
-      // Get previous period income
-      const previousIncome = await db.payment.aggregate({
+      // Calculate total expenses
+      const totalExpenses = await prisma.expense.aggregate({
         where: {
-          tenant: {
-            room: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
-            },
-          },
-          status: PaymentStatus.paid,
-          paidAt: {
-            gte: previousStartDate,
-            lt: startDate,
-          },
-        },
-        _sum: {
-          amount: true,
-        },
-      });
-
-      // Get current period expenses
-      const expenses = await db.expense.aggregate({
-        where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
-          date: {
+          propertyId: propertyId,
+          createdAt: {
             gte: startDate,
-            lt: now,
           },
         },
         _sum: {
@@ -99,151 +69,73 @@ export const financeRouter = createTRPCRouter({
         },
       });
 
-      // Get previous period expenses
-      const previousExpenses = await db.expense.aggregate({
-        where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
-          date: {
-            gte: previousStartDate,
-            lt: startDate,
-          },
-        },
-        _sum: {
-          amount: true,
-        },
-      });
-
-      // Calculate growth rates
-      const currentIncome = income._sum.amount ?? 0;
-      const prevIncome = previousIncome._sum.amount ?? 0;
-      const incomeGrowth = prevIncome > 0 ? ((currentIncome - prevIncome) / prevIncome) * 100 : 0;
-
-      const currentExpenses = expenses._sum.amount ?? 0;
-      const prevExpenses = previousExpenses._sum.amount ?? 0;
-      const expenseGrowth = prevExpenses > 0 ? ((currentExpenses - prevExpenses) / prevExpenses) * 100 : 0;
-
-      // Get income breakdown by type
-      const incomeByType = await Promise.all(
-        Object.values(PaymentType).map(async (type) => {
-          const result = await db.payment.aggregate({
-            where: {
-              tenant: {
-                room: {
-                  ...(propertyId ? { propertyId } : {}),
-                  property: {
-                    userId: ctx.session.user.id,
-                  },
-                },
-              },
-              status: PaymentStatus.paid,
-              type,
-              paidAt: {
-                gte: startDate,
-                lt: now,
-              },
-            },
-            _sum: {
-              amount: true,
-            },
-          });
-          return { type, amount: result._sum.amount ?? 0 };
-        })
-      );
-
-      // Get expense breakdown by category
-      const expenseByCategory = await Promise.all(
-        Object.values(ExpenseCategory).map(async (category) => {
-          const result = await db.expense.aggregate({
-            where: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
-              category,
-              date: {
-                gte: startDate,
-                lt: now,
-              },
-            },
-            _sum: {
-              amount: true,
-            },
-          });
-          return { category, amount: result._sum.amount ?? 0 };
-        })
-      );
-
-      // Get monthly trend
-      const monthlyTrend: MonthlyTrendItem[] = [];
-      let maxMonthlyAmount = 0;
-
-      for (let i = 5; i >= 0; i--) {
-        const monthStart = new Date(now);
-        monthStart.setMonth(now.getMonth() - i, 1);
-        const monthEnd = new Date(monthStart);
-        monthEnd.setMonth(monthStart.getMonth() + 1, 0);
-
-        const monthIncome = await db.payment.aggregate({
-          where: {
-            tenant: {
-              room: {
-                ...(propertyId ? { propertyId } : {}),
-                property: {
-                  userId: ctx.session.user.id,
-                },
-              },
-            },
-            status: PaymentStatus.paid,
-            paidAt: {
-              gte: monthStart,
-              lte: monthEnd,
-            },
-          },
-          _sum: {
-            amount: true,
-          },
-        });
-
-        const monthExpenses = await db.expense.aggregate({
-          where: {
-            ...(propertyId ? { propertyId } : {}),
-            property: {
-              userId: ctx.session.user.id,
-            },
-            date: {
-              gte: monthStart,
-              lte: monthEnd,
-            },
-          },
-          _sum: {
-            amount: true,
-          },
-        });
-
-        const monthIncomeAmount = monthIncome._sum.amount ?? 0;
-        const monthExpensesAmount = monthExpenses._sum.amount ?? 0;
-
-        maxMonthlyAmount = Math.max(maxMonthlyAmount, monthIncomeAmount, monthExpensesAmount);
-
-        monthlyTrend.push({
-          label: monthStart.toLocaleDateString("en-US", { month: "short" }),
-          income: monthIncomeAmount,
-          expenses: monthExpensesAmount,
-        });
-      }
+      // Get monthly trend data
+      const monthlyTrend = await getMonthlyTrend(propertyId, timeRange);
 
       return {
-        income: currentIncome,
-        expenses: currentExpenses,
-        incomeGrowth,
-        expenseGrowth,
-        incomeByType: Object.fromEntries(incomeByType.map(({ type, amount }) => [type, amount])),
-        expenseByCategory: Object.fromEntries(expenseByCategory.map(({ category, amount }) => [category, amount])),
+        totalRevenue: totalRevenue._sum.amount ?? 0,
+        totalExpenses: totalExpenses._sum.amount ?? 0,
         monthlyTrend,
-        maxMonthlyAmount,
       };
     }),
 });
+
+async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month" | "quarter" | "year") {
+  const now = new Date();
+  const periods = timeRange === "month" ? 30 : timeRange === "quarter" ? 90 : 12;
+  const trend = [];
+
+  for (let i = 0; i < periods; i++) {
+    const date = new Date();
+    const endDate = new Date();
+
+    if (timeRange === "year") {
+      date.setMonth(now.getMonth() - i);
+      endDate.setMonth(now.getMonth() - i + 1);
+    } else {
+      date.setDate(now.getDate() - i);
+      endDate.setDate(now.getDate() - i + 1);
+    }
+
+    // Get revenue for the period
+    const revenue = await prisma.payment.aggregate({
+      where: {
+        propertyId: propertyId,
+        createdAt: {
+          gte: date,
+          lt: endDate,
+        },
+        status: "PAID",
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    // Get expenses for the period
+    const expenses = await prisma.expense.aggregate({
+      where: {
+        propertyId: propertyId,
+        createdAt: {
+          gte: date,
+          lt: endDate,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    const month = timeRange === "year" ? date.toLocaleDateString("en-US", { month: "short" }) : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+    trend.push({
+      month,
+      revenue: revenue._sum.amount ?? 0,
+      expenses: expenses._sum.amount ?? 0,
+      profit: (revenue._sum.amount ?? 0) - (expenses._sum.amount ?? 0),
+    });
+  }
+
+  // Return only the last 12 entries for year view, or all entries for other views
+  return timeRange === "year" ? trend.reverse() : trend.reverse().slice(0, 30);
+}

@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-toastify";
+import { MaintenanceStatus, MaintenancePriority } from "@prisma/client";
 
 const locales = {
   "en-US": require("date-fns/locale/en-US"),
@@ -35,6 +36,21 @@ interface CalendarEvent {
   type: "occupancy" | "maintenance";
 }
 
+interface MaintenanceSchedule {
+  id: string;
+  title: string;
+  description: string;
+  status: MaintenanceStatus;
+  priority: MaintenancePriority;
+  createdAt: Date;
+  updatedAt: Date;
+  propertyId: string;
+  roomId: string;
+  room: {
+    number: string;
+  };
+}
+
 const maintenanceSchema = z.object({
   roomId: z.string().min(1, "Room is required"),
   startDate: z.date(),
@@ -53,11 +69,9 @@ export default function RoomCalendarPage() {
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
 
   const { data: rooms, isLoading: isLoadingRooms } = api.room.list.useQuery({ propertyId });
-  const { data: maintenanceSchedules } = api.room.getMaintenanceSchedule.useQuery(
+  const { data: maintenanceSchedules } = api.maintenance.getRequests.useQuery(
     {
       propertyId,
-      startDate: new Date(date.getFullYear(), date.getMonth(), 1),
-      endDate: new Date(date.getFullYear(), date.getMonth() + 1, 0),
     },
     {
       enabled: !!propertyId,
@@ -105,13 +119,13 @@ export default function RoomCalendarPage() {
     ) || [];
 
   const maintenanceEvents: CalendarEvent[] =
-    maintenanceSchedules?.map((maintenance) => ({
+    maintenanceSchedules?.requests.map((maintenance) => ({
       id: maintenance.id,
-      title: `${maintenance.room.number} - ${maintenance.type}`,
-      start: new Date(maintenance.startDate),
-      end: new Date(maintenance.endDate),
-      resourceId: maintenance.roomId,
-      type: "maintenance",
+      title: `Room ${maintenance.roomNumber} - ${maintenance.title}`,
+      start: maintenance.createdAt,
+      end: maintenance.updatedAt,
+      resourceId: maintenance.id,
+      type: "maintenance" as const,
     })) || [];
 
   const events = [...occupancyEvents, ...maintenanceEvents];

@@ -10,42 +10,57 @@ const locationSchema = z.object({
 });
 
 const propertySchema = z.object({
-  name: z.string().min(1, "Property name is required"),
-  description: z.string().min(1, "Description is required"),
+  name: z.string().min(1, "Name is required"),
   address: z.string().min(1, "Address is required"),
-  location: locationSchema,
-  facilities: z.array(z.string()).min(1, "At least one facility is required"),
-  images: z.array(z.string().url()).min(1, "At least one image is required"),
+  city: z.string().min(1, "City is required"),
+  province: z.string().min(1, "Province is required"),
+  postalCode: z.string().min(1, "Postal code is required"),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  facilities: z.array(z.string()).optional(),
 });
 
 export const propertyRouter = createTRPCRouter({
   create: protectedProcedure.input(propertySchema).mutation(async ({ input, ctx }) => {
-    const property = await db.property.create({
+    return db.property.create({
       data: {
         ...input,
         userId: ctx.session.user.id,
       },
     });
-
-    return property;
   }),
 
   list: protectedProcedure
     .input(
       z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(10),
         search: z.string().optional(),
-        page: z.number().min(1).optional(),
-        limit: z.number().min(1).max(100).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { search, page = 1, limit = 10 } = input;
+      const { page, limit, search } = input;
+      const skip = (page - 1) * limit;
 
       const where: Prisma.PropertyWhereInput = {
         userId: ctx.session.user.id,
         ...(search
           ? {
-              OR: [{ name: { contains: search, mode: "insensitive" as Prisma.QueryMode } }, { address: { contains: search, mode: "insensitive" as Prisma.QueryMode } }],
+              OR: [
+                {
+                  name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  address: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              ],
             }
           : {}),
       };
@@ -53,6 +68,9 @@ export const propertyRouter = createTRPCRouter({
       const [properties, total] = await Promise.all([
         db.property.findMany({
           where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
           include: {
             rooms: {
               include: {
@@ -60,20 +78,19 @@ export const propertyRouter = createTRPCRouter({
               },
             },
           },
-          orderBy: { createdAt: "desc" },
-          skip: (page - 1) * limit,
-          take: limit,
         }),
         db.property.count({ where }),
       ]);
 
+      const totalPages = Math.ceil(total / limit);
+
       return {
         properties,
         pagination: {
-          total,
           page,
           limit,
-          totalPages: Math.ceil(total / limit),
+          total,
+          totalPages,
         },
       };
     }),
@@ -107,55 +124,35 @@ export const propertyRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        data: propertySchema.partial(),
+        name: z.string().min(1),
+        address: z.string().min(1),
+        city: z.string().min(1),
+        province: z.string().min(1),
+        postalCode: z.string().min(1),
+        description: z.string().optional(),
+        location: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const property = await db.property.findUnique({
-        where: { id: input.id },
+      const { id, ...data } = input;
+
+      const property = await db.property.update({
+        where: {
+          id,
+          userId: ctx.session.user.id,
+        },
+        data,
       });
 
-      if (!property) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Property not found",
-        });
-      }
-
-      if (property.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this property",
-        });
-      }
-
-      return db.property.update({
-        where: { id: input.id },
-        data: input.data,
-      });
+      return property;
     }),
 
   delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ input, ctx }) => {
-    const property = await db.property.findUnique({
-      where: { id: input.id },
-    });
-
-    if (!property) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Property not found",
-      });
-    }
-
-    if (property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to delete this property",
-      });
-    }
-
     await db.property.delete({
-      where: { id: input.id },
+      where: {
+        id: input.id,
+        userId: ctx.session.user.id,
+      },
     });
 
     return { success: true };

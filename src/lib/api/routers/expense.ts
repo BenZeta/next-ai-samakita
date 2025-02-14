@@ -28,7 +28,14 @@ export const expenseRouter = createTRPCRouter({
     }
 
     return db.expense.create({
-      data: input,
+      data: {
+        propertyId: input.propertyId,
+        date: input.date,
+        amount: input.amount,
+        category: input.category,
+        description: input.description || "",
+        receipt: input.receiptUrl,
+      },
     });
   }),
 
@@ -216,7 +223,7 @@ export const expenseRouter = createTRPCRouter({
               propertyId,
             },
           },
-          status: "paid",
+          status: "PAID",
           paidAt: {
             gte: startDate,
             lte: endDate,

@@ -2,13 +2,19 @@
 
 import { useState } from "react";
 import { api } from "@/lib/trpc/react";
-import { PaymentStatus, PaymentType } from "@prisma/client";
+import { PaymentStatus, PaymentType, Payment, Tenant, Room } from "@prisma/client";
 import { toast } from "react-toastify";
 import { CreditCard, Filter } from "lucide-react";
 
 interface InvoiceStatusBoardProps {
   propertyId?: string;
 }
+
+type PaymentWithTenant = Payment & {
+  tenant: Tenant & {
+    room: Room;
+  };
+};
 
 export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
@@ -42,7 +48,7 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
           updatePaymentMutation.mutateAsync({
             paymentId,
             status: newStatus,
-            paidAt: newStatus === PaymentStatus.paid ? new Date() : undefined,
+            paidAt: newStatus === PaymentStatus.PAID ? new Date() : undefined,
           })
         )
       );
@@ -66,10 +72,31 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
   }
 
   const statusCounts = {
-    pending: payments?.filter((p) => p.status === PaymentStatus.pending).length ?? 0,
-    paid: payments?.filter((p) => p.status === PaymentStatus.paid).length ?? 0,
-    overdue: payments?.filter((p) => p.status === PaymentStatus.overdue).length ?? 0,
+    pending: payments?.filter((p) => p.status === PaymentStatus.PENDING).length ?? 0,
+    paid: payments?.filter((p) => p.status === PaymentStatus.PAID).length ?? 0,
+    overdue: payments?.filter((p) => p.status === PaymentStatus.OVERDUE).length ?? 0,
   };
+
+  const columns = [
+    {
+      id: PaymentStatus.PENDING,
+      title: "Pending",
+      items: payments?.filter((p) => p.status === PaymentStatus.PENDING) ?? [],
+    },
+    {
+      id: PaymentStatus.PAID,
+      title: "Paid",
+      items: payments?.filter((p) => p.status === PaymentStatus.PAID) ?? [],
+    },
+    {
+      id: PaymentStatus.OVERDUE,
+      title: "Overdue",
+      items: payments?.filter((p) => p.status === PaymentStatus.OVERDUE) ?? [],
+    },
+  ];
+
+  const totalPaid = payments?.filter((p) => p.status === PaymentStatus.PAID).length ?? 0;
+  const totalPending = payments?.filter((p) => p.status === PaymentStatus.PENDING).length ?? 0;
 
   return (
     <div className="rounded-lg bg-white p-6 shadow">
@@ -111,11 +138,11 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
       <div className="mb-6 grid grid-cols-3 gap-4">
         <div className="rounded-lg bg-yellow-50 p-4">
           <p className="text-sm font-medium text-yellow-800">Pending</p>
-          <p className="mt-1 text-2xl font-semibold text-yellow-900">{statusCounts.pending}</p>
+          <p className="mt-1 text-2xl font-semibold text-yellow-900">{totalPending}</p>
         </div>
         <div className="rounded-lg bg-green-50 p-4">
           <p className="text-sm font-medium text-green-800">Paid</p>
-          <p className="mt-1 text-2xl font-semibold text-green-900">{statusCounts.paid}</p>
+          <p className="mt-1 text-2xl font-semibold text-green-900">{totalPaid}</p>
         </div>
         <div className="rounded-lg bg-red-50 p-4">
           <p className="text-sm font-medium text-red-800">Overdue</p>
@@ -130,12 +157,12 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
           </p>
           <div className="flex space-x-2">
             <button
-              onClick={() => handleBulkStatusUpdate(PaymentStatus.paid)}
+              onClick={() => handleBulkStatusUpdate(PaymentStatus.PAID)}
               className="rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700">
               Mark as Paid
             </button>
             <button
-              onClick={() => handleBulkStatusUpdate(PaymentStatus.overdue)}
+              onClick={() => handleBulkStatusUpdate(PaymentStatus.OVERDUE)}
               className="rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">
               Mark as Overdue
             </button>
@@ -163,7 +190,7 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {payments?.map((payment) => (
+            {payments?.map((payment: PaymentWithTenant) => (
               <tr
                 key={payment.id}
                 className="hover:bg-gray-50">
@@ -191,7 +218,7 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
                 <td className="whitespace-nowrap px-6 py-4">
                   <span
                     className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                      payment.status === PaymentStatus.paid ? "bg-green-100 text-green-800" : payment.status === PaymentStatus.pending ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                      payment.status === PaymentStatus.PAID ? "bg-green-100 text-green-800" : payment.status === PaymentStatus.PENDING ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
                     }`}>
                     {payment.status}
                   </span>

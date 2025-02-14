@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
-import { PaymentStatus, PaymentType } from "@prisma/client";
+import { PaymentStatus, PaymentType, TenantStatus } from "@prisma/client";
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
 const paymentSchema = z.object({
@@ -44,7 +44,8 @@ export const billingRouter = createTRPCRouter({
     return db.payment.create({
       data: {
         ...input,
-        status: PaymentStatus.pending,
+        propertyId: tenant.room.property.id,
+        status: PaymentStatus.PENDING,
       },
     });
   }),
@@ -149,11 +150,10 @@ export const billingRouter = createTRPCRouter({
       });
     }),
 
-  generateRecurringInvoices: protectedProcedure.mutation(async ({ ctx }) => {
-    // Get all active tenants
+  generateRent: protectedProcedure.mutation(async ({ ctx }) => {
     const activeTenants = await db.tenant.findMany({
       where: {
-        status: "active",
+        status: TenantStatus.ACTIVE,
         room: {
           property: {
             userId: ctx.session.user.id,
@@ -161,30 +161,38 @@ export const billingRouter = createTRPCRouter({
         },
       },
       include: {
-        room: true,
+        room: {
+          include: {
+            property: true,
+          },
+        },
       },
     });
 
-    const today = new Date();
-    const dueDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); // First day of next month
+    const dueDate = new Date();
+    dueDate.setDate(5); // Due on the 5th of next month
+    if (dueDate.getDate() < 5) {
+      dueDate.setMonth(dueDate.getMonth());
+    } else {
+      dueDate.setMonth(dueDate.getMonth() + 1);
+    }
 
-    // Generate rent invoices for each active tenant
-    const invoices = await Promise.all(
+    await Promise.all(
       activeTenants.map((tenant) =>
         db.payment.create({
           data: {
             tenantId: tenant.id,
+            propertyId: tenant.room.property.id,
             amount: tenant.room.price,
             dueDate,
-            type: PaymentType.rent,
-            status: PaymentStatus.pending,
-            description: `Monthly rent for ${dueDate.toLocaleString("default", { month: "long", year: "numeric" })}`,
+            type: PaymentType.RENT,
+            status: PaymentStatus.PENDING,
           },
         })
       )
     );
 
-    return invoices;
+    return { success: true };
   }),
 
   getStats: protectedProcedure
@@ -193,32 +201,28 @@ export const billingRouter = createTRPCRouter({
         timeRange: z.enum(["week", "month", "year"]),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const now = new Date();
       let startDate: Date;
-      let endDate: Date;
+      let endDate = now;
 
       switch (input.timeRange) {
         case "week":
-          startDate = startOfWeek(now);
-          endDate = endOfWeek(now);
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
         case "month":
-          startDate = startOfMonth(now);
-          endDate = endOfMonth(now);
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         case "year":
-          startDate = startOfYear(now);
-          endDate = endOfYear(now);
+          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
           break;
       }
 
       const [totalRevenue, pendingPayments, dueThisWeek, overduePayments] = await Promise.all([
-        // Total revenue in the selected time range
         db.payment
           .aggregate({
             where: {
-              status: PaymentStatus.paid,
+              status: PaymentStatus.PAID,
               paidAt: {
                 gte: startDate,
                 lte: endDate,
@@ -230,17 +234,15 @@ export const billingRouter = createTRPCRouter({
           })
           .then((result) => result._sum.amount || 0),
 
-        // Count of pending payments
         db.payment.count({
           where: {
-            status: PaymentStatus.pending,
+            status: PaymentStatus.PENDING,
           },
         }),
 
-        // Count of payments due this week
         db.payment.count({
           where: {
-            status: PaymentStatus.pending,
+            status: PaymentStatus.PENDING,
             dueDate: {
               gte: startOfWeek(now),
               lte: endOfWeek(now),
@@ -248,10 +250,9 @@ export const billingRouter = createTRPCRouter({
           },
         }),
 
-        // Count of overdue payments
         db.payment.count({
           where: {
-            status: PaymentStatus.pending,
+            status: PaymentStatus.PENDING,
             dueDate: {
               lt: now,
             },

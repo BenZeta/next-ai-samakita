@@ -7,11 +7,11 @@ import { z } from "zod";
 import { toast } from "react-toastify";
 import { api } from "@/lib/trpc/react";
 import { useRouter } from "next/navigation";
-import { RoomType } from "@prisma/client";
+import { RoomStatus } from "@prisma/client";
 
 const roomSchema = z.object({
   number: z.string().min(1, "Room number is required"),
-  type: z.nativeEnum(RoomType),
+  type: z.nativeEnum(RoomStatus),
   size: z.number().min(1, "Size must be greater than 0"),
   amenities: z.array(z.string()).min(1, "At least one amenity is required"),
   price: z.number().min(0, "Price must be greater than or equal to 0"),
@@ -121,7 +121,7 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
           {...register("type")}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
           <option value="">Select a type</option>
-          {Object.values(RoomType).map((type) => (
+          {Object.values(RoomStatus).map((type) => (
             <option
               key={type}
               value={type}>

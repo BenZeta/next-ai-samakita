@@ -2,12 +2,12 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
-import { RoomType, TenantStatus, Prisma } from "@prisma/client";
+import { RoomStatus, TenantStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 const roomSchema = z.object({
   number: z.string().min(1, "Room number is required"),
-  type: z.nativeEnum(RoomType),
+  type: z.nativeEnum(RoomStatus),
   size: z.number().min(1, "Size must be greater than 0"),
   amenities: z.array(z.string()).min(1, "At least one amenity is required"),
   price: z.number().min(0, "Price must be greater than or equal to 0"),
@@ -17,7 +17,7 @@ const roomSchema = z.object({
 const bulkRoomSchema = z.object({
   startNumber: z.string().min(1, "Starting room number is required"),
   count: z.number().min(1, "Number of rooms must be at least 1").max(50, "Maximum 50 rooms at once"),
-  type: z.nativeEnum(RoomType),
+  type: z.nativeEnum(RoomStatus),
   size: z.number().min(1, "Size must be greater than 0"),
   amenities: z.array(z.string()).min(1, "At least one amenity is required"),
   price: z.number().min(0, "Price must be greater than or equal to 0"),
@@ -304,15 +304,15 @@ export const roomRouter = createTRPCRouter({
     }
 
     // Check for scheduling conflicts
-    const existingMaintenance = await db.maintenance.findFirst({
+    const existingMaintenance = await db.maintenanceRequest.findFirst({
       where: {
         roomId: input.roomId,
         OR: [
           {
-            AND: [{ startDate: { lte: input.startDate } }, { endDate: { gte: input.startDate } }],
+            AND: [{ createdAt: { lte: input.startDate } }, { updatedAt: { gte: input.startDate } }],
           },
           {
-            AND: [{ startDate: { lte: input.endDate } }, { endDate: { gte: input.endDate } }],
+            AND: [{ createdAt: { lte: input.endDate } }, { updatedAt: { gte: input.endDate } }],
           },
         ],
       },
@@ -325,8 +325,15 @@ export const roomRouter = createTRPCRouter({
       });
     }
 
-    return db.maintenance.create({
-      data: input,
+    return db.maintenanceRequest.create({
+      data: {
+        title: input.description,
+        description: input.description,
+        status: "PENDING",
+        priority: "MEDIUM",
+        roomId: input.roomId,
+        propertyId: room.propertyId,
+      },
     });
   }),
 
@@ -342,59 +349,7 @@ export const roomRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const { roomId, propertyId, startDate, endDate } = input;
 
-      if (!roomId && !propertyId) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Either roomId or propertyId must be provided",
-        });
-      }
-
-      // If propertyId is provided, verify access
-      if (propertyId) {
-        const property = await db.property.findUnique({
-          where: { id: propertyId },
-        });
-
-        if (!property) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Property not found",
-          });
-        }
-
-        if (property.userId !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You do not have permission to view maintenance schedules for this property",
-          });
-        }
-      }
-
-      // If roomId is provided, verify access through property
-      if (roomId) {
-        const room = await db.room.findUnique({
-          where: { id: roomId },
-          include: {
-            property: true,
-          },
-        });
-
-        if (!room) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Room not found",
-          });
-        }
-
-        if (room.property.userId !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You do not have permission to view maintenance schedules for this room",
-          });
-        }
-      }
-
-      return db.maintenance.findMany({
+      return db.maintenanceRequest.findMany({
         where: {
           ...(roomId ? { roomId } : {}),
           ...(propertyId
@@ -404,10 +359,10 @@ export const roomRouter = createTRPCRouter({
                 },
               }
             : {}),
-          startDate: {
+          createdAt: {
             gte: startDate,
           },
-          endDate: {
+          updatedAt: {
             lte: endDate,
           },
         },
@@ -455,7 +410,7 @@ export const roomRouter = createTRPCRouter({
           },
           tenants: {
             some: {
-              status: TenantStatus.active,
+              status: TenantStatus.ACTIVE,
             },
           },
         },
@@ -527,7 +482,7 @@ export const roomRouter = createTRPCRouter({
               },
               tenants: {
                 some: {
-                  status: TenantStatus.active,
+                  status: TenantStatus.ACTIVE,
                   startDate: {
                     lte: date,
                   },
@@ -571,7 +526,7 @@ export const roomRouter = createTRPCRouter({
           },
           tenants: {
             some: {
-              status: TenantStatus.active,
+              status: TenantStatus.ACTIVE,
               startDate: {
                 lte: previousPeriodStart,
               },
@@ -604,12 +559,49 @@ export const roomRouter = createTRPCRouter({
 
       const previousRate = previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
 
+      // Calculate room type breakdown
+      const roomTypes = Object.values(RoomStatus) as RoomStatus[];
+      const roomTypeBreakdown = await Promise.all(
+        roomTypes.map(async (type: RoomStatus) => {
+          const totalRoomsOfType = await db.room.count({
+            where: {
+              ...(propertyId ? { propertyId } : {}),
+              property: {
+                userId: ctx.session.user.id,
+              },
+              status: type,
+            },
+          });
+
+          const occupiedRoomsOfType = await db.room.count({
+            where: {
+              ...(propertyId ? { propertyId } : {}),
+              property: {
+                userId: ctx.session.user.id,
+              },
+              status: type,
+              tenants: {
+                some: {
+                  status: TenantStatus.ACTIVE,
+                },
+              },
+            },
+          });
+
+          return {
+            type,
+            occupancyRate: totalRoomsOfType > 0 ? (occupiedRoomsOfType / totalRoomsOfType) * 100 : 0,
+          };
+        })
+      );
+
       return {
         currentRate,
         previousRate,
         totalRooms,
         occupiedRooms,
         history,
+        roomTypeBreakdown,
       };
     }),
 });

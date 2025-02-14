@@ -2,17 +2,23 @@
 
 import { useState } from "react";
 import { api } from "@/lib/trpc/react";
-import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
-import { ExpenseCategory, PaymentType } from "@prisma/client";
+import { DollarSign, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 
 interface ProfitLossCalculatorProps {
   propertyId?: string;
 }
 
+interface MonthlyTrend {
+  month: string;
+  revenue: number;
+  expenses: number;
+  profit: number;
+}
+
 export function ProfitLossCalculator({ propertyId }: ProfitLossCalculatorProps) {
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
 
-  const { data: financialData, isLoading } = api.finance.getProfitLoss.useQuery({
+  const { data: financialData, isLoading } = api.finance.getStats.useQuery({
     propertyId,
     timeRange,
   });
@@ -27,20 +33,16 @@ export function ProfitLossCalculator({ propertyId }: ProfitLossCalculatorProps) 
     );
   }
 
-  const totalIncome = financialData?.income ?? 0;
-  const totalExpenses = financialData?.expenses ?? 0;
-  const netProfit = totalIncome - totalExpenses;
-  const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
-  const expenseGrowth = financialData?.expenseGrowth ?? 0;
-  const incomeGrowth = financialData?.incomeGrowth ?? 0;
+  const totalRevenue = financialData?.totalRevenue ?? 0;
+  const totalExpenses = financialData?.totalExpenses ?? 0;
+  const netProfit = totalRevenue - totalExpenses;
+  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  const monthlyTrend = financialData?.monthlyTrend ?? [];
 
   return (
     <div className="rounded-lg bg-white p-6 shadow">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <DollarSign className="h-5 w-5 text-gray-400" />
-          <h2 className="text-lg font-medium text-gray-900">Profit & Loss</h2>
-        </div>
+        <h2 className="text-lg font-medium text-gray-900">Profit & Loss</h2>
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value as "month" | "quarter" | "year")}
@@ -51,103 +53,91 @@ export function ProfitLossCalculator({ propertyId }: ProfitLossCalculatorProps) 
         </select>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
-        <div className="rounded-lg bg-green-50 p-4">
-          <p className="text-sm font-medium text-green-800">Total Income</p>
-          <p className="mt-1 text-2xl font-semibold text-green-900">Rp {totalIncome.toLocaleString()}</p>
-          <div className="mt-1 flex items-center text-sm">
-            <TrendingUp className="mr-1 h-4 w-4 text-green-600" />
-            <span className="text-green-600">+{incomeGrowth.toFixed(1)}% vs previous</span>
-          </div>
-        </div>
-        <div className="rounded-lg bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-800">Total Expenses</p>
-          <p className="mt-1 text-2xl font-semibold text-red-900">Rp {totalExpenses.toLocaleString()}</p>
-          <div className="mt-1 flex items-center text-sm">
-            <TrendingDown className="mr-1 h-4 w-4 text-red-600" />
-            <span className="text-red-600">
-              {expenseGrowth > 0 ? "+" : ""}
-              {expenseGrowth.toFixed(1)}% vs previous
-            </span>
-          </div>
-        </div>
-        <div className="rounded-lg bg-blue-50 p-4">
-          <p className="text-sm font-medium text-blue-800">Net Profit</p>
-          <p className="mt-1 text-2xl font-semibold text-blue-900">Rp {netProfit.toLocaleString()}</p>
-          <p className="mt-1 text-sm text-blue-600">{profitMargin.toFixed(1)}% margin</p>
-        </div>
-      </div>
-
-      <div className="mt-8 grid grid-cols-2 gap-6">
-        <div>
-          <h3 className="mb-4 text-sm font-medium text-gray-700">Income Breakdown</h3>
-          <div className="space-y-4">
-            {Object.values(PaymentType).map((type) => {
-              const amount = financialData?.incomeByType[type] ?? 0;
-              const percentage = totalIncome > 0 ? (amount / totalIncome) * 100 : 0;
-              return (
-                <div
-                  key={type}
-                  className="flex items-center">
-                  <div className="w-32 text-sm capitalize text-gray-500">{type.toLowerCase()}</div>
-                  <div className="flex-1">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                      <div
-                        className="h-full rounded-full bg-green-500"
-                        style={{ width: `${percentage}%` }}></div>
-                    </div>
-                  </div>
-                  <div className="ml-4 w-24 text-right text-sm text-gray-500">Rp {amount.toLocaleString()}</div>
-                </div>
-              );
-            })}
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="flex items-center">
+            <div className="rounded-full bg-green-100 p-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Revenue</p>
+              <p className="text-lg font-semibold text-gray-900">Rp {totalRevenue.toLocaleString()}</p>
+            </div>
           </div>
         </div>
 
-        <div>
-          <h3 className="mb-4 text-sm font-medium text-gray-700">Expense Breakdown</h3>
-          <div className="space-y-4">
-            {Object.values(ExpenseCategory).map((category) => {
-              const amount = financialData?.expenseByCategory[category] ?? 0;
-              const percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
-              return (
-                <div
-                  key={category}
-                  className="flex items-center">
-                  <div className="w-32 text-sm capitalize text-gray-500">{category.toLowerCase()}</div>
-                  <div className="flex-1">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                      <div
-                        className="h-full rounded-full bg-red-500"
-                        style={{ width: `${percentage}%` }}></div>
-                    </div>
-                  </div>
-                  <div className="ml-4 w-24 text-right text-sm text-gray-500">Rp {amount.toLocaleString()}</div>
-                </div>
-              );
-            })}
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="flex items-center">
+            <div className="rounded-full bg-red-100 p-2">
+              <DollarSign className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Expenses</p>
+              <p className="text-lg font-semibold text-gray-900">Rp {totalExpenses.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="flex items-center">
+            <div className="rounded-full bg-blue-100 p-2">{netProfit >= 0 ? <TrendingUp className="h-5 w-5 text-blue-600" /> : <TrendingDown className="h-5 w-5 text-blue-600" />}</div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Net Profit</p>
+              <p className="text-lg font-semibold text-gray-900">Rp {netProfit.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="flex items-center">
+            <div className="rounded-full bg-purple-100 p-2">
+              <ArrowRight className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Profit Margin</p>
+              <p className="text-lg font-semibold text-gray-900">{profitMargin.toFixed(1)}%</p>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="mt-8">
-        <h3 className="mb-4 text-sm font-medium text-gray-700">Monthly Trend</h3>
-        <div className="h-[200px] space-x-2">
-          {financialData?.monthlyTrend.map((month, index) => (
-            <div
-              key={index}
-              className="inline-flex h-full flex-col items-center">
-              <div className="flex h-[160px] items-end space-x-1">
-                <div
-                  style={{ height: `${(month.income / (financialData?.maxMonthlyAmount ?? 1)) * 100}%` }}
-                  className="w-3 rounded bg-green-500"></div>
-                <div
-                  style={{ height: `${(month.expenses / (financialData?.maxMonthlyAmount ?? 1)) * 100}%` }}
-                  className="w-3 rounded bg-red-500"></div>
+        <h3 className="mb-4 text-sm font-medium text-gray-500">Monthly Trend</h3>
+        <div className="relative">
+          <div className="absolute bottom-0 left-0 h-[1px] w-full bg-gray-200"></div>
+          <div className="flex h-[200px] items-end space-x-4">
+            {monthlyTrend.map((month, index) => (
+              <div
+                key={index}
+                className="flex-1">
+                <div className="relative h-full">
+                  {/* Expenses bar */}
+                  <div
+                    style={{
+                      height: `${(month.expenses / Math.max(...monthlyTrend.map((m) => Math.max(m.revenue, m.expenses)))) * 100}%`,
+                    }}
+                    className="absolute bottom-0 w-full rounded bg-red-200"></div>
+                  {/* Revenue bar */}
+                  <div
+                    style={{
+                      height: `${(month.revenue / Math.max(...monthlyTrend.map((m) => Math.max(m.revenue, m.expenses)))) * 100}%`,
+                    }}
+                    className="absolute bottom-0 w-1/2 rounded bg-green-500"></div>
+                </div>
+                <div className="mt-2 text-center text-xs text-gray-500">{month.month}</div>
               </div>
-              <span className="mt-2 text-xs text-gray-500">{month.label}</span>
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 flex justify-center space-x-6">
+          <div className="flex items-center">
+            <div className="mr-2 h-3 w-3 rounded bg-green-500"></div>
+            <span className="text-sm text-gray-600">Revenue</span>
+          </div>
+          <div className="flex items-center">
+            <div className="mr-2 h-3 w-3 rounded bg-red-200"></div>
+            <span className="text-sm text-gray-600">Expenses</span>
+          </div>
         </div>
       </div>
     </div>

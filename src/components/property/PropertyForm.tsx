@@ -21,16 +21,15 @@ const locationSchema = z.object({
 });
 
 const propertySchema = z.object({
-  name: z.string().min(1, "Property name is required"),
-  description: z.string().min(1, "Description is required"),
+  name: z.string().min(1, "Name is required"),
   address: z.string().min(1, "Address is required"),
-  location: locationSchema,
-  facilities: z.array(z.string()).min(1, "At least one facility is required"),
-  images: z
-    .custom<FileList>()
-    .refine((files) => files?.length >= 1, "At least one image is required")
-    .refine((files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE), "Max file size is 5MB")
-    .refine((files) => Array.from(files).every((file) => ACCEPTED_FILE_TYPES.includes(file.type)), "Only .jpg, .png, and .webp files are accepted"),
+  city: z.string().min(1, "City is required"),
+  province: z.string().min(1, "Province is required"),
+  postalCode: z.string().min(1, "Postal code is required"),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  facilities: z.array(z.string()).optional(),
+  images: z.array(z.string()).optional(),
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
@@ -48,6 +47,7 @@ export function PropertyForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
@@ -67,6 +67,7 @@ export function PropertyForm() {
     onSuccess: () => {
       toast.success("Property created successfully!");
       router.push("/properties");
+      router.refresh();
     },
     onError: (error) => {
       toast.error(error.message);
@@ -74,32 +75,45 @@ export function PropertyForm() {
   });
 
   const onSubmit = async (data: PropertyFormData) => {
+    if (!selectedLocation) {
+      toast.error("Please select a location on the map");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // First, upload all images
-      const imageUrls = await Promise.all(
-        Array.from(data.images).map(async (file) => {
+      // First upload images
+      const imageUrls: string[] = [];
+      if (imageFiles) {
+        for (let i = 0; i < imageFiles.length; i++) {
+          const file = imageFiles[i];
           const formData = new FormData();
           formData.append("file", file);
+
           const response = await fetch("/api/upload/property-image", {
             method: "POST",
             body: formData,
           });
-          if (!response.ok) throw new Error("Failed to upload image");
+
+          if (!response.ok) {
+            throw new Error("Failed to upload image");
+          }
+
           const { url } = await response.json();
-          return url;
-        })
-      );
+          imageUrls.push(url);
+        }
+      }
 
       // Then create the property
       await propertyMutation.mutateAsync({
         ...data,
         images: imageUrls,
         facilities: selectedFacilities,
-        location: selectedLocation!,
+        location: selectedLocation ? `${selectedLocation.lat},${selectedLocation.lng}` : "",
       });
     } catch (error) {
       toast.error("Failed to create property");
+      console.error("Error creating property:", error);
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +121,7 @@ export function PropertyForm() {
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setSelectedLocation(location);
-    setValue("location", location);
+    setValue("location", `${location.lat},${location.lng}`);
   };
 
   const toggleFacility = (facility: string) => {

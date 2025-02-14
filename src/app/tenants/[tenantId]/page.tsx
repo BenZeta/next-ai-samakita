@@ -4,6 +4,7 @@ import { api } from "@/lib/trpc/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FileText, Home, Phone, Mail, CreditCard, ClipboardList } from "lucide-react";
+import { TenantStatus } from "@prisma/client";
 
 export default function TenantDetailsPage() {
   const params = useParams();
@@ -111,7 +112,7 @@ export default function TenantDetailsPage() {
               <h3 className="text-sm font-medium text-gray-500">Status</h3>
               <span
                 className={`mt-1 inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                  tenant.status === "active" ? "bg-green-100 text-green-800" : tenant.status === "inactive" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
+                  tenant.status === TenantStatus.ACTIVE ? "bg-green-100 text-green-800" : tenant.status === TenantStatus.INACTIVE ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
                 }`}>
                 {tenant.status}
               </span>

@@ -3,6 +3,7 @@
 import { RoomForm } from "@/components/room/RoomForm";
 import { api } from "@/lib/trpc/react";
 import { useParams } from "next/navigation";
+import { RoomStatus } from "@prisma/client";
 
 export default function EditRoomPage() {
   const params = useParams();
@@ -28,7 +29,7 @@ export default function EditRoomPage() {
           initialData={{
             id: room.id,
             number: room.number,
-            type: room.type,
+            type: room.status as RoomStatus,
             size: room.size,
             price: room.price,
             amenities: room.amenities,

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType } from "@prisma/client";
 import { generateContract } from "@/lib/contracts";
 import { sendContractEmail } from "@/lib/email";
+import { prisma } from "@/lib/db";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -53,7 +54,7 @@ export const tenantRouter = createTRPCRouter({
         property: true,
         tenants: {
           where: {
-            status: TenantStatus.active,
+            status: TenantStatus.ACTIVE,
             endDate: {
               gt: new Date(),
             },
@@ -86,7 +87,7 @@ export const tenantRouter = createTRPCRouter({
     const tenant = await db.tenant.create({
       data: {
         ...input,
-        status: TenantStatus.active,
+        status: TenantStatus.ACTIVE,
       },
     });
 
@@ -275,7 +276,7 @@ export const tenantRouter = createTRPCRouter({
     return db.serviceRequest.create({
       data: {
         ...input,
-        status: ServiceRequestStatus.pending,
+        status: ServiceRequestStatus.PENDING,
       },
     });
   }),
@@ -321,7 +322,7 @@ export const tenantRouter = createTRPCRouter({
         where: { id: input.id },
         data: {
           status: input.status,
-          ...(input.status === ServiceRequestStatus.resolved ? { resolvedAt: new Date() } : {}),
+          ...(input.status === ServiceRequestStatus.RESOLVED ? { resolvedAt: new Date() } : {}),
         },
       });
     }),
@@ -355,7 +356,8 @@ export const tenantRouter = createTRPCRouter({
     return db.payment.create({
       data: {
         ...input,
-        status: PaymentStatus.pending,
+        status: PaymentStatus.PENDING,
+        propertyId: tenant.room.property.id,
       },
     });
   }),
@@ -401,7 +403,7 @@ export const tenantRouter = createTRPCRouter({
         where: { id: input.id },
         data: {
           status: input.status,
-          ...(input.status === PaymentStatus.paid ? { paidAt: new Date() } : {}),
+          ...(input.status === PaymentStatus.PAID ? { paidAt: new Date() } : {}),
         },
       });
     }),
@@ -434,8 +436,8 @@ export const tenantRouter = createTRPCRouter({
     await db.tenant.update({
       where: { id: input.tenantId },
       data: {
-        contractUrl,
-        contractStatus: "pending",
+        contractFile: contractUrl,
+        contractSigned: false,
       },
     });
 
@@ -457,7 +459,7 @@ export const tenantRouter = createTRPCRouter({
       });
     }
 
-    if (!tenant.contractUrl) {
+    if (!tenant.contractFile) {
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "No contract found for signing",
@@ -467,7 +469,7 @@ export const tenantRouter = createTRPCRouter({
     await db.tenant.update({
       where: { id: input.tenantId },
       data: {
-        contractStatus: "signed",
+        contractSigned: true,
         contractSignedAt: input.signedDate,
         signature: input.signature,
       },
@@ -475,4 +477,109 @@ export const tenantRouter = createTRPCRouter({
 
     return { success: true };
   }),
+
+  getOverview: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { propertyId, status } = input;
+      const now = new Date();
+
+      // Get tenants with filtering
+      const tenants = await prisma.tenant.findMany({
+        where: {
+          room: {
+            propertyId: propertyId,
+          },
+          ...(status
+            ? {
+                status,
+              }
+            : {}),
+        },
+        include: {
+          room: true,
+          leases: {
+            orderBy: {
+              startDate: "desc",
+            },
+            take: 1,
+          },
+        },
+        orderBy: {
+          name: "asc",
+        },
+      });
+
+      // Get tenant statistics
+      const stats = {
+        total: await prisma.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+          },
+        }),
+        active: await prisma.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+            status: "ACTIVE",
+          },
+        }),
+        inactive: await prisma.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+            status: "INACTIVE",
+          },
+        }),
+        upcomingMoveIns: await prisma.lease.count({
+          where: {
+            tenant: {
+              room: {
+                propertyId: propertyId,
+              },
+            },
+            startDate: {
+              gt: now,
+            },
+          },
+        }),
+        upcomingMoveOuts: await prisma.lease.count({
+          where: {
+            tenant: {
+              room: {
+                propertyId: propertyId,
+              },
+            },
+            endDate: {
+              gt: now,
+              lt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Next 30 days
+            },
+          },
+        }),
+      };
+
+      return {
+        tenants: tenants.map((tenant) => ({
+          id: tenant.id,
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          status: tenant.status,
+          roomNumber: tenant.room.number,
+          leaseStart: tenant.leases[0]?.startDate ?? new Date(),
+          leaseEnd: tenant.leases[0]?.endDate ?? new Date(),
+          rentAmount: tenant.leases[0]?.rentAmount ?? 0,
+        })),
+        stats,
+      };
+    }),
 });

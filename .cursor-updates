@@ -37,3 +37,4 @@
 - Added missing API routes for transcription and file uploads
 - Wrapped contract signing page in Suspense boundary for proper client-side rendering
 - Added SessionProvider to root layout to fix session management issues and enable proper authentication handling across the application.
+- Fixed type errors in RoomForm by using RoomStatus enum, corrected expense description type mismatch, and updated maintenance request query to use createdAt/updatedAt fields.

@@ -7,18 +7,16 @@ import { z } from "zod";
 import { toast } from "react-toastify";
 import { api } from "@/lib/trpc/react";
 import { useRouter } from "next/navigation";
-import { RoomType } from "@prisma/client";
+import { RoomStatus } from "@prisma/client";
 
 const roomSchema = z.object({
   startNumber: z.string().min(1, "Starting room number is required"),
-  count: z.number().min(1, "Number of rooms must be at least 1").max(50, "Maximum 50 rooms at once"),
-  type: z.nativeEnum(RoomType),
-  size: z.number().min(1, "Size must be greater than 0"),
-  amenities: z.array(z.string()).min(1, "At least one amenity is required"),
-  price: z.number().min(0, "Price must be greater than or equal to 0"),
-  numberingPrefix: z.string().optional(),
-  numberingSuffix: z.string().optional(),
-  startingFloor: z.number().optional(),
+  count: z.string().min(1, "Number of rooms is required"),
+  floor: z.string().min(1, "Floor number is required"),
+  type: z.nativeEnum(RoomStatus),
+  size: z.string().min(1, "Room size is required"),
+  price: z.string().min(1, "Room price is required"),
+  amenities: z.array(z.string()).optional(),
 });
 
 type BulkRoomFormData = z.infer<typeof roomSchema>;
@@ -42,8 +40,8 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
   } = useForm<BulkRoomFormData>({
     resolver: zodResolver(roomSchema),
     defaultValues: {
-      count: 1,
-      startingFloor: 1,
+      count: "1",
+      floor: "1",
     },
   });
 
@@ -58,18 +56,22 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
     },
   });
 
-  const onSubmit = async (data: BulkRoomFormData) => {
-    setIsLoading(true);
+  const onSubmit = async (data: z.infer<typeof roomSchema>) => {
     try {
       await createMutation.mutateAsync({
-        ...data,
         propertyId,
         amenities: selectedAmenities,
+        startNumber: data.startNumber,
+        count: parseInt(data.count),
+        type: data.type,
+        size: parseInt(data.size),
+        price: parseFloat(data.price),
+        startingFloor: parseInt(data.floor),
       });
+      router.refresh();
+      toast.success("Rooms created successfully");
     } catch (error) {
-      console.error("Failed to create rooms:", error);
-    } finally {
-      setIsLoading(false);
+      toast.error("Failed to create rooms");
     }
   };
 
@@ -104,9 +106,9 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
             Number of Rooms
           </label>
           <input
-            type="number"
+            type="text"
             id="count"
-            {...register("count", { valueAsNumber: true })}
+            {...register("count")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
           {errors.count && <p className="mt-1 text-sm text-red-600">{errors.count.message}</p>}
@@ -114,46 +116,17 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
 
         <div>
           <label
-            htmlFor="numberingPrefix"
+            htmlFor="floor"
             className="block text-sm font-medium text-gray-700">
-            Room Number Prefix (Optional)
+            Floor Number
           </label>
           <input
             type="text"
-            id="numberingPrefix"
-            {...register("numberingPrefix")}
-            placeholder="e.g., 'A-'"
+            id="floor"
+            {...register("floor")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
-        </div>
-
-        <div>
-          <label
-            htmlFor="numberingSuffix"
-            className="block text-sm font-medium text-gray-700">
-            Room Number Suffix (Optional)
-          </label>
-          <input
-            type="text"
-            id="numberingSuffix"
-            {...register("numberingSuffix")}
-            placeholder="e.g., '-B'"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="startingFloor"
-            className="block text-sm font-medium text-gray-700">
-            Starting Floor Number
-          </label>
-          <input
-            type="number"
-            id="startingFloor"
-            {...register("startingFloor", { valueAsNumber: true })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
+          {errors.floor && <p className="mt-1 text-sm text-red-600">{errors.floor.message}</p>}
         </div>
 
         <div>
@@ -167,11 +140,11 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
             {...register("type")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
             <option value="">Select a type</option>
-            {Object.values(RoomType).map((type) => (
+            {Object.values(RoomStatus).map((type) => (
               <option
                 key={type}
                 value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {type.charAt(0) + type.slice(1).toLowerCase()}
               </option>
             ))}
           </select>
@@ -185,10 +158,9 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
             Size (m²)
           </label>
           <input
-            type="number"
+            type="text"
             id="size"
-            step="0.01"
-            {...register("size", { valueAsNumber: true })}
+            {...register("size")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
           {errors.size && <p className="mt-1 text-sm text-red-600">{errors.size.message}</p>}
@@ -201,10 +173,9 @@ export function BulkRoomForm({ propertyId }: BulkRoomFormProps) {
             Price per Month
           </label>
           <input
-            type="number"
+            type="text"
             id="price"
-            step="0.01"
-            {...register("price", { valueAsNumber: true })}
+            {...register("price")}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           />
           {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price.message}</p>}
