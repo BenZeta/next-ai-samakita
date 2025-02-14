@@ -4,24 +4,17 @@ import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { PaymentStatus, PaymentType } from "@prisma/client";
 
-const generateInvoiceSchema = z.object({
+const paymentSchema = z.object({
   tenantId: z.string().min(1, "Tenant ID is required"),
   amount: z.number().min(0, "Amount must be greater than or equal to 0"),
-  dueDate: z.date(),
   type: z.nativeEnum(PaymentType),
+  dueDate: z.date(),
   description: z.string().optional(),
-});
-
-const updatePaymentSchema = z.object({
-  paymentId: z.string().min(1, "Payment ID is required"),
-  status: z.nativeEnum(PaymentStatus),
-  paidAmount: z.number().optional(),
-  paidAt: z.date().optional(),
   notes: z.string().optional(),
 });
 
 export const billingRouter = createTRPCRouter({
-  generateInvoice: protectedProcedure.input(generateInvoiceSchema).mutation(async ({ input, ctx }) => {
+  createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
     const tenant = await db.tenant.findUnique({
       where: { id: input.tenantId },
       include: {
@@ -43,23 +36,16 @@ export const billingRouter = createTRPCRouter({
     if (tenant.room.property.userId !== ctx.session.user.id) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "You do not have permission to generate invoices for this tenant",
+        message: "You do not have permission to create payments for this tenant",
       });
     }
 
-    // Create the payment record
-    const payment = await db.payment.create({
+    return db.payment.create({
       data: {
-        tenantId: input.tenantId,
-        amount: input.amount,
-        dueDate: input.dueDate,
-        type: input.type,
+        ...input,
         status: PaymentStatus.pending,
-        description: input.description,
       },
     });
-
-    return payment;
   }),
 
   getPayments: protectedProcedure
@@ -98,17 +84,10 @@ export const billingRouter = createTRPCRouter({
         },
         include: {
           tenant: {
-            select: {
-              name: true,
-              email: true,
+            include: {
               room: {
-                select: {
-                  number: true,
-                  property: {
-                    select: {
-                      name: true,
-                    },
-                  },
+                include: {
+                  property: true,
                 },
               },
             },
@@ -122,48 +101,52 @@ export const billingRouter = createTRPCRouter({
       return payments;
     }),
 
-  updatePayment: protectedProcedure.input(updatePaymentSchema).mutation(async ({ input, ctx }) => {
-    const payment = await db.payment.findUnique({
-      where: { id: input.paymentId },
-      include: {
-        tenant: {
-          include: {
-            room: {
-              include: {
-                property: true,
+  updatePayment: protectedProcedure
+    .input(
+      z.object({
+        paymentId: z.string().min(1, "Payment ID is required"),
+        status: z.nativeEnum(PaymentStatus),
+        paidAt: z.date().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const payment = await db.payment.findUnique({
+        where: { id: input.paymentId },
+        include: {
+          tenant: {
+            include: {
+              room: {
+                include: {
+                  property: true,
+                },
               },
             },
           },
         },
-      },
-    });
-
-    if (!payment) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Payment not found",
       });
-    }
 
-    if (payment.tenant.room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to update this payment",
+      if (!payment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment not found",
+        });
+      }
+
+      if (payment.tenant.room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to update this payment",
+        });
+      }
+
+      return db.payment.update({
+        where: { id: input.paymentId },
+        data: {
+          status: input.status,
+          paidAt: input.paidAt,
+        },
       });
-    }
-
-    const updatedPayment = await db.payment.update({
-      where: { id: input.paymentId },
-      data: {
-        status: input.status,
-        paidAmount: input.paidAmount,
-        paidAt: input.status === PaymentStatus.paid ? input.paidAt || new Date() : null,
-        notes: input.notes,
-      },
-    });
-
-    return updatedPayment;
-  }),
+    }),
 
   generateRecurringInvoices: protectedProcedure.mutation(async ({ ctx }) => {
     // Get all active tenants

@@ -6,7 +6,7 @@ import { RoomCalendar } from "@/components/room/RoomCalendar";
 
 export default function RoomDetailsPage() {
   const params = useParams();
-  const roomId = params.id as string;
+  const roomId = params.roomId as string;
 
   const { data: room, isLoading } = api.room.get.useQuery({ id: roomId });
 

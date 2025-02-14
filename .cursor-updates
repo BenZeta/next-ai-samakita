@@ -8,3 +8,5 @@
 - Captured screenshot of Button component stories in Storybook
 - Implemented Room Management System with bulk room creation, availability calendar, and maintenance scheduling features
 - Implemented Tenant Management System with tenant CRUD operations, check-in items management, and tenant details view
+- Implemented Payment Management System with payment creation, listing, and status management features
+- Fixed dynamic route parameter inconsistency by standardizing to use [roomId] across all routes
