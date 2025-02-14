@@ -1,20 +1,25 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import SignatureCanvas from "react-signature-canvas";
+import { useRef, useState } from "react";
 import { api } from "@/lib/trpc/react";
 import { toast } from "react-toastify";
-import SignatureCanvas from "react-signature-canvas";
+import { useRouter } from "next/navigation";
 
-export default function ContractSigningPage() {
+function ContractSigningContent() {
   const searchParams = useSearchParams();
-  const contractUrl = searchParams.get("url");
-  const [isLoading, setIsLoading] = useState(false);
+  const contractUrl = searchParams.get("contractUrl");
+  const tenantId = searchParams.get("tenantId");
   const signatureRef = useRef<SignatureCanvas>(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const signContractMutation = api.tenant.signContract.useMutation({
     onSuccess: () => {
       toast.success("Contract signed successfully!");
+      router.push("/dashboard");
     },
     onError: (error) => {
       toast.error(error.message);
@@ -22,24 +27,21 @@ export default function ContractSigningPage() {
   });
 
   const handleSign = async () => {
-    if (!signatureRef.current) return;
-    if (signatureRef.current.isEmpty()) {
-      toast.error("Please provide your signature");
-      return;
-    }
+    if (!signatureRef.current || !tenantId) return;
 
-    setIsLoading(true);
+    const signature = signatureRef.current.toDataURL();
+    setLoading(true);
+
     try {
-      const signatureData = signatureRef.current.toDataURL();
       await signContractMutation.mutateAsync({
-        tenantId: "", // This should be extracted from the contract URL or passed as a param
-        signature: signatureData,
+        tenantId,
+        signature,
         signedDate: new Date(),
       });
     } catch (error) {
-      console.error("Error signing contract:", error);
+      console.error("Failed to sign contract:", error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -49,55 +51,59 @@ export default function ContractSigningPage() {
     }
   };
 
-  if (!contractUrl) {
+  if (!contractUrl || !tenantId) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Invalid Contract URL</h1>
-          <p className="mt-2 text-gray-600">The contract URL is missing or invalid.</p>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <p className="text-lg text-gray-500">Invalid contract URL or tenant ID</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold">Sign Rental Agreement</h1>
+    <div className="mx-auto max-w-4xl p-8">
+      <h1 className="mb-8 text-2xl font-bold">Contract Signing</h1>
 
-        <div className="mb-8 rounded-lg bg-white p-6 shadow">
-          <iframe
-            src={contractUrl}
-            className="h-[600px] w-full rounded border border-gray-200"
-            title="Rental Agreement"
+      <div className="mb-8 rounded-lg border border-gray-200 p-4">
+        <h2 className="mb-4 text-lg font-medium">Contract Preview</h2>
+        <iframe
+          src={contractUrl}
+          className="h-[600px] w-full rounded-lg border border-gray-200"
+          title="Contract Preview"
+        />
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-4 text-lg font-medium">Digital Signature</h2>
+        <div className="rounded-lg border border-gray-200 p-4">
+          <SignatureCanvas
+            ref={signatureRef}
+            canvasProps={{
+              className: "w-full h-64 border border-gray-300 rounded-lg",
+            }}
           />
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold">Digital Signature</h2>
-          <div className="mb-4 rounded border border-gray-300 bg-white">
-            <SignatureCanvas
-              ref={signatureRef}
-              canvasProps={{
-                className: "w-full h-40",
-              }}
-            />
-          </div>
-          <div className="flex space-x-4">
+          <div className="mt-4 flex justify-end space-x-4">
             <button
               onClick={clearSignature}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200">
-              Clear Signature
+              className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              Clear
             </button>
             <button
               onClick={handleSign}
-              disabled={isLoading}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-              {isLoading ? "Signing..." : "Sign Contract"}
+              disabled={loading}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
+              {loading ? "Signing..." : "Sign Contract"}
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ContractSigningPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ContractSigningContent />
+    </Suspense>
   );
 }

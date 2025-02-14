@@ -94,7 +94,7 @@ export function TenantList({ roomId, showAddButton = true }: TenantListProps) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
+                    {tenant.startDate ? new Date(tenant.startDate).toLocaleDateString() : "Not set"} - {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : "Not set"}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

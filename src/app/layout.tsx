@@ -9,19 +9,26 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Superkos CMS",
-  description: "Property management system for Superkos",
+  description: "A modern boarding house management system",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1"
+        />
+      </head>
       <body className={inter.className}>
         <TRPCReactProvider>
           <div className="flex h-screen">
             <Sidebar />
             <main className="flex-1 overflow-y-auto bg-gray-100 p-8">{children}</main>
           </div>
-          <ToastContainer />
+          <ToastContainer position="bottom-right" />
         </TRPCReactProvider>
       </body>
     </html>

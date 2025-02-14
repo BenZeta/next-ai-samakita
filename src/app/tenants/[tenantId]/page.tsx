@@ -104,7 +104,7 @@ export default function TenantDetailsPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Period</h3>
               <p className="mt-1">
-                {new Date(tenant.startDate).toLocaleDateString()} - {new Date(tenant.endDate).toLocaleDateString()}
+                {tenant.startDate ? new Date(tenant.startDate).toLocaleDateString() : "Not set"} - {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : "Not set"}
               </p>
             </div>
             <div>
