@@ -1,22 +1,28 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { api } from "@/lib/trpc/react";
-import { DollarSign, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { api } from '@/lib/trpc/react';
+import { DollarSign, TrendingDown, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProfitLossCalculatorProps {
   propertyId?: string;
 }
 
-interface MonthlyTrend {
+interface MonthlyTrendItem {
   month: string;
   revenue: number;
   expenses: number;
   profit: number;
 }
 
+interface FinancialData {
+  totalRevenue: number;
+  totalExpenses: number;
+  monthlyTrend: MonthlyTrendItem[];
+}
+
 export function ProfitLossCalculator({ propertyId }: ProfitLossCalculatorProps) {
-  const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
+  const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('month');
 
   const { data: financialData, isLoading } = api.finance.getStats.useQuery({
     propertyId,
@@ -25,134 +31,126 @@ export function ProfitLossCalculator({ propertyId }: ProfitLossCalculatorProps) 
 
   if (isLoading) {
     return (
-      <div className="h-[400px] rounded-lg bg-white p-6 shadow">
+      <div className="h-[300px] rounded-lg bg-card p-6 shadow-sm">
         <div className="flex h-full items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
       </div>
     );
   }
 
-  const totalRevenue = financialData?.totalRevenue ?? 0;
-  const totalExpenses = financialData?.totalExpenses ?? 0;
-  const netProfit = totalRevenue - totalExpenses;
-  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-  const monthlyTrend = financialData?.monthlyTrend ?? [];
+  const stats = {
+    revenue: financialData?.totalRevenue ?? 0,
+    expenses: financialData?.totalExpenses ?? 0,
+    netProfit: (financialData?.totalRevenue ?? 0) - (financialData?.totalExpenses ?? 0),
+    profitMargin: financialData?.totalRevenue
+      ? ((financialData.totalRevenue - (financialData.totalExpenses ?? 0)) /
+          financialData.totalRevenue) *
+        100
+      : 0,
+  };
 
-  // Calculate the maximum value for scaling
-  const maxValue = Math.max(...monthlyTrend.map((m) => Math.max(m.revenue, m.expenses)));
+  // Calculate max value for chart scaling
+  const maxMonthlyAmount = Math.max(
+    ...(financialData?.monthlyTrend ?? []).map(item => Math.max(item.revenue, item.expenses))
+  );
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">Profit & Loss</h2>
+    <div className="rounded-lg bg-card p-6 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-card-foreground">Profit & Loss</h2>
+        </div>
         <select
           value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as "month" | "quarter" | "year")}
-          className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+          onChange={e => setTimeRange(e.target.value as 'month' | 'quarter' | 'year')}
+          className="w-full appearance-none rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
+        >
           <option value="month">This Month</option>
           <option value="quarter">This Quarter</option>
           <option value="year">This Year</option>
         </select>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {/* Revenue */}
-        <div className="flex flex-col justify-between rounded-lg bg-gradient-to-br from-green-50 to-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="rounded-full bg-green-100 p-2">
-              <DollarSign className="h-5 w-5 text-green-600" />
-            </div>
-            <span className="text-sm font-medium text-green-600">Revenue</span>
+      <div className="mt-6 grid grid-cols-2 gap-4">
+        <div className="rounded-lg bg-accent/50 p-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-green-600" />
+            <p className="text-sm font-medium text-muted-foreground">Revenue</p>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-gray-900">Rp {totalRevenue.toLocaleString()}</p>
-          </div>
+          <p className="mt-2 text-2xl font-bold text-card-foreground">
+            Rp {stats.revenue.toLocaleString()}
+          </p>
         </div>
 
-        {/* Expenses */}
-        <div className="flex flex-col justify-between rounded-lg bg-gradient-to-br from-red-50 to-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="rounded-full bg-red-100 p-2">
-              <DollarSign className="h-5 w-5 text-red-600" />
-            </div>
-            <span className="text-sm font-medium text-red-600">Expenses</span>
+        <div className="rounded-lg bg-accent/50 p-4">
+          <div className="flex items-center gap-2">
+            <TrendingDown className="h-4 w-4 text-destructive" />
+            <p className="text-sm font-medium text-muted-foreground">Expenses</p>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-gray-900">Rp {totalExpenses.toLocaleString()}</p>
-          </div>
+          <p className="mt-2 text-2xl font-bold text-card-foreground">
+            Rp {stats.expenses.toLocaleString()}
+          </p>
         </div>
 
-        {/* Net Profit */}
-        <div className="flex flex-col justify-between rounded-lg bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="rounded-full bg-blue-100 p-2">
-              {netProfit >= 0 ? <TrendingUp className="h-5 w-5 text-blue-600" /> : <TrendingDown className="h-5 w-5 text-blue-600" />}
-            </div>
-            <span className="text-sm font-medium text-blue-600">Net Profit</span>
+        <div className="rounded-lg bg-accent/50 p-4">
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-blue-600" />
+            <p className="text-sm font-medium text-muted-foreground">Net Profit</p>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-gray-900">Rp {netProfit.toLocaleString()}</p>
-          </div>
+          <p className="mt-2 text-2xl font-bold text-card-foreground">
+            Rp {stats.netProfit.toLocaleString()}
+          </p>
         </div>
 
-        {/* Profit Margin */}
-        <div className="flex flex-col justify-between rounded-lg bg-gradient-to-br from-purple-50 to-white p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="rounded-full bg-purple-100 p-2">
-              <ArrowRight className="h-5 w-5 text-purple-600" />
-            </div>
-            <span className="text-sm font-medium text-purple-600">Profit Margin</span>
+        <div className="rounded-lg bg-accent/50 p-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-semibold text-gray-900">{profitMargin.toFixed(1)}%</p>
-          </div>
+          <p className="mt-2 text-2xl font-bold text-card-foreground">
+            {stats.profitMargin.toFixed(1)}%
+          </p>
         </div>
       </div>
 
-      <div className="mt-8">
-        <h3 className="mb-4 text-sm font-medium text-gray-500">Monthly Trend</h3>
-        <div className="relative overflow-x-auto">
-          <div className="min-w-[600px]">
-            <div className="absolute bottom-0 left-0 h-[1px] w-full bg-gray-200"></div>
-            <div className="flex h-[200px] items-end space-x-2">
-              {monthlyTrend.map((month, index) => (
-                <div
-                  key={index}
-                  className="group relative flex-1">
-                  <div className="relative h-full">
-                    {/* Expenses bar */}
-                    <div
-                      style={{
-                        height: `${maxValue > 0 ? (month.expenses / maxValue) * 180 : 0}px`,
-                      }}
-                      className="absolute bottom-0 w-full rounded bg-red-200 transition-all group-hover:opacity-90"></div>
-                    {/* Revenue bar */}
-                    <div
-                      style={{
-                        height: `${maxValue > 0 ? (month.revenue / maxValue) * 180 : 0}px`,
-                      }}
-                      className="absolute bottom-0 w-1/2 rounded bg-green-500 transition-all group-hover:opacity-90"></div>
-                  </div>
-                  <div className="mt-2 text-center text-xs font-medium text-gray-500">{month.month}</div>
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 transform rounded bg-gray-800 p-2 text-xs text-white group-hover:block">
-                    <p>Revenue: Rp {month.revenue.toLocaleString()}</p>
-                    <p>Expenses: Rp {month.expenses.toLocaleString()}</p>
-                  </div>
+      {/* Monthly Trend Chart */}
+      <div className="mt-6">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">Monthly Trend</h3>
+        <div className="h-[200px] w-full">
+          <div className="flex h-full items-end gap-2">
+            {financialData?.monthlyTrend?.map((item: MonthlyTrendItem, index: number) => (
+              <div key={index} className="group relative flex-1">
+                <div className="relative h-full">
+                  {/* Revenue bar */}
+                  <div
+                    style={{ height: `${(item.revenue / maxMonthlyAmount) * 100}%` }}
+                    className="absolute bottom-0 w-full rounded-t bg-green-200 transition-all duration-300 group-hover:bg-green-300"
+                  />
+                  {/* Expense bar */}
+                  <div
+                    style={{ height: `${(item.expenses / maxMonthlyAmount) * 100}%` }}
+                    className="absolute bottom-0 w-full rounded-t bg-red-200 opacity-70 transition-all duration-300 group-hover:bg-red-300"
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-muted-foreground">
+                  {item.month}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="mt-4 flex justify-center space-x-6">
-          <div className="flex items-center">
-            <div className="mr-2 h-3 w-3 rounded bg-green-500"></div>
-            <span className="text-sm text-gray-600">Revenue</span>
+        <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full bg-green-200" />
+            <span className="text-xs text-muted-foreground">Revenue</span>
           </div>
-          <div className="flex items-center">
-            <div className="mr-2 h-3 w-3 rounded bg-red-200"></div>
-            <span className="text-sm text-gray-600">Expenses</span>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 rounded-full bg-red-200" />
+            <span className="text-xs text-muted-foreground">Expenses</span>
           </div>
         </div>
       </div>

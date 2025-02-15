@@ -1,26 +1,28 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import { db } from "@/lib/db";
-import { RoomStatus, TenantStatus, Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { db, prisma } from '@/lib/db';
+import { RoomStatus, TenantStatus } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const roomSchema = z.object({
-  number: z.string().min(1, "Room number is required"),
+  number: z.string().min(1, 'Room number is required'),
   type: z.nativeEnum(RoomStatus),
-  size: z.number().min(1, "Size must be greater than 0"),
-  amenities: z.array(z.string()).min(1, "At least one amenity is required"),
-  price: z.number().min(0, "Price must be greater than or equal to 0"),
-  propertyId: z.string().min(1, "Property ID is required"),
+  size: z.number().min(1, 'Size must be greater than 0'),
+  amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
+  price: z.number().min(0, 'Price must be greater than or equal to 0'),
+  propertyId: z.string().min(1, 'Property ID is required'),
 });
 
 const bulkRoomSchema = z.object({
-  startNumber: z.string().min(1, "Starting room number is required"),
-  count: z.number().min(1, "Number of rooms must be at least 1").max(50, "Maximum 50 rooms at once"),
+  startNumber: z.string().min(1, 'Starting room number is required'),
+  count: z
+    .number()
+    .min(1, 'Number of rooms must be at least 1')
+    .max(50, 'Maximum 50 rooms at once'),
   type: z.nativeEnum(RoomStatus),
-  size: z.number().min(1, "Size must be greater than 0"),
-  amenities: z.array(z.string()).min(1, "At least one amenity is required"),
-  price: z.number().min(0, "Price must be greater than or equal to 0"),
+  size: z.number().min(1, 'Size must be greater than 0'),
+  amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
+  price: z.number().min(0, 'Price must be greater than or equal to 0'),
   propertyId: z.string(),
   numberingPrefix: z.string().optional(),
   numberingSuffix: z.string().optional(),
@@ -31,8 +33,8 @@ const maintenanceSchema = z.object({
   roomId: z.string(),
   startDate: z.date(),
   endDate: z.date(),
-  description: z.string().min(1, "Description is required"),
-  type: z.enum(["cleaning", "repair", "inspection", "other"]),
+  description: z.string().min(1, 'Description is required'),
+  type: z.enum(['cleaning', 'repair', 'inspection', 'other']),
 });
 
 interface OccupancyHistoryItem {
@@ -49,15 +51,15 @@ export const roomRouter = createTRPCRouter({
 
     if (!property) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Property not found",
+        code: 'NOT_FOUND',
+        message: 'Property not found',
       });
     }
 
     if (property.userId !== ctx.session.user.id) {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to add rooms to this property",
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to add rooms to this property',
       });
     }
 
@@ -71,8 +73,8 @@ export const roomRouter = createTRPCRouter({
 
     if (existingRoom) {
       throw new TRPCError({
-        code: "CONFLICT",
-        message: "Room number already exists in this property",
+        code: 'CONFLICT',
+        message: 'Room number already exists in this property',
       });
     }
 
@@ -82,7 +84,18 @@ export const roomRouter = createTRPCRouter({
   }),
 
   createBulk: protectedProcedure.input(bulkRoomSchema).mutation(async ({ input, ctx }) => {
-    const { startNumber, count, type, size, amenities, price, propertyId, numberingPrefix = "", numberingSuffix = "", startingFloor = 1 } = input;
+    const {
+      startNumber,
+      count,
+      type,
+      size,
+      amenities,
+      price,
+      propertyId,
+      numberingPrefix = '',
+      numberingSuffix = '',
+      startingFloor = 1,
+    } = input;
 
     // Check if user has access to the property
     const property = await db.property.findUnique({
@@ -91,15 +104,15 @@ export const roomRouter = createTRPCRouter({
 
     if (!property) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Property not found",
+        code: 'NOT_FOUND',
+        message: 'Property not found',
       });
     }
 
     if (property.userId !== ctx.session.user.id) {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to create rooms for this property",
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to create rooms for this property',
       });
     }
 
@@ -107,7 +120,7 @@ export const roomRouter = createTRPCRouter({
     const rooms = Array.from({ length: count }, (_, index) => {
       const floor = Math.floor(index / 10) + startingFloor;
       const roomNum = (index % 10) + 1;
-      const paddedRoomNum = roomNum.toString().padStart(2, "0");
+      const paddedRoomNum = roomNum.toString().padStart(2, '0');
       const number = `${numberingPrefix}${floor}${paddedRoomNum}${numberingSuffix}`;
 
       return {
@@ -122,7 +135,7 @@ export const roomRouter = createTRPCRouter({
 
     // Create all rooms in a transaction
     return db.$transaction(
-      rooms.map((room) =>
+      rooms.map(room =>
         db.room.create({
           data: room,
         })
@@ -134,14 +147,14 @@ export const roomRouter = createTRPCRouter({
     .input(
       z.object({
         propertyId: z.string().optional(),
-        status: z.enum(["available", "occupied", "maintenance"]).optional(),
+        status: z.enum(['available', 'occupied', 'maintenance']).optional(),
       })
     )
     .query(async ({ input }) => {
       return prisma.room.findMany({
         where: {
           propertyId: input.propertyId,
-          ...(input.status === "available" && {
+          ...(input.status === 'available' && {
             tenants: {
               none: {
                 endDate: {
@@ -150,7 +163,7 @@ export const roomRouter = createTRPCRouter({
               },
             },
           }),
-          ...(input.status === "occupied" && {
+          ...(input.status === 'occupied' && {
             tenants: {
               some: {
                 endDate: {
@@ -211,7 +224,7 @@ export const roomRouter = createTRPCRouter({
       });
 
       if (!room) {
-        throw new Error("Room not found");
+        throw new Error('Room not found');
       }
 
       return room;
@@ -234,15 +247,15 @@ export const roomRouter = createTRPCRouter({
 
       if (!room) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Room not found",
+          code: 'NOT_FOUND',
+          message: 'Room not found',
         });
       }
 
       if (room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this room",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this room',
         });
       }
 
@@ -252,90 +265,97 @@ export const roomRouter = createTRPCRouter({
       });
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ input, ctx }) => {
-    const room = await db.room.findUnique({
-      where: { id: input.id },
-      include: {
-        property: true,
-      },
-    });
-
-    if (!room) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Room not found",
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const room = await db.room.findUnique({
+        where: { id: input.id },
+        include: {
+          property: true,
+        },
       });
-    }
 
-    if (room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to delete this room",
+      if (!room) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Room not found',
+        });
+      }
+
+      if (room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to delete this room',
+        });
+      }
+
+      await db.room.delete({
+        where: { id: input.id },
       });
-    }
 
-    await db.room.delete({
-      where: { id: input.id },
-    });
+      return { success: true };
+    }),
 
-    return { success: true };
-  }),
-
-  scheduleMaintenance: protectedProcedure.input(maintenanceSchema).mutation(async ({ input, ctx }) => {
-    const room = await db.room.findUnique({
-      where: { id: input.roomId },
-      include: {
-        property: true,
-      },
-    });
-
-    if (!room) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Room not found",
+  scheduleMaintenance: protectedProcedure
+    .input(maintenanceSchema)
+    .mutation(async ({ input, ctx }) => {
+      const room = await db.room.findUnique({
+        where: { id: input.roomId },
+        include: {
+          property: true,
+        },
       });
-    }
 
-    if (room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to schedule maintenance for this room",
+      if (!room) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Room not found',
+        });
+      }
+
+      if (room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to schedule maintenance for this room',
+        });
+      }
+
+      // Check for scheduling conflicts
+      const existingMaintenance = await db.maintenanceRequest.findFirst({
+        where: {
+          roomId: input.roomId,
+          OR: [
+            {
+              AND: [
+                { createdAt: { lte: input.startDate } },
+                { updatedAt: { gte: input.startDate } },
+              ],
+            },
+            {
+              AND: [{ createdAt: { lte: input.endDate } }, { updatedAt: { gte: input.endDate } }],
+            },
+          ],
+        },
       });
-    }
 
-    // Check for scheduling conflicts
-    const existingMaintenance = await db.maintenanceRequest.findFirst({
-      where: {
-        roomId: input.roomId,
-        OR: [
-          {
-            AND: [{ createdAt: { lte: input.startDate } }, { updatedAt: { gte: input.startDate } }],
-          },
-          {
-            AND: [{ createdAt: { lte: input.endDate } }, { updatedAt: { gte: input.endDate } }],
-          },
-        ],
-      },
-    });
+      if (existingMaintenance) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'There is already maintenance scheduled for this time period',
+        });
+      }
 
-    if (existingMaintenance) {
-      throw new TRPCError({
-        code: "CONFLICT",
-        message: "There is already maintenance scheduled for this time period",
+      return db.maintenanceRequest.create({
+        data: {
+          title: input.description,
+          description: input.description,
+          status: 'PENDING',
+          priority: 'MEDIUM',
+          roomId: input.roomId,
+          propertyId: room.propertyId,
+        },
       });
-    }
-
-    return db.maintenanceRequest.create({
-      data: {
-        title: input.description,
-        description: input.description,
-        status: "PENDING",
-        priority: "MEDIUM",
-        roomId: input.roomId,
-        propertyId: room.propertyId,
-      },
-    });
-  }),
+    }),
 
   getMaintenanceSchedule: protectedProcedure
     .input(
@@ -385,7 +405,7 @@ export const roomRouter = createTRPCRouter({
     .input(
       z.object({
         propertyId: z.string().optional(),
-        timeRange: z.enum(["week", "month", "year"]),
+        timeRange: z.enum(['week', 'month', 'year']),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -424,34 +444,34 @@ export const roomRouter = createTRPCRouter({
       const now = new Date();
       let historyPoints: { date: Date; label: string }[] = [];
 
-      if (timeRange === "week") {
-        // Last 7 days
+      if (timeRange === 'week') {
+        // Get data for each day of the week
         for (let i = 6; i >= 0; i--) {
           const date = new Date(now);
           date.setDate(date.getDate() - i);
           historyPoints.push({
             date,
-            label: date.toLocaleDateString("en-US", { weekday: "short" }),
+            label: date.toLocaleDateString('en-US', { weekday: 'short' }),
           });
         }
-      } else if (timeRange === "month") {
-        // Last 4 weeks
-        for (let i = 3; i >= 0; i--) {
+      } else if (timeRange === 'month') {
+        // Get data for each week of the month
+        for (let i = 4; i >= 0; i--) {
           const date = new Date(now);
           date.setDate(date.getDate() - i * 7);
           historyPoints.push({
             date,
-            label: `Week ${4 - i}`,
+            label: `Week ${4 - i + 1}`,
           });
         }
       } else {
-        // Last 12 months
+        // Get data for each month of the year
         for (let i = 11; i >= 0; i--) {
           const date = new Date(now);
           date.setMonth(date.getMonth() - i);
           historyPoints.push({
             date,
-            label: date.toLocaleDateString("en-US", { month: "short" }),
+            label: date.toLocaleDateString('en-US', { month: 'short' }),
           });
         }
       }
@@ -510,9 +530,9 @@ export const roomRouter = createTRPCRouter({
 
       // Get previous period rate for comparison
       const previousPeriodStart = new Date(now);
-      if (timeRange === "week") {
+      if (timeRange === 'week') {
         previousPeriodStart.setDate(previousPeriodStart.getDate() - 14);
-      } else if (timeRange === "month") {
+      } else if (timeRange === 'month') {
         previousPeriodStart.setMonth(previousPeriodStart.getMonth() - 1);
       } else {
         previousPeriodStart.setFullYear(previousPeriodStart.getFullYear() - 1);
@@ -557,7 +577,8 @@ export const roomRouter = createTRPCRouter({
         },
       });
 
-      const previousRate = previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
+      const previousRate =
+        previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
 
       // Calculate room type breakdown
       const roomTypes = Object.values(RoomStatus) as RoomStatus[];
@@ -590,7 +611,8 @@ export const roomRouter = createTRPCRouter({
 
           return {
             type,
-            occupancyRate: totalRoomsOfType > 0 ? (occupiedRoomsOfType / totalRoomsOfType) * 100 : 0,
+            occupancyRate:
+              totalRoomsOfType > 0 ? (occupiedRoomsOfType / totalRoomsOfType) * 100 : 0,
           };
         })
       );

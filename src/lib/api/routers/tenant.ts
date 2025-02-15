@@ -1,44 +1,49 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import { db } from "@/lib/db";
-import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType, PaymentMethod, Prisma } from "@prisma/client";
-import { generateContract } from "@/lib/contract";
-import { sendContractEmail, sendInvoiceEmail } from "@/lib/email";
-import { propertySchema, userSchema } from "@/lib/contracts";
-import { supabase } from "@/lib/supabase";
-import { createMidtransPayment } from "@/lib/midtrans";
-import { createPaymentIntent } from "@/lib/stripe";
+import { generateContract } from '@/lib/contract';
+import { db } from '@/lib/db';
+import { sendContractEmail, sendInvoiceEmail } from '@/lib/email';
+import { createPaymentIntent } from '@/lib/stripe';
+import { supabase } from '@/lib/supabase';
+import {
+  PaymentMethod,
+  PaymentStatus,
+  PaymentType,
+  Prisma,
+  ServiceRequestStatus,
+  TenantStatus,
+} from '@prisma/client';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const tenantSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, "Invalid Indonesian phone number"),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, 'Invalid Indonesian phone number'),
   ktpNumber: z.string().optional(),
-  ktpFile: z.string().url("Invalid KTP file URL").optional(),
-  kkFile: z.string().url("Invalid KK file URL").optional(),
+  ktpFile: z.string().url('Invalid KTP file URL').optional(),
+  kkFile: z.string().url('Invalid KK file URL').optional(),
   references: z.array(z.string()),
-  roomId: z.string().min(1, "Room ID is required"),
+  roomId: z.string().min(1, 'Room ID is required'),
   startDate: z.date(),
   endDate: z.date(),
 });
 
 const checkInItemSchema = z.object({
-  tenantId: z.string().min(1, "Tenant ID is required"),
-  itemName: z.string().min(1, "Item name is required"),
-  condition: z.string().min(1, "Condition is required"),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
+  itemName: z.string().min(1, 'Item name is required'),
+  condition: z.string().min(1, 'Condition is required'),
   notes: z.string().optional(),
 });
 
 const serviceRequestSchema = z.object({
-  tenantId: z.string().min(1, "Tenant ID is required"),
-  type: z.string().min(1, "Request type is required"),
-  description: z.string().min(1, "Description is required"),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
+  type: z.string().min(1, 'Request type is required'),
+  description: z.string().min(1, 'Description is required'),
 });
 
 const paymentSchema = z.object({
-  tenantId: z.string().min(1, "Tenant ID is required"),
-  amount: z.number().min(0, "Amount must be greater than or equal to 0"),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
+  amount: z.number().min(0, 'Amount must be greater than or equal to 0'),
   dueDate: z.date(),
   type: z.nativeEnum(PaymentType),
 });
@@ -53,18 +58,18 @@ export const tenantRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1, "Name is required"),
-        email: z.string().email("Invalid email address"),
-        phone: z.string().min(1, "Phone number is required"),
+        name: z.string().min(1, 'Name is required'),
+        email: z.string().email('Invalid email address'),
+        phone: z.string().min(1, 'Phone number is required'),
         ktpNumber: z.string().optional(),
-        ktpFile: z.string().url("Invalid KTP file URL").optional(),
-        kkFile: z.string().url("Invalid KK file URL").optional(),
+        ktpFile: z.string().url('Invalid KTP file URL').optional(),
+        kkFile: z.string().url('Invalid KK file URL').optional(),
         rentAmount: z.number(),
-        depositAmount: z.number().min(1, "Deposit amount is required"),
-        startDate: z.string().min(1, "Start date is required"),
-        endDate: z.string().min(1, "End date is required"),
+        depositAmount: z.number().min(1, 'Deposit amount is required'),
+        startDate: z.string().min(1, 'Start date is required'),
+        endDate: z.string().min(1, 'End date is required'),
         references: z.array(z.string()).optional(),
-        roomId: z.string().min(1, "Room ID is required"),
+        roomId: z.string().min(1, 'Room ID is required'),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -80,28 +85,28 @@ export const tenantRouter = createTRPCRouter({
 
       if (!room) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Room not found",
+          code: 'NOT_FOUND',
+          message: 'Room not found',
         });
       }
 
       if (room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to add tenants to this room",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to add tenants to this room',
         });
       }
 
       // Verify that the provided rent amount matches the room price
       if (rentAmount !== room.price) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Rent amount must match the room price",
+          code: 'BAD_REQUEST',
+          message: 'Rent amount must match the room price',
         });
       }
 
       // Create tenant and lease in a transaction
-      const result = await db.$transaction(async (tx) => {
+      const result = await db.$transaction(async tx => {
         // Create tenant
         const tenant = await tx.tenant.create({
           data: {
@@ -111,13 +116,17 @@ export const tenantRouter = createTRPCRouter({
             endDate: new Date(endDate),
             rentAmount,
             depositAmount,
-            status: "ACTIVE",
+            status: 'ACTIVE',
           },
         });
 
         // Calculate first rent due date based on property's dueDate setting
         const now = new Date();
-        const firstRentDueDate = new Date(now.getFullYear(), now.getMonth() + 1, room.property.dueDate);
+        const firstRentDueDate = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          room.property.dueDate
+        );
 
         // Create initial rent payment with next month's due date
         await tx.payment.create({
@@ -125,8 +134,8 @@ export const tenantRouter = createTRPCRouter({
             tenantId: tenant.id,
             propertyId: room.property.id,
             amount: rentAmount,
-            type: "RENT",
-            status: "PENDING",
+            type: 'RENT',
+            status: 'PENDING',
             dueDate: firstRentDueDate,
           },
         });
@@ -137,8 +146,8 @@ export const tenantRouter = createTRPCRouter({
             tenantId: tenant.id,
             propertyId: room.property.id,
             amount: depositAmount,
-            type: "DEPOSIT",
-            status: "PENDING",
+            type: 'DEPOSIT',
+            status: 'PENDING',
             dueDate: new Date(startDate),
           },
         });
@@ -146,7 +155,7 @@ export const tenantRouter = createTRPCRouter({
         // Update room status
         await tx.room.update({
           where: { id: roomId },
-          data: { status: "OCCUPIED" },
+          data: { status: 'OCCUPIED' },
         });
 
         return tenant;
@@ -159,7 +168,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         roomId: z.string().optional(),
-        status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         search: z.string().optional(),
       })
     )
@@ -175,19 +184,19 @@ export const tenantRouter = createTRPCRouter({
                 {
                   name: {
                     contains: search,
-                    mode: "insensitive",
+                    mode: 'insensitive',
                   },
                 },
                 {
                   email: {
                     contains: search,
-                    mode: "insensitive",
+                    mode: 'insensitive',
                   },
                 },
                 {
                   phone: {
                     contains: search,
-                    mode: "insensitive",
+                    mode: 'insensitive',
                   },
                 },
               ],
@@ -205,7 +214,7 @@ export const tenantRouter = createTRPCRouter({
           },
         },
         orderBy: {
-          createdAt: "desc",
+          createdAt: 'desc',
         },
       });
 
@@ -233,8 +242,8 @@ export const tenantRouter = createTRPCRouter({
 
       if (!tenant) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
         });
       }
 
@@ -262,15 +271,15 @@ export const tenantRouter = createTRPCRouter({
 
       if (!tenant) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
         });
       }
 
       if (tenant.room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this tenant",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this tenant',
         });
       }
 
@@ -294,15 +303,15 @@ export const tenantRouter = createTRPCRouter({
 
     if (!tenant) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
+        code: 'NOT_FOUND',
+        message: 'Tenant not found',
       });
     }
 
     if (tenant.room.property.userId !== ctx.session.user.id) {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to add check-in items for this tenant",
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to add check-in items for this tenant',
       });
     }
 
@@ -316,39 +325,41 @@ export const tenantRouter = createTRPCRouter({
     });
   }),
 
-  createServiceRequest: protectedProcedure.input(serviceRequestSchema).mutation(async ({ input, ctx }) => {
-    const tenant = await db.tenant.findUnique({
-      where: { id: input.tenantId },
-      include: {
-        room: {
-          include: {
-            property: true,
+  createServiceRequest: protectedProcedure
+    .input(serviceRequestSchema)
+    .mutation(async ({ input, ctx }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
           },
         },
-      },
-    });
-
-    if (!tenant) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
       });
-    }
 
-    if (tenant.room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to create service requests for this tenant",
+      if (!tenant) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
+        });
+      }
+
+      if (tenant.room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to create service requests for this tenant',
+        });
+      }
+
+      return db.serviceRequest.create({
+        data: {
+          ...input,
+          status: ServiceRequestStatus.PENDING,
+        },
       });
-    }
-
-    return db.serviceRequest.create({
-      data: {
-        ...input,
-        status: ServiceRequestStatus.PENDING,
-      },
-    });
-  }),
+    }),
 
   updateServiceRequest: protectedProcedure
     .input(
@@ -375,15 +386,15 @@ export const tenantRouter = createTRPCRouter({
 
       if (!serviceRequest) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Service request not found",
+          code: 'NOT_FOUND',
+          message: 'Service request not found',
         });
       }
 
       if (serviceRequest.tenant.room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this service request",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this service request',
         });
       }
 
@@ -417,15 +428,15 @@ export const tenantRouter = createTRPCRouter({
 
       if (!tenant || !tenant.room) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant or room not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant or room not found',
         });
       }
 
       if (tenant.room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to create payments for this tenant",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to create payments for this tenant',
         });
       }
 
@@ -454,8 +465,8 @@ export const tenantRouter = createTRPCRouter({
       if (input.paymentMethod === PaymentMethod.STRIPE) {
         if (!tenant.email) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Tenant email is required for Stripe payments",
+            code: 'BAD_REQUEST',
+            message: 'Tenant email is required for Stripe payments',
           });
         }
 
@@ -465,8 +476,8 @@ export const tenantRouter = createTRPCRouter({
 
         if (!property) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Property not found",
+            code: 'NOT_FOUND',
+            message: 'Property not found',
           });
         }
 
@@ -476,8 +487,8 @@ export const tenantRouter = createTRPCRouter({
 
         if (!room) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Room not found",
+            code: 'NOT_FOUND',
+            message: 'Room not found',
           });
         }
 
@@ -543,15 +554,15 @@ export const tenantRouter = createTRPCRouter({
 
       if (!payment) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found",
+          code: 'NOT_FOUND',
+          message: 'Payment not found',
         });
       }
 
       if (payment.tenant.room.property.userId !== ctx.session.user.id) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You do not have permission to update this payment",
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this payment',
         });
       }
 
@@ -564,92 +575,146 @@ export const tenantRouter = createTRPCRouter({
       });
     }),
 
-  generateContract: protectedProcedure.input(z.object({ tenantId: z.string() })).mutation(async ({ input }) => {
-    const tenant = await db.tenant.findUnique({
-      where: { id: input.tenantId },
-      include: {
-        room: {
-          include: {
-            property: true,
+  generateContract: protectedProcedure
+    .input(z.object({ tenantId: z.string() }))
+    .mutation(async ({ input }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
           },
         },
-      },
-    });
-
-    if (!tenant) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
       });
-    }
 
-    const property = tenant.room.property;
-    const contractUrl = await generateContract({
-      user: {
-        id: tenant.id,
-        name: tenant.name,
-        email: tenant.email,
-        phone: tenant.phone,
-        ktpNumber: tenant.ktpNumber,
-      },
-      property: {
-        name: property.name,
-        description: property.description,
-        address: property.address,
-        city: property.city || "Unknown",
-        province: property.province || "Unknown",
-        postalCode: property.postalCode || "Unknown",
-        facilities: property.facilities,
-      },
-      transaction: {
-        id: tenant.id,
-        amount: tenant.rentAmount || 0,
-        createdAt: tenant.createdAt,
-      },
-    });
+      if (!tenant) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
+        });
+      }
 
-    // Update tenant with contract URL
-    const updatedTenant = await db.tenant.update({
-      where: { id: input.tenantId },
-      data: {
-        contractFile: contractUrl,
-      },
-      include: {
-        room: {
-          include: {
-            property: true,
+      const property = tenant.room.property;
+      const contractUrl = await generateContract({
+        user: {
+          id: tenant.id,
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          ktpNumber: tenant.ktpNumber,
+        },
+        property: {
+          name: property.name,
+          description: property.description,
+          address: property.address,
+          city: property.city || 'Unknown',
+          province: property.province || 'Unknown',
+          postalCode: property.postalCode || 'Unknown',
+          facilities: property.facilities,
+        },
+        transaction: {
+          id: tenant.id,
+          amount: tenant.rentAmount || 0,
+          createdAt: tenant.createdAt,
+        },
+      });
+
+      // Update tenant with contract URL
+      const updatedTenant = await db.tenant.update({
+        where: { id: input.tenantId },
+        data: {
+          contractFile: contractUrl,
+        },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    try {
-      // Try to send email but don't fail if it doesn't work
-      await sendContractEmail(
-        updatedTenant.email,
-        contractUrl,
-        updatedTenant.name,
-        updatedTenant.room.property.name,
-        updatedTenant.id
-      );
-    } catch (error) {
-      console.error("Failed to send contract email:", error);
-      // Don't throw the error - we still want to return the contract URL
-    }
+      try {
+        // Try to send email but don't fail if it doesn't work
+        await sendContractEmail(
+          updatedTenant.email,
+          contractUrl,
+          updatedTenant.name,
+          updatedTenant.room.property.name,
+          updatedTenant.id
+        );
+      } catch (error) {
+        console.error('Failed to send contract email:', error);
+        // Don't throw the error - we still want to return the contract URL
+      }
 
-    return updatedTenant;
-  }),
+      return updatedTenant;
+    }),
+
+  extendLease: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      if (!tenant) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
+        });
+      }
+
+      if (tenant.room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to extend this lease',
+        });
+      }
+
+      // Add one month to the current end date
+      if (!tenant.endDate) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Tenant does not have a valid end date',
+        });
+      }
+
+      const newEndDate = new Date(tenant.endDate);
+      newEndDate.setMonth(newEndDate.getMonth() + 1);
+
+      return db.tenant.update({
+        where: { id: input.tenantId },
+        data: {
+          endDate: newEndDate,
+        },
+      });
+    }),
 
   getOverview: protectedProcedure
     .input(
       z.object({
         propertyId: z.string().optional(),
-        status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
       })
     )
     .query(async ({ input }) => {
       const { propertyId, status } = input;
       const now = new Date();
+      const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
       // Get tenants with filtering
       const tenants = await db.tenant.findMany({
@@ -667,13 +732,13 @@ export const tenantRouter = createTRPCRouter({
           room: true,
           leases: {
             orderBy: {
-              startDate: "desc",
+              startDate: 'desc',
             },
             take: 1,
           },
         },
         orderBy: {
-          name: "asc",
+          name: 'asc',
         },
       });
 
@@ -691,7 +756,7 @@ export const tenantRouter = createTRPCRouter({
             room: {
               propertyId: propertyId,
             },
-            status: "ACTIVE",
+            status: 'ACTIVE',
           },
         }),
         inactive: await db.tenant.count({
@@ -699,48 +764,25 @@ export const tenantRouter = createTRPCRouter({
             room: {
               propertyId: propertyId,
             },
-            status: "INACTIVE",
+            status: 'INACTIVE',
           },
         }),
-        upcomingMoveIns: await db.lease.count({
+        upcomingMoveOuts: await db.tenant.count({
           where: {
-            tenant: {
-              room: {
-                propertyId: propertyId,
-              },
+            room: {
+              propertyId: propertyId,
             },
-            startDate: {
-              gt: now,
-            },
-          },
-        }),
-        upcomingMoveOuts: await db.lease.count({
-          where: {
-            tenant: {
-              room: {
-                propertyId: propertyId,
-              },
-            },
+            status: 'ACTIVE',
             endDate: {
               gt: now,
-              lt: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Next 30 days
+              lte: oneWeekFromNow,
             },
           },
         }),
       };
 
       return {
-        tenants: tenants.map((tenant) => ({
-          id: tenant.id,
-          name: tenant.name,
-          email: tenant.email,
-          phone: tenant.phone,
-          status: tenant.status,
-          roomNumber: tenant.room.number,
-          leaseStart: tenant.leases[0]?.startDate ?? new Date(),
-          leaseEnd: tenant.leases[0]?.endDate ?? new Date(),
-          rentAmount: tenant.leases[0]?.rentAmount ?? 0,
-        })),
+        tenants,
         stats,
       };
     }),
@@ -766,35 +808,35 @@ export const tenantRouter = createTRPCRouter({
 
       if (!tenant) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
         });
       }
 
       // Convert base64 to buffer
-      const fileBuffer = Buffer.from(input.file, "base64");
+      const fileBuffer = Buffer.from(input.file, 'base64');
       const contractKey = `${tenant.id}-${Date.now()}-signed.pdf`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from("contracts")
+        .from('contracts')
         .upload(contractKey, fileBuffer, {
-          contentType: "application/pdf",
-          cacheControl: "3600",
+          contentType: 'application/pdf',
+          cacheControl: '3600',
           upsert: true,
         });
 
       if (uploadError) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
+          code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to upload contract: ${uploadError.message}`,
         });
       }
 
       // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("contracts")
-        .getPublicUrl(contractKey);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('contracts').getPublicUrl(contractKey);
 
       // Update tenant with the signed contract URL
       const updatedTenantWithSignedContract = await db.tenant.update({
@@ -835,8 +877,8 @@ export const tenantRouter = createTRPCRouter({
 
       if (!tenant || !tenant.room) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant or room not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant or room not found',
         });
       }
 
@@ -865,8 +907,8 @@ export const tenantRouter = createTRPCRouter({
       if (input.paymentMethod === PaymentMethod.STRIPE) {
         if (!tenant.email) {
           throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Tenant email is required for Stripe payments",
+            code: 'BAD_REQUEST',
+            message: 'Tenant email is required for Stripe payments',
           });
         }
 
@@ -876,8 +918,8 @@ export const tenantRouter = createTRPCRouter({
 
         if (!property) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Property not found",
+            code: 'NOT_FOUND',
+            message: 'Property not found',
           });
         }
 
@@ -887,8 +929,8 @@ export const tenantRouter = createTRPCRouter({
 
         if (!room) {
           throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Room not found",
+            code: 'NOT_FOUND',
+            message: 'Room not found',
           });
         }
 
@@ -944,13 +986,13 @@ export const tenantRouter = createTRPCRouter({
         payments: {
           where: {
             status: {
-              in: ["PENDING", "OVERDUE"],
+              in: ['PENDING', 'OVERDUE'],
             },
           },
         },
       },
       orderBy: {
-        name: "asc",
+        name: 'asc',
       },
     });
 

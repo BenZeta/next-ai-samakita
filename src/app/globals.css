@@ -1,86 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-*,
-*::before,
-*::after {
-  @apply m-0 box-border p-0;
-}
-
-html,
-body {
-  @apply min-h-full w-full;
-}
-
-body {
-  @apply flex w-full flex-col bg-gradient-to-br from-blue-50 to-red-50 text-slate-900 dark:from-slate-900 dark:to-slate-800 dark:text-slate-100;
-}
-
-#__next {
-  @apply flex h-full min-h-screen w-full;
-}
-
-.aspect-ratio-box {
-  padding-top: 56.25%; /* 16:9 Aspect Ratio */
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.5;
+@layer base {
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
   }
-}
-.blink {
-  animation: blink 1s linear infinite;
-}
-
-@keyframes fade-in {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-.fade-in {
-  animation: fade-in 0.5s ease-in-out;
-}
-
-.modal-overlay {
-  background-color: rgba(0, 0, 0, 0.75);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal-content {
-  position: relative;
-  background: #1f2937;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  outline: none;
-  width: 90%;
-  height: 80%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @layer base {
@@ -131,9 +59,34 @@ body {
 }
 
 @layer base {
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+  * {
+    @apply border-border;
   }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+}
+
+/* Custom styles */
+html,
+body {
+  @apply h-full antialiased;
+}
+
+#__next {
+  @apply flex h-full min-h-screen w-full flex-col;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @keyframes wave {
