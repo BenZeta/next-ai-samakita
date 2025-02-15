@@ -7,6 +7,7 @@ import { generateContract } from "@/lib/contract";
 import { sendContractEmail, sendInvoiceEmail } from "@/lib/email";
 import { propertySchema, userSchema } from "@/lib/contracts";
 import { supabase } from "@/lib/supabase";
+import { createMidtransPayment } from "@/lib/midtrans";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -450,8 +451,24 @@ export const tenantRouter = createTRPCRouter({
       // Generate Midtrans payment link if needed
       let paymentLink: string | undefined;
       if (input.paymentMethod === PaymentMethod.MIDTRANS) {
-        // TODO: Implement Midtrans integration
-        // paymentLink = await createMidtransPayment(payment);
+        const midtransResponse = await createMidtransPayment({
+          orderId: payment.id,
+          amount: payment.amount,
+          customerName: tenant.name,
+          customerEmail: tenant.email,
+        });
+        
+        paymentLink = midtransResponse.redirect_url;
+        
+        // Update payment with Midtrans transaction details
+        await ctx.db.payment.update({
+          where: { id: payment.id },
+          data: {
+            midtransId: midtransResponse.transaction_id,
+            midtransToken: midtransResponse.token,
+            midtransStatus: midtransResponse.transaction_status,
+          },
+        });
       }
 
       // Send invoice email
@@ -815,8 +832,24 @@ export const tenantRouter = createTRPCRouter({
       // Generate Midtrans payment link if needed
       let paymentLink: string | undefined;
       if (input.paymentMethod === PaymentMethod.MIDTRANS) {
-        // TODO: Implement Midtrans integration
-        // paymentLink = await createMidtransPayment(payment);
+        const midtransResponse = await createMidtransPayment({
+          orderId: payment.id,
+          amount: payment.amount,
+          customerName: tenant.name,
+          customerEmail: tenant.email,
+        });
+        
+        paymentLink = midtransResponse.redirect_url;
+        
+        // Update payment with Midtrans transaction details
+        await ctx.db.payment.update({
+          where: { id: payment.id },
+          data: {
+            midtransId: midtransResponse.transaction_id,
+            midtransToken: midtransResponse.token,
+            midtransStatus: midtransResponse.transaction_status,
+          },
+        });
       }
 
       // Send invoice email
