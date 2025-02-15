@@ -1,15 +1,23 @@
-import { PrismaClient, RoomStatus, TenantStatus, PaymentStatus, PaymentType, ExpenseCategory, PaymentMethod } from "@prisma/client";
-import { hash } from "bcryptjs";
+import {
+  ExpenseCategory,
+  PaymentMethod,
+  PaymentStatus,
+  PaymentType,
+  PrismaClient,
+  RoomStatus,
+  TenantStatus,
+} from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   // Create a test user
-  const hashedPassword = await hash("password123", 12);
+  const hashedPassword = await hash('password123', 12);
   const user = await prisma.user.create({
     data: {
-      name: "Test User",
-      email: "test@example.com",
+      name: 'Test User',
+      email: 'test@example.com',
       hashedPassword,
       emailVerified: new Date(),
     },
@@ -18,13 +26,13 @@ async function main() {
   // Create a test property
   const property = await prisma.property.create({
     data: {
-      name: "Test Property",
-      address: "123 Test Street",
-      city: "Test City",
-      province: "Test Province",
-      postalCode: "12345",
-      description: "A test property",
-      location: "Test Location",
+      name: 'Test Property',
+      address: '123 Test Street',
+      city: 'Test City',
+      province: 'Test Province',
+      postalCode: '12345',
+      description: 'A test property',
+      location: 'Test Location',
       userId: user.id,
       dueDate: 5, // Default due date is 5th of each month
     },
@@ -34,9 +42,9 @@ async function main() {
   const rooms = await Promise.all([
     prisma.room.create({
       data: {
-        number: "101",
+        number: '101',
         floor: 1,
-        type: "Standard",
+        type: 'Standard',
         size: 20,
         price: 1000000,
         status: RoomStatus.AVAILABLE,
@@ -45,9 +53,9 @@ async function main() {
     }),
     prisma.room.create({
       data: {
-        number: "102",
+        number: '102',
         floor: 1,
-        type: "Deluxe",
+        type: 'Deluxe',
         size: 25,
         price: 1500000,
         status: RoomStatus.AVAILABLE,
@@ -57,17 +65,21 @@ async function main() {
   ]);
 
   // Create test tenants
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 20); // 5th of previous month
+  const endDate = new Date(now.getFullYear(), now.getMonth(), 20); // 5th of current month
+
   const tenant = await prisma.tenant.create({
     data: {
-      name: "Test Tenant",
-      email: "tenant@example.com",
-      phone: "1234567890",
-      ktpNumber: "1234567890123456",
-      ktpFile: "ktp.jpg",
+      name: 'Test Tenant',
+      email: 'tenant@example.com',
+      phone: '1234567890',
+      ktpNumber: '1234567890123456',
+      ktpFile: 'ktp.jpg',
       status: TenantStatus.ACTIVE,
       roomId: rooms[0].id,
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      startDate,
+      endDate,
       rentAmount: 1000000,
       depositAmount: 2000000,
     },
@@ -91,17 +103,17 @@ async function main() {
     data: {
       amount: 500000,
       category: ExpenseCategory.UTILITY,
-      description: "Electricity bill",
+      description: 'Electricity bill',
       date: new Date(),
       propertyId: property.id,
     },
   });
 
-  console.log("Seed data created successfully");
+  console.log('Seed data created successfully');
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e);
     process.exit(1);
   })

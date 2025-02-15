@@ -57,9 +57,9 @@ export function TenantOverview({ propertyId }: TenantOverviewProps) {
     name: tenant.name,
     room: tenant.room.number,
     status: tenant.status,
-    leaseStart: (tenant.leases[0]?.startDate ?? new Date()).toISOString(),
-    leaseEnd: (tenant.leases[0]?.endDate ?? new Date()).toISOString(),
-    rent: tenant.leases[0]?.rentAmount ?? 0,
+    leaseStart: (tenant.startDate ?? new Date()).toISOString(),
+    leaseEnd: (tenant.endDate ?? new Date()).toISOString(),
+    rent: tenant.rentAmount ?? 0,
   }));
 
   return (

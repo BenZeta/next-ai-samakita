@@ -1,0 +1,2 @@
+- Updated tenant seeding logic to set start date 5 days from current date and end date to 5th of current month, and implemented lease extension functionality in tenant details page with confirmation modal.
+- Fixed tenant lease dates display in TenantOverview component to show correct start and end dates from tenant data.
