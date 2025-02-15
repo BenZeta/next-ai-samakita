@@ -43,3 +43,4 @@
 - Modified tenant creation flow to use room price as rent amount instead of requiring manual input.
 - Fixed contract signing error by adding proper tenant verification and error handling in the signContract mutation.
 - Fixed imports and database references in tenant router, removed unused imports and replaced prisma references with db.
+- Added payment features including dueDate for properties, invoice sending functionality with email and WhatsApp integration, and Midtrans payment gateway support.

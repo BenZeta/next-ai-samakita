@@ -2,9 +2,9 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
-import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType, Prisma } from "@prisma/client";
+import { TenantStatus, ServiceRequestStatus, PaymentStatus, PaymentType, PaymentMethod, Prisma } from "@prisma/client";
 import { generateContract } from "@/lib/contract";
-import { sendContractEmail } from "@/lib/email";
+import { sendContractEmail, sendInvoiceEmail } from "@/lib/email";
 import { propertySchema, userSchema } from "@/lib/contracts";
 import { supabase } from "@/lib/supabase";
 
@@ -719,5 +719,85 @@ export const tenantRouter = createTRPCRouter({
       });
 
       return updatedTenantWithSignedContract;
+    }),
+
+  sendInvoice: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.string(),
+        paymentMethod: z.nativeEnum(PaymentMethod),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const tenant = await db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      if (!tenant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tenant not found",
+        });
+      }
+
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}-${tenant.id.slice(-4)}`;
+
+      // Calculate due date based on property's dueDate setting
+      const now = new Date();
+      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
+      if (dueDate < now) {
+        dueDate.setMonth(dueDate.getMonth() + 1);
+      }
+
+      // Create payment record
+      const payment = await db.payment.create({
+        data: {
+          amount: tenant.room.price,
+          type: PaymentType.RENT,
+          status: PaymentStatus.INVOICED,
+          method: input.paymentMethod,
+          dueDate,
+          invoiceNumber,
+          tenantId: tenant.id,
+          propertyId: tenant.room.propertyId,
+        },
+      });
+
+      // Generate Midtrans payment link if needed
+      let paymentLink = undefined;
+      if (input.paymentMethod === PaymentMethod.MIDTRANS) {
+        // TODO: Implement Midtrans integration
+        // paymentLink = await createMidtransPayment(payment);
+      }
+
+      // Send invoice email
+      await sendInvoiceEmail({
+        email: tenant.email,
+        tenantName: tenant.name,
+        propertyName: tenant.room.property.name,
+        roomNumber: tenant.room.number,
+        amount: payment.amount,
+        dueDate: payment.dueDate,
+        invoiceNumber: payment.invoiceNumber!,
+        paymentLink,
+      });
+
+      // TODO: Send WhatsApp notification
+      // await sendWhatsAppNotification(tenant.phone, {
+      //   type: "INVOICE",
+      //   invoiceNumber,
+      //   amount: payment.amount,
+      //   dueDate,
+      // });
+
+      return payment;
     }),
 });

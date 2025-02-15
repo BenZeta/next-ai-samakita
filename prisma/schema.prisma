@@ -84,6 +84,7 @@ model Property {
   postalCode          String?              // Made optional during migration
   description         String               @default("")
   location            String               @default("")
+  dueDate             Int                  @default(5) // Day of the month when rent is due (1-31)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   userId              String
@@ -162,19 +163,29 @@ model ServiceRequest {
   resolvedAt  DateTime?
 }
 
+enum PaymentMethod {
+  MANUAL
+  MIDTRANS
+}
+
 model Payment {
-  id         String        @id @default(cuid())
-  amount     Float
-  type       PaymentType
-  status     PaymentStatus @default(PENDING)
-  dueDate    DateTime
-  paidAt     DateTime?
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  tenantId   String
-  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  propertyId String
-  property   Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  amount         Float
+  type           PaymentType
+  status         PaymentStatus @default(PENDING)
+  method         PaymentMethod @default(MANUAL)
+  dueDate        DateTime
+  paidAt         DateTime?
+  invoiceSentAt  DateTime?
+  invoiceNumber  String?
+  receiptUrl     String?
+  midtransId     String?       @unique
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  tenantId       String
+  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  propertyId     String
+  property       Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 enum RoomStatus {
@@ -205,6 +216,7 @@ enum PaymentType {
 
 enum PaymentStatus {
   PENDING
+  INVOICED
   PAID
   OVERDUE
   CANCELLED

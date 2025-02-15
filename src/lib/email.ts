@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { createElement } from 'react';
 import { ContractEmail } from './email/templates/ContractEmail';
+import { InvoiceEmail } from './email/templates/InvoiceEmail';
 
 const resend = new Resend(process.env.RESEND_API_KEY || '');
 
@@ -41,5 +42,45 @@ export async function sendContractEmail(email: string, contractUrl: string, tena
   } catch (error) {
     console.error('Error sending contract email:', error);
     // Don't throw the error - we don't want to fail contract generation if email fails
+  }
+}
+
+export async function sendInvoiceEmail({
+  email,
+  tenantName,
+  propertyName,
+  roomNumber,
+  amount,
+  dueDate,
+  invoiceNumber,
+  paymentLink,
+}: {
+  email: string;
+  tenantName: string;
+  propertyName: string;
+  roomNumber: string;
+  amount: number;
+  dueDate: Date;
+  invoiceNumber: string;
+  paymentLink?: string;
+}) {
+  try {
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@benzeta.shop',
+      to: email,
+      subject: `Invoice for Rent Payment - ${propertyName}`,
+      react: createElement(InvoiceEmail, {
+        tenantName,
+        propertyName,
+        roomNumber,
+        amount,
+        dueDate,
+        invoiceNumber,
+        paymentLink,
+      }),
+    });
+  } catch (error) {
+    console.error('Error sending invoice email:', error);
+    throw error;
   }
 }
