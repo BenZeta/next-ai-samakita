@@ -113,7 +113,11 @@ export const tenantRouter = createTRPCRouter({
           },
         });
 
-        // Create initial rent payment
+        // Calculate first rent due date based on property's dueDate setting
+        const now = new Date();
+        const firstRentDueDate = new Date(now.getFullYear(), now.getMonth() + 1, room.property.dueDate);
+
+        // Create initial rent payment with next month's due date
         await tx.payment.create({
           data: {
             tenantId: tenant.id,
@@ -121,11 +125,11 @@ export const tenantRouter = createTRPCRouter({
             amount: rentAmount,
             type: "RENT",
             status: "PENDING",
-            dueDate: new Date(startDate),
+            dueDate: firstRentDueDate,
           },
         });
 
-        // Create deposit payment
+        // Create deposit payment with immediate due date
         await tx.payment.create({
           data: {
             tenantId: tenant.id,
@@ -390,40 +394,81 @@ export const tenantRouter = createTRPCRouter({
       });
     }),
 
-  createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
-    const tenant = await db.tenant.findUnique({
-      where: { id: input.tenantId },
-      include: {
-        room: {
-          include: {
-            property: true,
+  createRentPayment: protectedProcedure
+    .input(
+      z.object({
+        tenantId: z.string(),
+        paymentMethod: z.nativeEnum(PaymentMethod),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const tenant = await ctx.db.tenant.findUnique({
+        where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
           },
         },
-      },
-    });
-
-    if (!tenant) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
       });
-    }
 
-    if (tenant.room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to create payments for this tenant",
+      if (!tenant || !tenant.room) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tenant or room not found",
+        });
+      }
+
+      if (tenant.room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to create payments for this tenant",
+        });
+      }
+
+      // Calculate due date based on property's dueDate setting
+      const now = new Date();
+      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
+      if (dueDate < now) {
+        dueDate.setMonth(dueDate.getMonth() + 1);
+      }
+
+      // Create payment
+      const payment = await ctx.db.payment.create({
+        data: {
+          amount: tenant.rentAmount || tenant.room.price,
+          type: PaymentType.RENT,
+          status: PaymentStatus.PENDING,
+          method: input.paymentMethod,
+          dueDate,
+          tenantId: tenant.id,
+          propertyId: tenant.room.propertyId,
+        },
       });
-    }
 
-    return db.payment.create({
-      data: {
-        ...input,
-        status: PaymentStatus.PENDING,
-        propertyId: tenant.room.property.id,
-      },
-    });
-  }),
+      // Generate Midtrans payment link if needed
+      let paymentLink: string | undefined;
+      if (input.paymentMethod === PaymentMethod.MIDTRANS) {
+        // TODO: Implement Midtrans integration
+        // paymentLink = await createMidtransPayment(payment);
+      }
+
+      // Send invoice email
+      await sendInvoiceEmail({
+        email: tenant.email,
+        tenantName: tenant.name,
+        propertyName: tenant.room.property.name,
+        roomNumber: tenant.room.number,
+        amount: payment.amount,
+        dueDate: payment.dueDate,
+        paymentLink,
+        paymentType: payment.type,
+        invoiceNumber: `INV-${payment.id}`,
+      });
+
+      return payment;
+    }),
 
   updatePayment: protectedProcedure
     .input(
@@ -728,8 +773,8 @@ export const tenantRouter = createTRPCRouter({
         paymentMethod: z.nativeEnum(PaymentMethod),
       })
     )
-    .mutation(async ({ input }) => {
-      const tenant = await db.tenant.findUnique({
+    .mutation(async ({ input, ctx }) => {
+      const tenant = await ctx.db.tenant.findUnique({
         where: { id: input.tenantId },
         include: {
           room: {
@@ -740,15 +785,12 @@ export const tenantRouter = createTRPCRouter({
         },
       });
 
-      if (!tenant) {
+      if (!tenant || !tenant.room) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Tenant not found",
+          message: "Tenant or room not found",
         });
       }
-
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}-${tenant.id.slice(-4)}`;
 
       // Calculate due date based on property's dueDate setting
       const now = new Date();
@@ -757,22 +799,21 @@ export const tenantRouter = createTRPCRouter({
         dueDate.setMonth(dueDate.getMonth() + 1);
       }
 
-      // Create payment record
-      const payment = await db.payment.create({
+      // Create payment
+      const payment = await ctx.db.payment.create({
         data: {
-          amount: tenant.room.price,
+          amount: tenant.rentAmount || tenant.room.price,
           type: PaymentType.RENT,
           status: PaymentStatus.PENDING,
           method: input.paymentMethod,
           dueDate,
-          invoiceNumber,
           tenantId: tenant.id,
           propertyId: tenant.room.propertyId,
         },
       });
 
       // Generate Midtrans payment link if needed
-      let paymentLink = undefined;
+      let paymentLink: string | undefined;
       if (input.paymentMethod === PaymentMethod.MIDTRANS) {
         // TODO: Implement Midtrans integration
         // paymentLink = await createMidtransPayment(payment);
@@ -786,18 +827,10 @@ export const tenantRouter = createTRPCRouter({
         roomNumber: tenant.room.number,
         amount: payment.amount,
         dueDate: payment.dueDate,
-        invoiceNumber: payment.invoiceNumber!,
         paymentLink,
         paymentType: payment.type,
+        invoiceNumber: `INV-${payment.id}`,
       });
-
-      // TODO: Send WhatsApp notification
-      // await sendWhatsAppNotification(tenant.phone, {
-      //   type: "INVOICE",
-      //   invoiceNumber,
-      //   amount: payment.amount,
-      //   dueDate,
-      // });
 
       return payment;
     }),

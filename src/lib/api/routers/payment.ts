@@ -68,6 +68,7 @@ export const paymentRouter = createTRPCRouter({
             data: {
               midtransId: midtransPayment.transaction_id,
               midtransToken: midtransPayment.token,
+              method: PaymentMethod.MIDTRANS,
             },
           });
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/trpc/react";
-import { PaymentStatus, PaymentType } from "@prisma/client";
+import { PaymentStatus, PaymentType, PaymentMethod } from "@prisma/client";
 import { toast } from "react-toastify";
-import { CreditCard, Ban, Upload } from "lucide-react";
+import { TRPCClientErrorLike } from "@trpc/client";
+import { AppRouter } from "@/lib/api/root";
 
 interface PaymentListProps {
   tenantId: string;
@@ -12,15 +13,16 @@ interface PaymentListProps {
 }
 
 export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
-  const [uploadingPaymentId, setUploadingPaymentId] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<PaymentType | undefined>();
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const utils = api.useUtils();
 
-  const {
-    data: payments,
-    isLoading,
-    refetch,
-  } = api.billing.getPayments.useQuery({
+  const { data: payments, refetch } = api.billing.getPayments.useQuery({
     tenantId,
-    type: paymentType,
+    type: selectedType,
+    startDate: startDate ? new Date(startDate) : undefined,
+    endDate: endDate ? new Date(endDate) : undefined,
   });
 
   const updatePaymentMutation = api.billing.updatePayment.useMutation({
@@ -28,67 +30,85 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
       toast.success("Payment status updated successfully!");
       refetch();
     },
-    onError: (error) => {
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message);
     },
   });
 
-  const handleCancelPayment = async (paymentId: string) => {
+  const checkPaymentStatus = api.billing.checkStatus.useMutation({
+    onSuccess: () => {
+      utils.billing.getPayments.invalidate();
+    },
+  });
+
+  useEffect(() => {
+    const checkPendingPayments = () => {
+      if (!payments?.length) return;
+      
+      payments.forEach((payment) => {
+        if (
+          payment.method === PaymentMethod.MIDTRANS &&
+          payment.status === PaymentStatus.PENDING &&
+          payment.midtransId
+        ) {
+          checkPaymentStatus.mutate({ paymentId: payment.id });
+        }
+      });
+    };
+
+    // Check immediately
+    checkPendingPayments();
+
+    // Then check every 10 seconds for pending Midtrans payments
+    const interval = setInterval(checkPendingPayments, 10000);
+
+    return () => clearInterval(interval);
+  }, [payments, checkPaymentStatus]);
+
+  const handleStatusChange = async (paymentId: string, newStatus: PaymentStatus) => {
     try {
       await updatePaymentMutation.mutateAsync({
         paymentId,
-        status: PaymentStatus.CANCELLED,
+        status: newStatus,
       });
     } catch (error) {
-      console.error("Failed to cancel payment:", error);
+      console.error("Failed to update payment status:", error);
     }
   };
 
-  const handleUploadProof = async (paymentId: string, file: File) => {
-    try {
-      setUploadingPaymentId(paymentId);
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Upload to your storage service (e.g., Supabase)
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload file");
-      }
-
-      const { url } = await response.json();
-
-      // Update payment with proof and mark as PAID
-      await updatePaymentMutation.mutateAsync({
-        paymentId,
-        status: PaymentStatus.PAID,
-        proofOfPayment: url,
-      });
-
-      toast.success("Payment proof uploaded successfully!");
-    } catch (error) {
-      console.error("Failed to upload payment proof:", error);
-      toast.error("Failed to upload payment proof");
-    } finally {
-      setUploadingPaymentId(null);
-    }
-  };
-
-  if (isLoading) {
-    return <div className="py-4 text-center text-gray-500">Loading payments...</div>;
-  }
-
-  if (!payments || payments.length === 0) {
-    return <div className="py-4 text-center text-gray-500">No payments found.</div>;
-  }
+  const typeOptions = Object.values(PaymentType);
 
   return (
     <div className="space-y-4">
-      {payments.map((payment) => (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedType || ""}
+            onChange={(e) => setSelectedType(e.target.value ? (e.target.value as PaymentType) : undefined)}
+            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <option value="">All Types</option>
+            {typeOptions.map((type) => (
+              <option key={type} value={type}>
+                {type.charAt(0) + type.slice(1).toLowerCase()}
+              </option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+
+      {payments?.map((payment) => (
         <div
           key={payment.id}
           className={`rounded-lg border border-gray-200 bg-white p-4 transition-all hover:shadow-md ${
@@ -103,72 +123,26 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
               : ""
           }`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div
-                className={`rounded-full p-2 ${
-                  payment.status === PaymentStatus.OVERDUE
-                    ? "bg-red-100 text-red-600"
-                    : payment.status === PaymentStatus.PENDING
-                    ? "bg-yellow-100 text-yellow-600"
-                    : payment.status === PaymentStatus.PAID
-                    ? "bg-green-100 text-green-600"
-                    : payment.status === PaymentStatus.CANCELLED
-                    ? "bg-gray-100 text-gray-600"
-                    : "bg-gray-100 text-gray-600"
-                }`}>
-                {payment.status === PaymentStatus.CANCELLED ? (
-                  <Ban className="h-5 w-5" />
-                ) : (
-                  <CreditCard className="h-5 w-5" />
-                )}
-              </div>
-              <div>
-                <p className="font-medium">
-                  Rp {payment.amount.toLocaleString()} - {payment.type}
-                </p>
+            <div>
+              <p className="font-medium">
+                Rp {payment.amount.toLocaleString()} - {payment.type}
+              </p>
+              <p className="text-sm text-gray-600">Due: {new Date(payment.dueDate).toLocaleDateString()}</p>
+              <p className="text-sm text-gray-600">
+                Status: {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}
+              </p>
+              {payment.method && (
                 <p className="text-sm text-gray-600">
-                  Due: {new Date(payment.dueDate).toLocaleDateString()}
+                  Method: {payment.method.charAt(0) + payment.method.slice(1).toLowerCase()}
                 </p>
+              )}
+              {payment.midtransStatus && (
                 <p className="text-sm text-gray-600">
-                  Status: {payment.status.charAt(0) + payment.status.slice(1).toLowerCase()}
+                  Midtrans Status: {payment.midtransStatus}
                 </p>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              {payment.status !== PaymentStatus.CANCELLED && payment.status !== PaymentStatus.PAID && (
-                <>
-                  <label
-                    htmlFor={`proof-${payment.id}`}
-                    className={`cursor-pointer rounded-full bg-blue-100 p-2 text-blue-600 hover:bg-blue-200 ${
-                      uploadingPaymentId === payment.id ? "opacity-50" : ""
-                    }`}>
-                    <Upload className="h-5 w-5" />
-                    <input
-                      type="file"
-                      id={`proof-${payment.id}`}
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          handleUploadProof(payment.id, file);
-                        }
-                      }}
-                      disabled={uploadingPaymentId === payment.id}
-                    />
-                  </label>
-                  <button
-                    onClick={() => handleCancelPayment(payment.id)}
-                    className="rounded-full bg-red-100 p-2 text-red-600 hover:bg-red-200"
-                    title="Cancel payment">
-                    <Ban className="h-5 w-5" />
-                  </button>
-                </>
               )}
             </div>
-          </div>
-          {payment.proofOfPayment && (
-            <div className="mt-2">
+            {payment.proofOfPayment && (
               <a
                 href={payment.proofOfPayment}
                 target="_blank"
@@ -176,10 +150,16 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
                 className="text-sm text-blue-600 hover:underline">
                 View Payment Proof
               </a>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       ))}
+
+      {(!payments || payments.length === 0) && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-center text-gray-500">
+          No payments found
+        </div>
+      )}
     </div>
   );
 }

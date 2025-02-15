@@ -1,4 +1,4 @@
-import { PrismaClient, RoomStatus, TenantStatus, PaymentStatus, PaymentType, ExpenseCategory } from "@prisma/client";
+import { PrismaClient, RoomStatus, TenantStatus, PaymentStatus, PaymentType, ExpenseCategory, PaymentMethod } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -78,9 +78,9 @@ async function main() {
     data: {
       amount: 1000000,
       type: PaymentType.RENT,
-      status: PaymentStatus.PAID,
+      status: PaymentStatus.PENDING,
+      method: PaymentMethod.MANUAL,
       dueDate: new Date(),
-      paidAt: new Date(),
       tenantId: tenant.id,
       propertyId: property.id,
     },

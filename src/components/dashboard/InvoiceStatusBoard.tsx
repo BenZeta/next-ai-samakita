@@ -27,6 +27,7 @@ export function InvoiceStatusBoard({ payments: initialPayments, isLoading }: Inv
     data: paymentsData,
     refetch,
   } = api.billing.getPayments.useQuery({
+    tenantId: "all",
     type: type === "all" ? undefined : type,
   });
 

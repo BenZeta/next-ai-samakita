@@ -20,7 +20,7 @@ const paymentSchema = z.object({
 
 export const billingRouter = createTRPCRouter({
   createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
-    const tenant = await db.tenant.findUnique({
+    const tenant = await ctx.db.tenant.findUnique({
       where: { id: input.tenantId },
       include: {
         room: {
@@ -38,93 +38,133 @@ export const billingRouter = createTRPCRouter({
       });
     }
 
-    if (tenant.room.property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You do not have permission to create payments for this tenant",
-      });
-    }
-
-    return db.payment.create({
+    // Create payment record
+    const payment = await ctx.db.payment.create({
       data: {
         ...input,
-        propertyId: tenant.room.property.id,
         status: PaymentStatus.PENDING,
+        propertyId: tenant.room.propertyId,
       },
     });
+
+    // If payment method is Midtrans, create payment in Midtrans
+    if (input.method === PaymentMethod.MIDTRANS) {
+      try {
+        const midtransPayment = await createMidtransPayment({
+          orderId: payment.id,
+          amount: payment.amount,
+          customerName: tenant.name,
+          customerEmail: tenant.email,
+        });
+
+        // Update payment with Midtrans details
+        await ctx.db.payment.update({
+          where: { id: payment.id },
+          data: {
+            midtransId: midtransPayment.transaction_id,
+            midtransToken: midtransPayment.token,
+            method: PaymentMethod.MIDTRANS,
+          },
+        });
+
+        return {
+          ...payment,
+          midtransRedirectUrl: midtransPayment.redirect_url,
+        };
+      } catch (error) {
+        console.error("Failed to create Midtrans payment:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create Midtrans payment",
+        });
+      }
+    }
+
+    return payment;
   }),
 
   getPayments: protectedProcedure
     .input(
       z.object({
-        tenantId: z.string().optional(),
+        tenantId: z.union([z.literal("all"), z.string()]),
         type: z.nativeEnum(PaymentType).optional(),
         startDate: z.date().optional(),
         endDate: z.date().optional(),
-        limit: z.number().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const now = new Date();
       const payments = await ctx.db.payment.findMany({
         where: {
-          tenantId: input.tenantId,
-          type: input.type,
-          dueDate: {
-            gte: input.startDate,
-            lte: input.endDate,
-          },
+          ...(input.tenantId !== "all" ? { tenantId: input.tenantId } : {}),
+          ...(input.type ? { type: input.type } : {}),
+          ...(input.startDate && input.endDate
+            ? {
+                createdAt: {
+                  gte: input.startDate,
+                  lte: input.endDate,
+                },
+              }
+            : {}),
         },
-        orderBy: {
-          dueDate: "desc",
-        },
-        take: input.limit,
+        orderBy: { createdAt: "desc" },
         include: {
           tenant: {
             include: {
-              room: true,
-            },
+              room: true
+            }
           },
-          property: true,
         },
       });
 
-      // Update payment statuses based on due dates and notifications
+      // Check Midtrans status for pending payments
       const updatedPayments = await Promise.all(
         payments.map(async (payment) => {
-          let newStatus = payment.status;
-
-          // Don't update if already PAID or CANCELLED
-          if (payment.status !== PaymentStatus.PAID && payment.status !== PaymentStatus.CANCELLED) {
-            if (payment.dueDate < now && !payment.paidAt) {
-              newStatus = PaymentStatus.OVERDUE;
-            } else if (payment.notificationSentAt && !payment.paidAt) {
-              newStatus = PaymentStatus.PENDING;
-            }
-
-            // Update payment if status has changed
-            if (newStatus !== payment.status) {
-              await ctx.db.payment.update({
-                where: { id: payment.id },
-                data: { status: newStatus },
-              });
-              payment.status = newStatus;
-            }
-
-            // Check Midtrans status if payment is pending and has midtransId
-            if (payment.midtransId && payment.status === PaymentStatus.PENDING) {
+          if (
+            payment.method === PaymentMethod.MIDTRANS &&
+            payment.status === PaymentStatus.PENDING &&
+            payment.midtransId
+          ) {
+            try {
               const midtransStatus = await checkMidtransPaymentStatus(payment.midtransId);
-              if (midtransStatus.transaction_status === "settlement") {
+              
+              let newStatus: PaymentStatus = payment.status;
+              let paidAt = payment.paidAt;
+
+              switch (midtransStatus.transaction_status) {
+                case "capture":
+                case "settlement":
+                  newStatus = PaymentStatus.PAID;
+                  paidAt = new Date(midtransStatus.transaction_time);
+                  break;
+                case "deny":
+                case "cancel":
+                case "expire":
+                  newStatus = PaymentStatus.CANCELLED;
+                  break;
+                case "failure":
+                  newStatus = PaymentStatus.FAILED;
+                  break;
+              }
+
+              if (newStatus !== payment.status) {
                 await ctx.db.payment.update({
                   where: { id: payment.id },
-                  data: { 
-                    status: PaymentStatus.PAID,
-                    paidAt: new Date(),
+                  data: {
+                    status: newStatus,
+                    paidAt,
+                    midtransStatus: midtransStatus.transaction_status,
                   },
                 });
-                payment.status = PaymentStatus.PAID;
-                payment.paidAt = new Date();
+
+                return {
+                  ...payment,
+                  status: newStatus,
+                  paidAt,
+                  midtransStatus: midtransStatus.transaction_status,
+                };
               }
+            } catch (error) {
+              console.error(`Failed to check Midtrans status for payment ${payment.id}:`, error);
             }
           }
           return payment;
@@ -158,10 +198,8 @@ export const billingRouter = createTRPCRouter({
       }
 
       // If cancelling payment, invalidate any payment links
-      if (input.status === PaymentStatus.CANCELLED) {
-        if (payment.midtransId) {
-          await cancelMidtransPayment(payment.midtransId);
-        }
+      if (input.status === PaymentStatus.CANCELLED && payment.midtransId) {
+        await cancelMidtransPayment(payment.midtransId);
       }
 
       return ctx.db.payment.update({
@@ -177,6 +215,111 @@ export const billingRouter = createTRPCRouter({
                 midtransToken: null,
               }
             : {}),
+        },
+        include: {
+          tenant: true,
+        },
+      });
+    }),
+
+  checkStatus: protectedProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const payment = await ctx.db.payment.findUnique({
+        where: { id: input.paymentId },
+      });
+
+      if (!payment || !payment.midtransId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment not found or no Midtrans ID associated",
+        });
+      }
+
+      try {
+        const midtransStatus = await checkMidtransPaymentStatus(payment.midtransId);
+        
+        let newStatus: PaymentStatus = payment.status;
+        let paidAt = payment.paidAt;
+
+        switch (midtransStatus.transaction_status) {
+          case "capture":
+          case "settlement":
+            newStatus = PaymentStatus.PAID;
+            paidAt = new Date(midtransStatus.transaction_time);
+            break;
+          case "deny":
+          case "cancel":
+          case "expire":
+            newStatus = PaymentStatus.CANCELLED;
+            break;
+          case "failure":
+            newStatus = PaymentStatus.FAILED;
+            break;
+        }
+
+        if (newStatus !== payment.status) {
+          await ctx.db.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: newStatus,
+              paidAt,
+              midtransStatus: midtransStatus.transaction_status,
+            },
+          });
+        }
+
+        return {
+          status: newStatus,
+          midtransStatus: midtransStatus.transaction_status,
+        };
+      } catch (error) {
+        console.error(`Failed to check Midtrans status for payment ${payment.id}:`, error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to check payment status",
+        });
+      }
+    }),
+
+  updateDeposit: protectedProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+        isRefunded: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const payment = await ctx.db.payment.findUnique({
+        where: { id: input.paymentId },
+        include: {
+          tenant: true,
+        },
+      });
+
+      if (!payment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Payment not found",
+        });
+      }
+
+      if (payment.type !== PaymentType.DEPOSIT) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This payment is not a deposit",
+        });
+      }
+
+      return ctx.db.payment.update({
+        where: { id: input.paymentId },
+        data: {
+          isRefunded: input.isRefunded,
+          status: input.isRefunded ? PaymentStatus.REFUNDED : PaymentStatus.PAID,
         },
         include: {
           tenant: true,

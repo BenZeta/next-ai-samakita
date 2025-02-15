@@ -45,3 +45,7 @@
 - Fixed imports and database references in tenant router, removed unused imports and replaced prisma references with db.
 - Added payment features including dueDate for properties, invoice sending functionality with email and WhatsApp integration, and Midtrans payment gateway support.
 - Fixed Midtrans integration by updating response types and property names in `midtrans.ts`, `billing.ts`, and `payment.ts` routers, ensuring proper handling of payment statuses and notifications.
+- Fixed type errors in tenant router by using correct PaymentMethod enum values and updating tenant query to include room relationship.
+- Added deposit management with isRefunded field and REFUNDED status to PaymentStatus enum.
+- Implemented automatic status updates for Midtrans payments using polling in PaymentList component.
+- Successfully ran final build verification with all type errors resolved.

@@ -158,26 +158,27 @@ model ServiceRequest {
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  tenantId      String
-  amount        Float
-  dueDate       DateTime
-  paidAt        DateTime?
-  status        PaymentStatus @default(PENDING)
-  type          PaymentType
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  propertyId    String
-  invoiceNumber String?
-  description   String?
-  notes         String?
-  proofOfPayment String?
-  midtransId    String?      @unique
-  midtransToken String?
+  id              String        @id @default(cuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  amount          Float
+  type            PaymentType
+  status          PaymentStatus @default(PENDING)
+  method          PaymentMethod?
+  dueDate         DateTime
+  paidAt          DateTime?
+  description     String?
+  notes           String?
+  proofOfPayment  String?
+  midtransId      String?
+  midtransToken   String?
+  midtransStatus  String?
+  isRefunded      Boolean       @default(false)
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId        String
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  propertyId      String
   notificationSentAt DateTime?
-  method        PaymentMethod @default(MANUAL)
-  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([propertyId])
@@ -276,6 +277,8 @@ enum PaymentStatus {
   PAID
   OVERDUE
   CANCELLED
+  FAILED
+  REFUNDED
 }
 
 enum ExpenseCategory {
