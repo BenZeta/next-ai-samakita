@@ -1,26 +1,34 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { api } from "@/lib/trpc/react";
-import { PaymentList } from "@/components/payment/PaymentList";
-import { CreditCard, DollarSign, Clock, AlertCircle, Mail, MessageCircle, Search, Ban } from "lucide-react";
-import { PaymentStatus, PaymentType } from "@prisma/client";
-import { toast } from "react-hot-toast";
+import { PaymentList } from '@/components/payment/PaymentList';
+import { api } from '@/lib/trpc/react';
+import { PaymentType } from '@prisma/client';
+import {
+  AlertCircle,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Mail,
+  MessageCircle,
+  Search,
+} from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function BillingPage() {
-  const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("month");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType>(PaymentType.RENT);
 
   const { data: stats, isLoading: statsLoading } = api.billing.getStats.useQuery({ timeRange });
   const { data: tenants, isLoading: tenantsLoading } = api.tenant.getAll.useQuery();
-  
+
   const sendNotificationMutation = api.billing.sendNotification.useMutation();
 
-  const handleSendNotification = async (tenantId: string, method: "email" | "whatsapp") => {
+  const handleSendNotification = async (tenantId: string, method: 'email' | 'whatsapp') => {
     try {
-      await sendNotificationMutation.mutateAsync({ 
-        tenantId, 
+      await sendNotificationMutation.mutateAsync({
+        tenantId,
         method,
         paymentType: selectedPaymentType,
       });
@@ -38,9 +46,10 @@ export default function BillingPage() {
     );
   }
 
-  const filteredTenants = tenants?.filter(tenant => 
-    tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tenant.room?.number.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTenants = tenants?.filter(
+    tenant =>
+      tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tenant.room?.number.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -110,7 +119,7 @@ export default function BillingPage() {
             type="text"
             placeholder="Search tenant or room number..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
           />
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
@@ -118,10 +127,10 @@ export default function BillingPage() {
         <div className="flex items-center space-x-4">
           <select
             value={selectedPaymentType}
-            onChange={(e) => setSelectedPaymentType(e.target.value as PaymentType)}
+            onChange={e => setSelectedPaymentType(e.target.value as PaymentType)}
             className="rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
           >
-            {Object.values(PaymentType).map((type) => (
+            {Object.values(PaymentType).map(type => (
               <option key={type} value={type}>
                 {type.charAt(0) + type.slice(1).toLowerCase()} Payments
               </option>
@@ -129,7 +138,7 @@ export default function BillingPage() {
           </select>
           <select
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as "week" | "month" | "year")}
+            onChange={e => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
             className="rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
           >
             <option value="week">Last Week</option>
@@ -141,8 +150,11 @@ export default function BillingPage() {
 
       {/* Tenant Payment Cards */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {filteredTenants?.map((tenant) => (
-          <div key={tenant.id} className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl">
+        {filteredTenants?.map(tenant => (
+          <div
+            key={tenant.id}
+            className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+          >
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold">{tenant.name}</h3>
@@ -150,14 +162,14 @@ export default function BillingPage() {
               </div>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => handleSendNotification(tenant.id, "whatsapp")}
+                  onClick={() => handleSendNotification(tenant.id, 'whatsapp')}
                   className="rounded-full bg-green-100 p-2 text-green-600 hover:bg-green-200"
                   title={`Send WhatsApp reminder for ${selectedPaymentType.toLowerCase()} payment`}
                 >
                   <MessageCircle className="h-5 w-5" />
                 </button>
                 <button
-                  onClick={() => handleSendNotification(tenant.id, "email")}
+                  onClick={() => handleSendNotification(tenant.id, 'email')}
                   className="rounded-full bg-blue-100 p-2 text-blue-600 hover:bg-blue-200"
                   title={`Send email reminder for ${selectedPaymentType.toLowerCase()} payment`}
                 >
@@ -165,7 +177,7 @@ export default function BillingPage() {
                 </button>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <PaymentList tenantId={tenant.id} paymentType={selectedPaymentType} />
             </div>

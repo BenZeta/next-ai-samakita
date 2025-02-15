@@ -68,6 +68,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/dotenv": "^8.2.0",
     "@types/node": "^20",
