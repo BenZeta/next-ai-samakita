@@ -114,9 +114,9 @@ export default function TenantsPage() {
                 Manual Bank Transfer
               </button>
               <button
-                onClick={() => handleSendInvoice(selectedTenantId, PaymentMethod.MIDTRANS)}
+                onClick={() => handleSendInvoice(selectedTenantId, PaymentMethod.STRIPE)}
                 className="w-full rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">
-                Pay with Midtrans
+                Pay with Stripe
               </button>
               <button
                 onClick={() => setShowPaymentModal(false)}

@@ -8,6 +8,7 @@ import { sendContractEmail, sendInvoiceEmail } from "@/lib/email";
 import { propertySchema, userSchema } from "@/lib/contracts";
 import { supabase } from "@/lib/supabase";
 import { createMidtransPayment } from "@/lib/midtrans";
+import { createPaymentIntent } from "@/lib/stripe";
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -448,27 +449,57 @@ export const tenantRouter = createTRPCRouter({
         },
       });
 
-      // Generate Midtrans payment link if needed
+      // Generate Stripe payment link if needed
       let paymentLink: string | undefined;
-      if (input.paymentMethod === PaymentMethod.MIDTRANS) {
-        const midtransResponse = await createMidtransPayment({
+      if (input.paymentMethod === PaymentMethod.STRIPE) {
+        if (!tenant.email) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Tenant email is required for Stripe payments",
+          });
+        }
+
+        const property = await db.property.findUnique({
+          where: { id: payment.propertyId },
+        });
+
+        if (!property) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Property not found",
+          });
+        }
+
+        const room = await db.room.findUnique({
+          where: { id: tenant.roomId },
+        });
+
+        if (!room) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Room not found",
+          });
+        }
+
+        const stripeResponse = await createPaymentIntent({
           orderId: payment.id,
           amount: payment.amount,
-          customerName: tenant.name,
           customerEmail: tenant.email,
+          customerName: tenant.name,
+          description: `${payment.type} payment for ${property.name} - Room ${room.number}`,
         });
-        
-        paymentLink = midtransResponse.redirect_url;
-        
-        // Update payment with Midtrans transaction details
+
         await ctx.db.payment.update({
           where: { id: payment.id },
           data: {
-            midtransId: midtransResponse.transaction_id,
-            midtransToken: midtransResponse.token,
-            midtransStatus: midtransResponse.transaction_status,
+            stripePaymentId: stripeResponse.paymentIntentId,
+            stripeClientSecret: stripeResponse.clientSecret || undefined,
           },
         });
+
+        // Create the Stripe Checkout URL
+        const checkoutUrl = `https://checkout.stripe.com/pay/${stripeResponse.paymentIntentId}`;
+        paymentLink = checkoutUrl;
       }
 
       // Send invoice email
@@ -829,27 +860,57 @@ export const tenantRouter = createTRPCRouter({
         },
       });
 
-      // Generate Midtrans payment link if needed
+      // Generate Stripe payment link if needed
       let paymentLink: string | undefined;
-      if (input.paymentMethod === PaymentMethod.MIDTRANS) {
-        const midtransResponse = await createMidtransPayment({
+      if (input.paymentMethod === PaymentMethod.STRIPE) {
+        if (!tenant.email) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Tenant email is required for Stripe payments",
+          });
+        }
+
+        const property = await db.property.findUnique({
+          where: { id: payment.propertyId },
+        });
+
+        if (!property) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Property not found",
+          });
+        }
+
+        const room = await db.room.findUnique({
+          where: { id: tenant.roomId },
+        });
+
+        if (!room) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Room not found",
+          });
+        }
+
+        const stripeResponse = await createPaymentIntent({
           orderId: payment.id,
           amount: payment.amount,
-          customerName: tenant.name,
           customerEmail: tenant.email,
+          customerName: tenant.name,
+          description: `${payment.type} payment for ${property.name} - Room ${room.number}`,
         });
-        
-        paymentLink = midtransResponse.redirect_url;
-        
-        // Update payment with Midtrans transaction details
+
         await ctx.db.payment.update({
           where: { id: payment.id },
           data: {
-            midtransId: midtransResponse.transaction_id,
-            midtransToken: midtransResponse.token,
-            midtransStatus: midtransResponse.transaction_status,
+            stripePaymentId: stripeResponse.paymentIntentId,
+            stripeClientSecret: stripeResponse.clientSecret || undefined,
           },
         });
+
+        // Create the Stripe Checkout URL
+        const checkoutUrl = `https://checkout.stripe.com/pay/${stripeResponse.paymentIntentId}`;
+        paymentLink = checkoutUrl;
       }
 
       // Send invoice email

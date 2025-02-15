@@ -49,3 +49,6 @@
 - Added deposit management with isRefunded field and REFUNDED status to PaymentStatus enum.
 - Implemented automatic status updates for Midtrans payments using polling in PaymentList component.
 - Successfully ran final build verification with all type errors resolved.
+- Updated billing system to prevent manual status changes for Midtrans payments and simplified PaymentList component by removing unnecessary filters.
+- Modified Stripe integration to only use card payments since other payment methods are not activated in the account.
+- Fixed Stripe payment link format in email templates and updated the payment flow to use proper Stripe Checkout URLs.

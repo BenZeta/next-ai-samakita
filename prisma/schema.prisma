@@ -164,24 +164,20 @@ model Payment {
   amount          Float
   type            PaymentType
   status          PaymentStatus @default(PENDING)
-  method          PaymentMethod?
+  method          PaymentMethod @default(MANUAL)
   dueDate         DateTime
   paidAt          DateTime?
   description     String?
   notes           String?
   proofOfPayment  String?
-  midtransId      String?
-  midtransToken   String?
-  midtransStatus  String?
   isRefunded      Boolean       @default(false)
-  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stripePaymentId String?
+  stripeClientSecret String?
+  stripeCustomerId String?
   tenantId        String
-  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   propertyId      String
-  notificationSentAt DateTime?
-
-  @@index([tenantId])
-  @@index([propertyId])
+  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model Expense {
@@ -242,8 +238,8 @@ enum UserRole {
 }
 
 enum PaymentMethod {
-  MIDTRANS
   MANUAL
+  STRIPE
 }
 
 enum RoomStatus {

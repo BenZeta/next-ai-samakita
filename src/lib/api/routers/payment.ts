@@ -3,7 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { PaymentMethod, PaymentStatus, PaymentType } from "@prisma/client";
-import { createMidtransPayment, checkMidtransPaymentStatus } from "@/lib/midtrans";
+import { createPaymentIntent, retrievePaymentIntent } from "@/lib/stripe";
 import { sendPaymentConfirmation, sendPaymentOverdue, sendPaymentReminder } from "@/lib/whatsapp";
 
 export const paymentRouter = createTRPCRouter({
@@ -21,6 +21,13 @@ export const paymentRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const tenant = await db.tenant.findUnique({
         where: { id: input.tenantId },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
       });
 
       if (!tenant) {
@@ -37,64 +44,49 @@ export const paymentRouter = createTRPCRouter({
         },
       });
 
-      // If payment method is Midtrans, create payment in Midtrans
-      if (input.method === PaymentMethod.MIDTRANS) {
+      // If payment method is Stripe, create payment intent
+      if (input.method === PaymentMethod.STRIPE) {
         try {
-          const tenant = await db.tenant.findUnique({
-            where: { id: input.tenantId },
-            select: {
-              name: true,
-              email: true,
-            },
-          });
-
-          if (!tenant) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Tenant not found",
-            });
-          }
-
-          const midtransPayment = await createMidtransPayment({
-            orderId: payment.id,
+          const stripePayment = await createPaymentIntent({
             amount: payment.amount,
-            customerName: tenant.name,
             customerEmail: tenant.email,
+            customerName: tenant.name,
+            orderId: payment.id,
+            description: `${payment.type} payment for ${tenant.room.property.name} - Room ${tenant.room.number}`,
           });
 
-          // Update payment with Midtrans details
+          // Update payment with Stripe details
           await db.payment.update({
             where: { id: payment.id },
             data: {
-              midtransId: midtransPayment.transaction_id,
-              midtransToken: midtransPayment.token,
-              method: PaymentMethod.MIDTRANS,
+              stripePaymentId: stripePayment.paymentIntentId,
+              stripeClientSecret: stripePayment.clientSecret,
             },
           });
 
-          // Return Midtrans payment details
+          // Return Stripe payment details
           return {
             ...payment,
-            midtransRedirectUrl: midtransPayment.redirect_url,
+            stripeClientSecret: stripePayment.clientSecret,
           };
         } catch (error) {
-          console.error("Failed to create Midtrans payment:", error);
+          console.error("Failed to create Stripe payment:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to create Midtrans payment",
+            message: "Failed to create Stripe payment",
           });
         }
       }
 
       // Send payment link to tenant
-      if (payment.midtransId && payment.midtransToken) {
-        const midtransStatus = await checkMidtransPaymentStatus(payment.midtransId);
+      if (payment.stripePaymentId) {
+        const stripeStatus = await retrievePaymentIntent(payment.stripePaymentId);
         
-        // Send payment reminder with Midtrans link
+        // Send payment reminder with Stripe link
         await sendPaymentReminder(tenant, payment);
 
-        // Update payment status based on Midtrans status
-        if (midtransStatus.transaction_status === "settlement") {
+        // Update payment status based on Stripe status
+        if (stripeStatus.status === "succeeded") {
           await db.payment.update({
             where: { id: payment.id },
             data: {
@@ -102,7 +94,7 @@ export const paymentRouter = createTRPCRouter({
               paidAt: new Date(),
             },
           });
-        } else if (midtransStatus.transaction_status === "expire" || midtransStatus.transaction_status === "cancel") {
+        } else if (stripeStatus.status === "canceled") {
           await db.payment.update({
             where: { id: payment.id },
             data: {
@@ -111,7 +103,7 @@ export const paymentRouter = createTRPCRouter({
           });
         }
       } else {
-        // Send regular payment reminder without Midtrans link
+        // Send regular payment reminder without Stripe link
         await sendPaymentReminder(tenant, payment);
       }
 
@@ -135,12 +127,12 @@ export const paymentRouter = createTRPCRouter({
         });
       }
 
-      if (payment.method === PaymentMethod.MIDTRANS && payment.midtransId) {
+      if (payment.method === PaymentMethod.STRIPE && payment.stripePaymentId) {
         try {
-          const status = await checkMidtransPaymentStatus(payment.midtransId);
+          const status = await retrievePaymentIntent(payment.stripePaymentId);
 
-          // Update payment status based on Midtrans status
-          if (status.transaction_status === "settlement") {
+          // Update payment status based on Stripe status
+          if (status.status === "succeeded") {
             await db.payment.update({
               where: { id: payment.id },
               data: {
@@ -155,7 +147,7 @@ export const paymentRouter = createTRPCRouter({
             } catch (error) {
               console.error("Failed to send WhatsApp payment confirmation:", error);
             }
-          } else if (status.transaction_status === "expire" || status.transaction_status === "cancel") {
+          } else if (status.status === "canceled") {
             await db.payment.update({
               where: { id: payment.id },
               data: {
@@ -171,7 +163,7 @@ export const paymentRouter = createTRPCRouter({
             }
           }
         } catch (error) {
-          console.error("Failed to check Midtrans payment status:", error);
+          console.error("Failed to check Stripe payment status:", error);
         }
       }
 
