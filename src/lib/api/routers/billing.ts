@@ -197,6 +197,14 @@ export const billingRouter = createTRPCRouter({
         });
       }
 
+      // Prevent manual status changes for Midtrans payments
+      if (payment.method === PaymentMethod.MIDTRANS) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot manually update status of Midtrans payments",
+        });
+      }
+
       // If cancelling payment, invalidate any payment links
       if (input.status === PaymentStatus.CANCELLED && payment.midtransId) {
         await cancelMidtransPayment(payment.midtransId);

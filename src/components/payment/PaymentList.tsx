@@ -13,16 +13,11 @@ interface PaymentListProps {
 }
 
 export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
-  const [selectedType, setSelectedType] = useState<PaymentType | undefined>();
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
   const utils = api.useUtils();
 
   const { data: payments, refetch } = api.billing.getPayments.useQuery({
     tenantId,
-    type: selectedType,
-    startDate: startDate ? new Date(startDate) : undefined,
-    endDate: endDate ? new Date(endDate) : undefined,
+    type: paymentType,
   });
 
   const updatePaymentMutation = api.billing.updatePayment.useMutation({
@@ -76,38 +71,35 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
     }
   };
 
-  const typeOptions = Object.values(PaymentType);
+  const handleUploadProof = async (paymentId: string, file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      const { url } = await response.json();
+
+      await updatePaymentMutation.mutateAsync({
+        paymentId,
+        status: PaymentStatus.PAID,
+        proofOfPayment: url,
+      });
+    } catch (error) {
+      console.error("Failed to upload proof of payment:", error);
+      toast.error("Failed to upload proof of payment");
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <select
-            value={selectedType || ""}
-            onChange={(e) => setSelectedType(e.target.value ? (e.target.value as PaymentType) : undefined)}
-            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="">All Types</option>
-            {typeOptions.map((type) => (
-              <option key={type} value={type}>
-                {type.charAt(0) + type.slice(1).toLowerCase()}
-              </option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
-
       {payments?.map((payment) => (
         <div
           key={payment.id}
@@ -142,15 +134,44 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
                 </p>
               )}
             </div>
-            {payment.proofOfPayment && (
-              <a
-                href={payment.proofOfPayment}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:underline">
-                View Payment Proof
-              </a>
-            )}
+            <div className="flex items-center space-x-2">
+              {payment.proofOfPayment ? (
+                <a
+                  href={payment.proofOfPayment}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline">
+                  View Payment Proof
+                </a>
+              ) : payment.method === PaymentMethod.MANUAL && payment.status !== PaymentStatus.PAID && (
+                <div>
+                  <input
+                    type="file"
+                    id={`proof-${payment.id}`}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleUploadProof(payment.id, file);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={`proof-${payment.id}`}
+                    className="cursor-pointer rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+                    Upload Proof
+                  </label>
+                </div>
+              )}
+              {payment.method === PaymentMethod.MANUAL && payment.status === PaymentStatus.PENDING && (
+                <button
+                  onClick={() => handleStatusChange(payment.id, PaymentStatus.PAID)}
+                  className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                  Mark as Paid
+                </button>
+              )}
+            </div>
           </div>
         </div>
       ))}
