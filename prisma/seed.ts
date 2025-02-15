@@ -26,6 +26,7 @@ async function main() {
       description: "A test property",
       location: "Test Location",
       userId: user.id,
+      dueDate: 5, // Default due date is 5th of each month
     },
   });
 

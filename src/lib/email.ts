@@ -54,6 +54,7 @@ export async function sendInvoiceEmail({
   dueDate,
   invoiceNumber,
   paymentLink,
+  paymentType,
 }: {
   email: string;
   tenantName: string;
@@ -63,12 +64,13 @@ export async function sendInvoiceEmail({
   dueDate: Date;
   invoiceNumber: string;
   paymentLink?: string;
+  paymentType: string;
 }) {
   try {
     await resend.emails.send({
       from: process.env.EMAIL_FROM || 'noreply@benzeta.shop',
       to: email,
-      subject: `Invoice for Rent Payment - ${propertyName}`,
+      subject: `Invoice for ${paymentType} Payment - ${propertyName}`,
       react: createElement(InvoiceEmail, {
         tenantName,
         propertyName,
@@ -81,6 +83,20 @@ export async function sendInvoiceEmail({
     });
   } catch (error) {
     console.error('Error sending invoice email:', error);
+    throw error;
+  }
+}
+
+export async function sendEmail({ to, subject, text, html }: { to: string; subject: string; text: string; html?: string }) {
+  try {
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@benzeta.shop',
+      to,
+      subject,
+      html: html || text,
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
     throw error;
   }
 }

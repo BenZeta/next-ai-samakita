@@ -31,6 +31,7 @@ const propertySchema = z.object({
   location: z.string().optional(),
   facilities: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),
+  dueDate: z.number().min(1, "Due date is required").max(31, "Due date must be between 1 and 31"),
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
@@ -254,6 +255,23 @@ export function PropertyForm() {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
         {errors.postalCode && <p className="mt-1 text-sm text-red-600">{errors.postalCode.message}</p>}
+      </div>
+
+      <div>
+        <label
+          htmlFor="dueDate"
+          className="block text-sm font-medium text-gray-700">
+          Rent Due Date (Day of Month)
+        </label>
+        <input
+          type="number"
+          id="dueDate"
+          min="1"
+          max="31"
+          {...register("dueDate", { valueAsNumber: true })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        />
+        {errors.dueDate && <p className="mt-1 text-sm text-red-600">{errors.dueDate.message}</p>}
       </div>
 
       <div>

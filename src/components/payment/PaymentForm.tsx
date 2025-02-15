@@ -7,11 +7,12 @@ import { z } from "zod";
 import { toast } from "react-toastify";
 import { api } from "@/lib/trpc/react";
 import { useRouter } from "next/navigation";
-import { PaymentType } from "@prisma/client";
+import { PaymentType, PaymentMethod } from "@prisma/client";
 
 const paymentSchema = z.object({
   amount: z.number().min(0, "Amount must be greater than or equal to 0"),
   type: z.nativeEnum(PaymentType),
+  method: z.nativeEnum(PaymentMethod),
   dueDate: z.string().min(1, "Due date is required"),
   description: z.string().optional(),
   notes: z.string().optional(),
@@ -33,6 +34,9 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
     formState: { errors },
   } = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      method: PaymentMethod.MANUAL,
+    },
   });
 
   const createPaymentMutation = api.billing.createPayment.useMutation({
@@ -53,6 +57,7 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
         tenantId,
         amount: data.amount,
         type: data.type,
+        method: data.method,
         dueDate: new Date(data.dueDate),
         description: data.description,
         notes: data.notes,
@@ -65,19 +70,14 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label
-          htmlFor="amount"
-          className="block text-sm font-medium text-gray-700">
-          Amount (Rp)
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          Amount
         </label>
         <input
           type="number"
           id="amount"
-          step="0.01"
           {...register("amount", { valueAsNumber: true })}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
@@ -85,21 +85,16 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="type"
-          className="block text-sm font-medium text-gray-700">
+        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
           Payment Type
         </label>
         <select
           id="type"
           {...register("type")}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-          <option value="">Select payment type</option>
           {Object.values(PaymentType).map((type) => (
-            <option
-              key={type}
-              value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
+            <option key={type} value={type}>
+              {type.charAt(0) + type.slice(1).toLowerCase()}
             </option>
           ))}
         </select>
@@ -107,9 +102,24 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="dueDate"
-          className="block text-sm font-medium text-gray-700">
+        <label htmlFor="method" className="block text-sm font-medium text-gray-700">
+          Payment Method
+        </label>
+        <select
+          id="method"
+          {...register("method")}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+          {Object.values(PaymentMethod).map((method) => (
+            <option key={method} value={method}>
+              {method.charAt(0) + method.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
+        {errors.method && <p className="mt-1 text-sm text-red-600">{errors.method.message}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
           Due Date
         </label>
         <input
@@ -122,46 +132,36 @@ export function PaymentForm({ tenantId }: PaymentFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-700">
-          Description (Optional)
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description
         </label>
-        <input
-          type="text"
+        <textarea
           id="description"
           {...register("description")}
+          rows={3}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
         {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
       </div>
 
       <div>
-        <label
-          htmlFor="notes"
-          className="block text-sm font-medium text-gray-700">
-          Notes (Optional)
+        <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+          Notes
         </label>
         <textarea
           id="notes"
-          rows={3}
           {...register("notes")}
+          rows={3}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
         />
         {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes.message}</p>}
       </div>
 
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-          Cancel
-        </button>
+      <div className="flex justify-end">
         <button
           type="submit"
           disabled={isLoading}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50">
+          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
           {isLoading ? "Creating..." : "Create Payment"}
         </button>
       </div>

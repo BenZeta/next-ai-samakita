@@ -2,31 +2,31 @@
 
 import { useState } from "react";
 import { api } from "@/lib/trpc/react";
-import { PaymentStatus, PaymentType, Payment, Tenant, Room } from "@prisma/client";
+import { PaymentStatus, PaymentType, Payment, Tenant, Room, Property, TenantStatus, RoomStatus } from "@prisma/client";
 import { toast } from "react-toastify";
-import { CreditCard, Filter } from "lucide-react";
-
-interface InvoiceStatusBoardProps {
-  propertyId?: string;
-}
+import { CreditCard, Filter, Check, Ban, Clock, XCircle } from "lucide-react";
+import { format } from "date-fns";
 
 type PaymentWithTenant = Payment & {
   tenant: Tenant & {
     room: Room;
   };
+  property: Property;
 };
 
-export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
+interface InvoiceStatusBoardProps {
+  payments?: PaymentWithTenant[];
+  isLoading?: boolean;
+}
+
+export function InvoiceStatusBoard({ payments: initialPayments, isLoading }: InvoiceStatusBoardProps) {
   const [selectedPayments, setSelectedPayments] = useState<string[]>([]);
-  const [status, setStatus] = useState<PaymentStatus | "all">("all");
   const [type, setType] = useState<PaymentType | "all">("all");
 
   const {
-    data: payments,
-    isLoading,
+    data: paymentsData,
     refetch,
   } = api.billing.getPayments.useQuery({
-    status: status === "all" ? undefined : status,
     type: type === "all" ? undefined : type,
   });
 
@@ -48,7 +48,6 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
           updatePaymentMutation.mutateAsync({
             paymentId,
             status: newStatus,
-            paidAt: newStatus === PaymentStatus.PAID ? new Date() : undefined,
           })
         )
       );
@@ -61,6 +60,17 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
     setSelectedPayments((prev) => (prev.includes(paymentId) ? prev.filter((id) => id !== paymentId) : [...prev, paymentId]));
   };
 
+  const handleStatusChange = async (paymentId: string, newStatus: PaymentStatus) => {
+    try {
+      await updatePaymentMutation.mutateAsync({
+        paymentId,
+        status: newStatus,
+      });
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="h-[400px] rounded-lg bg-white p-6 shadow">
@@ -71,32 +81,13 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
     );
   }
 
+  const payments = paymentsData || initialPayments || [];
+
   const statusCounts = {
-    pending: payments?.filter((p) => p.status === PaymentStatus.PENDING).length ?? 0,
-    paid: payments?.filter((p) => p.status === PaymentStatus.PAID).length ?? 0,
-    overdue: payments?.filter((p) => p.status === PaymentStatus.OVERDUE).length ?? 0,
+    pending: payments.filter((p) => p.status === PaymentStatus.PENDING).length,
+    paid: payments.filter((p) => p.status === PaymentStatus.PAID).length,
+    overdue: payments.filter((p) => p.status === PaymentStatus.OVERDUE).length,
   };
-
-  const columns = [
-    {
-      id: PaymentStatus.PENDING,
-      title: "Pending",
-      items: payments?.filter((p) => p.status === PaymentStatus.PENDING) ?? [],
-    },
-    {
-      id: PaymentStatus.PAID,
-      title: "Paid",
-      items: payments?.filter((p) => p.status === PaymentStatus.PAID) ?? [],
-    },
-    {
-      id: PaymentStatus.OVERDUE,
-      title: "Overdue",
-      items: payments?.filter((p) => p.status === PaymentStatus.OVERDUE) ?? [],
-    },
-  ];
-
-  const totalPaid = payments?.filter((p) => p.status === PaymentStatus.PAID).length ?? 0;
-  const totalPending = payments?.filter((p) => p.status === PaymentStatus.PENDING).length ?? 0;
 
   return (
     <div className="rounded-lg bg-white p-6 shadow">
@@ -107,19 +98,6 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
         </div>
         <div className="flex space-x-4">
           <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as PaymentStatus | "all")}
-            className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="all">All Status</option>
-            {Object.values(PaymentStatus).map((s) => (
-              <option
-                key={s}
-                value={s}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </option>
-            ))}
-          </select>
-          <select
             value={type}
             onChange={(e) => setType(e.target.value as PaymentType | "all")}
             className="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
@@ -128,7 +106,7 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
               <option
                 key={t}
                 value={t}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()}
               </option>
             ))}
           </select>
@@ -138,11 +116,11 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
       <div className="mb-6 grid grid-cols-3 gap-4">
         <div className="rounded-lg bg-yellow-50 p-4">
           <p className="text-sm font-medium text-yellow-800">Pending</p>
-          <p className="mt-1 text-2xl font-semibold text-yellow-900">{totalPending}</p>
+          <p className="mt-1 text-2xl font-semibold text-yellow-900">{statusCounts.pending}</p>
         </div>
         <div className="rounded-lg bg-green-50 p-4">
           <p className="text-sm font-medium text-green-800">Paid</p>
-          <p className="mt-1 text-2xl font-semibold text-green-900">{totalPaid}</p>
+          <p className="mt-1 text-2xl font-semibold text-green-900">{statusCounts.paid}</p>
         </div>
         <div className="rounded-lg bg-red-50 p-4">
           <p className="text-sm font-medium text-red-800">Overdue</p>
@@ -177,8 +155,8 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
               <th className="w-8 px-6 py-3">
                 <input
                   type="checkbox"
-                  checked={selectedPayments.length === payments?.length}
-                  onChange={(e) => setSelectedPayments(e.target.checked ? payments?.map((p) => p.id) ?? [] : [])}
+                  checked={selectedPayments.length === payments.length}
+                  onChange={(e) => setSelectedPayments(e.target.checked ? payments.map((p) => p.id) : [])}
                   className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
               </th>
@@ -190,7 +168,7 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {payments?.map((payment: PaymentWithTenant) => (
+            {payments.map((payment) => (
               <tr
                 key={payment.id}
                 className="hover:bg-gray-50">
@@ -214,13 +192,21 @@ export function InvoiceStatusBoard({ propertyId }: InvoiceStatusBoardProps) {
                 <td className="whitespace-nowrap px-6 py-4">
                   <span className="font-medium">Rp {payment.amount.toLocaleString()}</span>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4">{new Date(payment.dueDate).toLocaleDateString()}</td>
+                <td className="whitespace-nowrap px-6 py-4">{format(new Date(payment.dueDate), "dd MMM yyyy")}</td>
                 <td className="whitespace-nowrap px-6 py-4">
                   <span
-                    className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                      payment.status === PaymentStatus.PAID ? "bg-green-100 text-green-800" : payment.status === PaymentStatus.PENDING ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"
+                    className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
+                      payment.status === PaymentStatus.OVERDUE
+                        ? "bg-red-100 text-red-800"
+                        : payment.status === PaymentStatus.PENDING
+                        ? "bg-yellow-100 text-yellow-800"
+                        : payment.status === PaymentStatus.PAID
+                        ? "bg-green-100 text-green-800"
+                        : payment.status === PaymentStatus.CANCELLED
+                        ? "bg-gray-100 text-gray-800"
+                        : "bg-gray-100 text-gray-800"
                     }`}>
-                    {payment.status}
+                    {payment.status.charAt(0).toUpperCase() + payment.status.slice(1).toLowerCase()}
                   </span>
                 </td>
               </tr>

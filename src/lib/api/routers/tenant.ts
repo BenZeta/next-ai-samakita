@@ -762,7 +762,7 @@ export const tenantRouter = createTRPCRouter({
         data: {
           amount: tenant.room.price,
           type: PaymentType.RENT,
-          status: PaymentStatus.INVOICED,
+          status: PaymentStatus.PENDING,
           method: input.paymentMethod,
           dueDate,
           invoiceNumber,
@@ -788,6 +788,7 @@ export const tenantRouter = createTRPCRouter({
         dueDate: payment.dueDate,
         invoiceNumber: payment.invoiceNumber!,
         paymentLink,
+        paymentType: payment.type,
       });
 
       // TODO: Send WhatsApp notification
@@ -800,4 +801,32 @@ export const tenantRouter = createTRPCRouter({
 
       return payment;
     }),
+
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    const tenants = await ctx.db.tenant.findMany({
+      where: {
+        status: TenantStatus.ACTIVE,
+        room: {
+          property: {
+            userId: ctx.session.user.id,
+          },
+        },
+      },
+      include: {
+        room: true,
+        payments: {
+          where: {
+            status: {
+              in: ["PENDING", "OVERDUE"],
+            },
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+    return tenants;
+  }),
 });

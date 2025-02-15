@@ -9,7 +9,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Superkos CMS",
+  title: "Sama Kita CMS",
   description: "A modern boarding house management system",
 };
 

@@ -5,11 +5,15 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PaymentList } from "@/components/payment/PaymentList";
 import { Plus } from "lucide-react";
+import { PaymentType } from "@prisma/client";
 
-export default function TenantPaymentsPage() {
-  const params = useParams();
-  const tenantId = params.tenantId as string;
+interface TenantPaymentsPageProps {
+  params: {
+    tenantId: string;
+  };
+}
 
+export default function TenantPaymentsPage({ params: { tenantId } }: TenantPaymentsPageProps) {
   const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
 
   if (isLoading) {
@@ -37,7 +41,7 @@ export default function TenantPaymentsPage() {
         </Link>
       </div>
 
-      <PaymentList tenantId={tenantId} />
+      <PaymentList tenantId={tenantId} paymentType={PaymentType.RENT} />
     </div>
   );
 }

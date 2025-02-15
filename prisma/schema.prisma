@@ -9,23 +9,23 @@ datasource db {
 }
 
 model User {
-  id             String     @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String?
-  email          String?    @unique
+  email          String?       @unique
   emailVerified  DateTime?
   image          String?
   hashedPassword String?
   phone          String?
   address        String?
-  ktpFile        String? // URL to the stored KTP file
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   login          String?
-  role           UserRole   @default(user)
-  isAdmin        Boolean    @default(false)
+  role           UserRole      @default(user)
+  isAdmin        Boolean       @default(false)
+  ktpFile        String?
   accounts       Account[]
-  sessions       Session[]
   properties     Property[]
+  sessions       Session[]
   transactions   Transaction[]
 }
 
@@ -35,12 +35,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -52,13 +52,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum UserRole {
-  user
-  admin
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Allowlist {
@@ -78,114 +72,177 @@ model VerificationToken {
 model Property {
   id                  String               @id @default(cuid())
   name                String
-  address             String
-  city                String?              // Made optional during migration
-  province            String?              // Made optional during migration
-  postalCode          String?              // Made optional during migration
   description         String               @default("")
+  address             String
   location            String               @default("")
-  dueDate             Int                  @default(5) // Day of the month when rent is due (1-31)
+  facilities          String[]             @default([])
+  images              String[]             @default([])
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   userId              String
+  city                String?
+  postalCode          String?
+  province            String?
+  dueDate             Int                  @default(5)
+  expenses            Expense[]
+  maintenanceRequests MaintenanceRequest[]
+  payments            Payment[]
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   rooms               Room[]
-  expenses            Expense[]
-  payments            Payment[]
-  maintenanceRequests MaintenanceRequest[]
-  facilities          String[]             @default([])
-  images              String[]             @default([])
   transactions        Transaction[]
 }
 
 model Room {
   id                  String               @id @default(cuid())
   number              String
-  floor               Int?                 // Made optional during migration
-  type                String
   size                Int
+  amenities           String[]             @default([])
   price               Float
-  status              RoomStatus           @default(AVAILABLE)
+  propertyId          String
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
-  propertyId          String
+  floor               Int?
+  status              RoomStatus           @default(AVAILABLE)
+  type                String
+  maintenanceRequests MaintenanceRequest[]
   property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tenants             Tenant[]
-  maintenanceRequests MaintenanceRequest[]
-  amenities           String[]             @default([])
 }
 
 model Tenant {
-  id               String           @id @default(cuid())
-  name             String
-  email            String
-  phone            String
-  ktpNumber        String?
-  ktpFile          String?
-  kkFile           String?
-  references       String[]
-  status           TenantStatus     @default(ACTIVE)
-  roomId           String
-  room             Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  startDate        DateTime?
-  endDate          DateTime?
-  rentAmount       Float?
-  depositAmount    Float?
-  contractFile     String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  payments         Payment[]
-  leases           Lease[]
-  checkInItems     CheckInItem[]
-  serviceRequests  ServiceRequest[]
+  id              String           @id @default(cuid())
+  name            String
+  email           String
+  phone           String
+  ktpNumber       String?
+  ktpFile         String?
+  kkFile          String?
+  references      String[]
+  roomId          String
+  startDate       DateTime?
+  endDate         DateTime?
+  status          TenantStatus     @default(ACTIVE)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  contractFile    String?
+  depositAmount   Float?
+  rentAmount      Float?
+  checkInItems    CheckInItem[]
+  leases          Lease[]
+  payments        Payment[]
+  serviceRequests ServiceRequest[]
+  room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
 }
 
 model CheckInItem {
   id        String   @id @default(cuid())
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
   tenantId  String
   itemName  String
   condition String
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
 }
 
 model ServiceRequest {
   id          String               @id @default(cuid())
-  tenant      Tenant              @relation(fields: [tenantId], references: [id])
   tenantId    String
   type        String
   description String
   status      ServiceRequestStatus @default(PENDING)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
   resolvedAt  DateTime?
-}
-
-enum PaymentMethod {
-  MANUAL
-  MIDTRANS
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  amount         Float
-  type           PaymentType
-  status         PaymentStatus @default(PENDING)
-  method         PaymentMethod @default(MANUAL)
-  dueDate        DateTime
-  paidAt         DateTime?
-  invoiceSentAt  DateTime?
-  invoiceNumber  String?
-  receiptUrl     String?
-  midtransId     String?       @unique
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  tenantId       String
-  tenant         Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  propertyId     String
-  property       Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  tenantId      String
+  amount        Float
+  dueDate       DateTime
+  paidAt        DateTime?
+  status        PaymentStatus @default(PENDING)
+  type          PaymentType
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  propertyId    String
+  invoiceNumber String?
+  description   String?
+  notes         String?
+  proofOfPayment String?
+  midtransId    String?      @unique
+  midtransToken String?
+  notificationSentAt DateTime?
+  method        PaymentMethod @default(MANUAL)
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([propertyId])
+}
+
+model Expense {
+  id          String          @id @default(cuid())
+  propertyId  String
+  category    ExpenseCategory
+  amount      Float
+  date        DateTime
+  description String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  receipt     String?
+  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model MaintenanceRequest {
+  id          String              @id @default(cuid())
+  title       String
+  description String
+  status      MaintenanceStatus   @default(PENDING)
+  priority    MaintenancePriority @default(LOW)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  propertyId  String
+  roomId      String
+  property    Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  room        Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+model Lease {
+  id         String   @id @default(cuid())
+  startDate  DateTime
+  endDate    DateTime
+  rentAmount Float
+  deposit    Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  propertyId  String
+  amount      Float
+  status      TransactionStatus @default(PENDING)
+  contractUrl String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  property    Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  user
+  admin
+}
+
+enum PaymentMethod {
+  MIDTRANS
+  MANUAL
 }
 
 enum RoomStatus {
@@ -216,7 +273,6 @@ enum PaymentType {
 
 enum PaymentStatus {
   PENDING
-  INVOICED
   PAID
   OVERDUE
   CANCELLED
@@ -231,33 +287,6 @@ enum ExpenseCategory {
   OTHER
 }
 
-model Expense {
-  id          String          @id @default(cuid())
-  amount      Float
-  category    ExpenseCategory
-  description String
-  date        DateTime
-  receipt     String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  propertyId  String
-  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-}
-
-model MaintenanceRequest {
-  id          String              @id @default(cuid())
-  title       String
-  description String
-  status      MaintenanceStatus   @default(PENDING)
-  priority    MaintenancePriority @default(LOW)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  propertyId  String
-  property    Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  roomId      String
-  room        Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
-}
-
 enum MaintenanceStatus {
   PENDING
   IN_PROGRESS
@@ -270,33 +299,8 @@ enum MaintenancePriority {
   HIGH
 }
 
-model Lease {
-  id         String   @id @default(cuid())
-  startDate  DateTime
-  endDate    DateTime
-  rentAmount Float
-  deposit    Float
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-}
-
 enum TransactionStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model Transaction {
-  id          String            @id @default(cuid())
-  userId      String
-  propertyId  String
-  amount      Float
-  status      TransactionStatus @default(PENDING)
-  contractUrl String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property    Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }

@@ -19,6 +19,7 @@ const propertySchema = z.object({
   location: z.string().optional(),
   images: z.array(z.string()).optional(),
   facilities: z.array(z.string()).optional(),
+  dueDate: z.number().min(1).max(31).default(5),
 });
 
 export const propertyRouter = createTRPCRouter({
@@ -131,6 +132,7 @@ export const propertyRouter = createTRPCRouter({
         postalCode: z.string().min(1),
         description: z.string().optional(),
         location: z.string().optional(),
+        dueDate: z.number().min(1).max(31),
       })
     )
     .mutation(async ({ input, ctx }) => {
