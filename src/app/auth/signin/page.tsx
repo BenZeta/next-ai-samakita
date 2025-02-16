@@ -1,11 +1,11 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { Building } from 'lucide-react';
 
 export default function SignIn() {
   const router = useRouter();
@@ -18,7 +18,6 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      // Store credentials temporarily for session refresh
       localStorage.setItem('userEmail', email);
       localStorage.setItem('userPassword', password);
 
@@ -30,7 +29,6 @@ export default function SignIn() {
 
       if (result?.error) {
         toast.error(result.error);
-        // Clear stored credentials on error
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userPassword');
       } else {
@@ -39,7 +37,6 @@ export default function SignIn() {
       }
     } catch (error) {
       toast.error('An error occurred during sign in');
-      // Clear stored credentials on error
       localStorage.removeItem('userEmail');
       localStorage.removeItem('userPassword');
     } finally {
@@ -48,25 +45,71 @@ export default function SignIn() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
-      <Link
-        href="/"
-        className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back
-      </Link>
-
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Sign in to your account</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Enter your credentials below</p>
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-background/95 to-background/90 px-4 py-8 overflow-hidden">
+      {/* Modern Geometric Background */}
+      <div className="pointer-events-none fixed inset-0" aria-hidden="true">
+        {/* Large Animated Circles */}
+        <div className="absolute inset-0">
+          <div className="absolute left-1/4 top-1/4 h-96 w-96 animate-morph rounded-full bg-gradient-to-r from-primary/40 to-foreground/40 blur-3xl"></div>
+          <div className="absolute right-1/4 bottom-1/4 h-96 w-96 animate-morph-delayed rounded-full bg-gradient-to-r from-foreground/40 to-primary/40 blur-3xl"></div>
         </div>
 
-        <div className="mt-8 rounded-lg bg-card p-8 shadow-lg">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Decorative Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+        {/* Glowing Orbs */}
+        <div className="absolute inset-0">
+          <div className="absolute left-20 top-20 h-24 w-24 animate-float-slow rounded-full bg-foreground/30 shadow-[0_0_40px_20px] shadow-foreground/20"></div>
+          <div className="absolute right-40 bottom-40 h-32 w-32 animate-float rounded-full bg-primary/30 shadow-[0_0_40px_20px] shadow-primary/20"></div>
+          <div className="absolute left-1/3 top-1/2 h-28 w-28 animate-float-delayed rounded-full bg-foreground/30 shadow-[0_0_40px_20px] shadow-foreground/20"></div>
+        </div>
+
+        {/* Animated Lines */}
+        <div className="absolute inset-0">
+          <div className="absolute left-0 top-1/4 h-px w-full animate-network bg-gradient-to-r from-transparent via-foreground/40 to-transparent"></div>
+          <div className="absolute left-0 top-2/4 h-px w-full animate-network-delayed bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
+          <div className="absolute left-0 top-3/4 h-px w-full animate-network bg-gradient-to-r from-transparent via-foreground/40 to-transparent"></div>
+        </div>
+
+        {/* Diagonal Lines */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -left-1/4 top-0 h-[200%] w-1 rotate-45 animate-beam bg-gradient-to-b from-transparent via-foreground/30 to-transparent"></div>
+          <div className="absolute left-1/2 top-0 h-[200%] w-1 rotate-45 animate-beam-delayed bg-gradient-to-b from-transparent via-primary/30 to-transparent"></div>
+          <div className="absolute right-1/4 top-0 h-[200%] w-1 rotate-45 animate-beam bg-gradient-to-b from-transparent via-foreground/30 to-transparent"></div>
+        </div>
+      </div>
+
+      {/* Logo & Brand Section */}
+      <div className="relative mb-8 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="group relative flex h-16 w-16 items-center justify-center rounded-2xl bg-card shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/40 via-foreground/40 to-foreground/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            <Building className="h-8 w-8 text-primary transition-all duration-300 group-hover:scale-110" />
+          </div>
+        </div>
+        <h1 className="relative bg-gradient-to-r from-primary via-foreground to-foreground bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
+          Welcome to Superkos
+        </h1>
+        <p className="mt-2 text-base text-muted-foreground">
+          Property management made simple
+        </p>
+      </div>
+
+      {/* Login Card */}
+      <div className="group relative w-full max-w-[400px] overflow-hidden rounded-2xl bg-card/90 p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 sm:p-8">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-foreground/10 to-foreground/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
+        <div className="relative">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Sign in</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Enter your credentials to access your account
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
                 Email address
               </label>
               <input
@@ -77,13 +120,13 @@ export default function SignIn() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="block w-full rounded-lg border border-input bg-background/80 px-4 py-2.5 text-foreground backdrop-blur-sm transition-all placeholder:text-muted-foreground/60 hover:border-primary/50 focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-foreground">
                 Password
               </label>
               <input
@@ -94,7 +137,7 @@ export default function SignIn() {
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="block w-full rounded-lg border border-input bg-background/80 px-4 py-2.5 text-foreground backdrop-blur-sm transition-all placeholder:text-muted-foreground/60 hover:border-primary/50 focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
                 placeholder="••••••••"
               />
             </div>
@@ -102,20 +145,30 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="relative w-full overflow-hidden rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-r-transparent"></div>
+                  <span className="ml-2">Signing in...</span>
+                </div>
+              ) : (
+                'Sign in'
+              )}
             </button>
-
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href="/auth/signup" className="text-primary hover:text-primary/90">
-                  Sign up
-                </Link>
-              </p>
-            </div>
           </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{' '}
+              <Link 
+                href="/auth/signup" 
+                className="font-medium text-primary transition-colors hover:text-primary/90"
+              >
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
