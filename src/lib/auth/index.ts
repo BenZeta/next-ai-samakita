@@ -39,6 +39,9 @@ declare module 'next-auth' {
       isTeamAdmin?: boolean;
     };
     accessToken?: string;
+    token?: {
+      businessVerified?: boolean;
+    };
   }
 
   export interface Profile {
@@ -51,6 +54,13 @@ declare module 'next-auth' {
     expires?: string;
     isTeamAdmin?: boolean;
     isAdmin?: boolean;
+    businessVerified?: boolean;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    businessVerified?: boolean;
   }
 }
 
@@ -70,6 +80,9 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          include: {
+            businessProfile: true,
+          },
         });
 
         if (!user || !user.hashedPassword) {
@@ -88,6 +101,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role as UserRole | undefined,
+          businessVerified: user.businessProfile?.verificationStatus === 'VERIFIED',
         };
       },
     }),
@@ -103,6 +117,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.user.role = token.role as UserRole | undefined;
         session.user.isAdmin = token.isAdmin as boolean | undefined;
+        session.token = {
+          businessVerified: token.businessVerified,
+        };
       }
       return session;
     },
@@ -110,6 +127,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.isAdmin = user.isAdmin;
+        token.businessVerified = user.businessVerified;
       }
       return token;
     },

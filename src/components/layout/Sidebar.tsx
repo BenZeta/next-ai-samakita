@@ -11,12 +11,13 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+// All navigation items
 const navigation = [
-  { name: 'Overview', href: '/business-verification', icon: FileCheck },
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Properties', href: '/properties', icon: Building2 },
   { name: 'Tenants', href: '/tenants', icon: Users },
@@ -28,6 +29,10 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
+  const { data: session } = useSession();
+
+  // Check if business is verified from session token
+  const isVerified = (session as any)?.token?.businessVerified === true;
 
   // Auto-close sidebar on mobile
   useEffect(() => {
@@ -105,6 +110,20 @@ export function Sidebar() {
             );
           })}
         </nav>
+
+        {!isVerified && (
+          <div className="absolute bottom-0 left-0 right-0 bg-yellow-600 p-4">
+            <Link
+              href="/business-verification"
+              className="flex items-center gap-2 text-sm text-white hover:text-white/90"
+            >
+              <FileCheck className="h-5 w-5" />
+              <span className={`${isOpen ? 'block' : 'lg:hidden'}`}>
+                Complete Business Verification
+              </span>
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

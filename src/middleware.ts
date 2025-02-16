@@ -8,8 +8,30 @@ const publicPaths = [
   '/auth/verify',
   '/auth/error',
   '/api/auth',
-  '/api/trpc',
+  '/api/trpc/auth',
+  '/api/trpc/business',
   '/api/upload',
+];
+
+// API routes that require business verification
+const protectedApiRoutes = [
+  '/api/trpc/property.create',
+  '/api/trpc/property.update',
+  '/api/trpc/property.delete',
+  '/api/trpc/room.create',
+  '/api/trpc/room.update',
+  '/api/trpc/room.delete',
+  '/api/trpc/tenant.create',
+  '/api/trpc/tenant.update',
+  '/api/trpc/tenant.delete',
+  '/api/trpc/billing.create',
+  '/api/trpc/billing.update',
+  '/api/trpc/expense.create',
+  '/api/trpc/expense.update',
+  '/api/trpc/expense.delete',
+  '/api/trpc/maintenance.create',
+  '/api/trpc/maintenance.update',
+  '/api/trpc/maintenance.delete',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -34,9 +56,20 @@ export async function middleware(request: NextRequest) {
   // Check business verification status from token
   const isVerified = token.businessVerified === true;
 
-  // If not verified and trying to access protected routes, redirect to business verification
-  if (!isVerified && !request.nextUrl.pathname.startsWith('/api/')) {
-    return NextResponse.redirect(new URL('/business-verification', request.url));
+  // For protected API routes, check verification
+  const isProtectedApiRoute = protectedApiRoutes.some(route =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  if (!isVerified && isProtectedApiRoute) {
+    return NextResponse.json(
+      {
+        error: 'Business verification required',
+        code: 'BUSINESS_VERIFICATION_REQUIRED',
+        message: 'Please complete business verification to perform this action.',
+      },
+      { status: 403 }
+    );
   }
 
   return NextResponse.next();

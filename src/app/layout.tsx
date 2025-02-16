@@ -1,4 +1,3 @@
-import { Sidebar } from '@/components/layout/Sidebar';
 import { Providers } from '@/components/providers/Providers';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
@@ -14,7 +13,13 @@ export const metadata = {
   description: 'A modern boarding house management system',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { segment: string[] };
+}) {
   const session = await getServerSession(authOptions);
 
   return (
@@ -25,14 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={inter.className}>
         <Providers session={session}>
-          {session ? (
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-background">{children}</main>
-            </div>
-          ) : (
-            children
-          )}
+          {children}
           <ToastContainer />
         </Providers>
       </body>

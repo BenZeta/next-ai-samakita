@@ -2,6 +2,7 @@
 
 import { api } from '@/lib/trpc/react';
 import { ArrowDown, ArrowUp, Building } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import {
   Area,
@@ -38,6 +39,8 @@ interface OccupancyData {
 
 export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
+  const { data: session } = useSession();
+  const isVerified = (session as any)?.token?.businessVerified === true;
 
   const { data: occupancyData, isLoading } = api.room.getOccupancyStats.useQuery(
     {
@@ -45,9 +48,26 @@ export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
       timeRange,
     },
     {
-      refetchInterval: 30000, // Refresh every 30 seconds
+      enabled: isVerified,
+      retry: false,
     }
   );
+
+  if (!isVerified) {
+    return (
+      <div className="rounded-lg bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <Building className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-card-foreground">Occupancy Rate</h2>
+        </div>
+        <div className="mt-6 text-center text-muted-foreground">
+          Complete business verification to view occupancy statistics
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

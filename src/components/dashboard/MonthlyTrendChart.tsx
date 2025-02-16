@@ -1,7 +1,8 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, TrendingUp } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import {
   Area,
@@ -26,11 +27,35 @@ interface MonthlyTrendItem {
 
 export function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
   const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('month');
+  const { data: session } = useSession();
+  const isVerified = (session as any)?.token?.businessVerified === true;
 
-  const { data: financialData, isLoading } = api.finance.getStats.useQuery({
-    propertyId,
-    timeRange,
-  });
+  const { data: financialData, isLoading } = api.finance.getStats.useQuery(
+    {
+      propertyId,
+      timeRange,
+    },
+    {
+      enabled: isVerified,
+      retry: false,
+    }
+  );
+
+  if (!isVerified) {
+    return (
+      <div className="rounded-lg bg-card p-6 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-card-foreground">Monthly Trend</h2>
+        </div>
+        <div className="mt-6 text-center text-muted-foreground">
+          Complete business verification to view financial trends
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
