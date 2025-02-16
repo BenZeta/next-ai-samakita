@@ -1,11 +1,11 @@
 'use client';
 
+import { Building } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { Building } from 'lucide-react';
 
 export default function SignIn() {
   const router = useRouter();
@@ -90,9 +90,7 @@ export default function SignIn() {
         <h1 className="relative bg-gradient-to-r from-primary via-foreground to-foreground bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
           Welcome to Superkos
         </h1>
-        <p className="mt-2 text-base text-muted-foreground">
-          Property management made simple
-        </p>
+        <p className="mt-2 text-base text-muted-foreground">Property management made simple</p>
       </div>
 
       {/* Login Card */}
@@ -161,8 +159,8 @@ export default function SignIn() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link 
-                href="/auth/signup" 
+              <Link
+                href="/auth/signup"
                 className="font-medium text-primary transition-colors hover:text-primary/90"
               >
                 Sign up
