@@ -1,6 +1,8 @@
 'use client';
 
+import type { AppRouter } from '@/lib/api/root';
 import { api } from '@/lib/trpc/react';
+import type { TRPCClientErrorLike } from '@trpc/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
@@ -14,9 +16,12 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const createUser = api.auth.signup.useMutation({
+  const createUser = api.auth.register.useMutation({
     onSuccess: async () => {
       toast.success('Account created successfully!');
       // Sign in the user automatically
@@ -32,7 +37,7 @@ export default function SignUp() {
         router.push('/business-verification');
       }
     },
-    onError: error => {
+    onError: (error: TRPCClientErrorLike<AppRouter>) => {
       toast.error(error.message);
       setIsLoading(false);
     },
@@ -48,15 +53,40 @@ export default function SignUp() {
       return;
     }
 
+    if (!ktpFile) {
+      toast.error('KTP file is required');
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      // First, upload the KTP file
+      const formData = new FormData();
+      formData.append('file', ktpFile);
+      const response = await fetch('/api/upload/ktp', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload KTP file');
+      }
+
+      const { url: ktpUrl } = await response.json();
+
+      // Then register the user
       await createUser.mutateAsync({
         name,
         email,
         password,
+        phone,
+        address,
+        ktpFile: ktpUrl,
       });
     } catch (error) {
-      // Error is handled in onError callback
       console.error('Signup error:', error);
+      toast.error('Failed to create account');
+      setIsLoading(false);
     }
   };
 
@@ -128,6 +158,7 @@ export default function SignUp() {
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="••••••••"
               />
+              <p className="mt-1 text-sm text-muted-foreground">Must be at least 6 characters</p>
             </div>
 
             <div>
@@ -148,6 +179,58 @@ export default function SignUp() {
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 placeholder="••••••••"
               />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-foreground">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                required
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="+628123456789"
+              />
+              <p className="mt-1 text-sm text-muted-foreground">
+                Enter a valid Indonesian phone number
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-foreground">
+                Address
+              </label>
+              <textarea
+                id="address"
+                name="address"
+                required
+                value={address}
+                onChange={e => setAddress(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Enter your address"
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="ktpFile" className="block text-sm font-medium text-foreground">
+                KTP File
+              </label>
+              <input
+                id="ktpFile"
+                name="ktpFile"
+                type="file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={e => setKtpFile(e.target.files?.[0] || null)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              <p className="mt-1 text-sm text-muted-foreground">
+                Upload your KTP or identification document (max 5MB, .jpg, .png, or .pdf)
+              </p>
             </div>
 
             <button

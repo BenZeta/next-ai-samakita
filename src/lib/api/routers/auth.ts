@@ -1,17 +1,16 @@
-import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
-import { sendVerificationEmail } from "@/lib/email";
-import crypto from "crypto";
+import { db } from '@/lib/db';
+import { sendVerificationEmail } from '@/lib/email';
+import { TRPCError } from '@trpc/server';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+import { z } from 'zod';
+import { createTRPCRouter, publicProcedure } from '../trpc';
 
 const emailSchema = z.string().email();
-const passwordSchema = z
+const passwordSchema = z.string().min(5);
+const phoneSchema = z
   .string()
-  .min(8)
-  .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character");
-const phoneSchema = z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, "Invalid Indonesian phone number");
+  .regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, 'Invalid Indonesian phone number');
 
 export const authRouter = createTRPCRouter({
   register: publicProcedure
@@ -35,8 +34,8 @@ export const authRouter = createTRPCRouter({
 
       if (existingUser) {
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "User with this email already exists",
+          code: 'CONFLICT',
+          message: 'User with this email already exists',
         });
       }
 
@@ -71,39 +70,41 @@ export const authRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  verifyEmail: publicProcedure.input(z.object({ token: z.string() })).mutation(async ({ input }) => {
-    const { token } = input;
+  verifyEmail: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ input }) => {
+      const { token } = input;
 
-    // Find the verification token
-    const verificationToken = await db.verificationToken.findUnique({
-      where: { token },
-    });
-
-    if (!verificationToken) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Invalid verification token",
+      // Find the verification token
+      const verificationToken = await db.verificationToken.findUnique({
+        where: { token },
       });
-    }
 
-    if (verificationToken.expires < new Date()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Verification token has expired",
+      if (!verificationToken) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Invalid verification token',
+        });
+      }
+
+      if (verificationToken.expires < new Date()) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Verification token has expired',
+        });
+      }
+
+      // Update user's email verification status
+      await db.user.update({
+        where: { email: verificationToken.identifier },
+        data: { emailVerified: new Date() },
       });
-    }
 
-    // Update user's email verification status
-    await db.user.update({
-      where: { email: verificationToken.identifier },
-      data: { emailVerified: new Date() },
-    });
+      // Delete the verification token
+      await db.verificationToken.delete({
+        where: { token },
+      });
 
-    // Delete the verification token
-    await db.verificationToken.delete({
-      where: { token },
-    });
-
-    return { success: true };
-  }),
+      return { success: true };
+    }),
 });

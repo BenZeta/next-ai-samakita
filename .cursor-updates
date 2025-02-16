@@ -1,2 +1,4 @@
 - Fixed tenant lease dates display in TenantOverview component to show correct start and end dates from tenant data.
 - Implemented business verification system with BusinessProfile and Property models, tRPC router for handling verification process, and API routes for document uploads.
+- Fixed type errors in signup and business verification pages, ensuring proper type safety for form handling and API interactions.
+- Removed edge runtime from upload routes to fix build errors with NextAuth.js requiring Node.js crypto module.

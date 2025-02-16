@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
+type BusinessType = 'personal' | 'company';
+
 export default function BusinessVerificationPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -13,7 +15,7 @@ export default function BusinessVerificationPage() {
 
   // Business Information
   const [businessName, setBusinessName] = useState('');
-  const [businessType, setBusinessType] = useState('personal'); // personal or company
+  const [businessType, setBusinessType] = useState<BusinessType>('personal');
   const [taxId, setTaxId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -116,7 +118,7 @@ export default function BusinessVerificationPage() {
                     type="radio"
                     value="personal"
                     checked={businessType === 'personal'}
-                    onChange={e => setBusinessType(e.target.value)}
+                    onChange={e => setBusinessType(e.target.value as BusinessType)}
                     className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
                   />
                   <span className="ml-2">Personal</span>
@@ -126,7 +128,7 @@ export default function BusinessVerificationPage() {
                     type="radio"
                     value="company"
                     checked={businessType === 'company'}
-                    onChange={e => setBusinessType(e.target.value)}
+                    onChange={e => setBusinessType(e.target.value as BusinessType)}
                     className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
                   />
                   <span className="ml-2">Company</span>
