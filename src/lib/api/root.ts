@@ -1,12 +1,13 @@
-import { createCallerFactory, createTRPCRouter } from "./trpc";
-import { authRouter } from "./routers/auth";
-import { propertyRouter } from "./routers/property";
-import { roomRouter } from "./routers/room";
-import { tenantRouter } from "./routers/tenant";
-import { billingRouter } from "./routers/billing";
-import { financeRouter } from "./routers/finance";
-import { expenseRouter } from "./routers/expense";
-import { maintenanceRouter } from "./routers/maintenance";
+import { authRouter } from './routers/auth';
+import { billingRouter } from './routers/billing';
+import { businessRouter } from './routers/business';
+import { expenseRouter } from './routers/expense';
+import { financeRouter } from './routers/finance';
+import { maintenanceRouter } from './routers/maintenance';
+import { propertyRouter } from './routers/property';
+import { roomRouter } from './routers/room';
+import { tenantRouter } from './routers/tenant';
+import { createCallerFactory, createTRPCRouter } from './trpc';
 // import all routers here
 
 /**
@@ -23,6 +24,7 @@ export const appRouter = createTRPCRouter({
   finance: financeRouter,
   expense: expenseRouter,
   maintenance: maintenanceRouter,
+  business: businessRouter,
   // add routers here
 });
 
