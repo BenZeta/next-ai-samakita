@@ -158,7 +158,6 @@ export default function BillingPage() {
           </select>
         </div>
       </motion.div>
-
       {/* Tenant Cards */}
       <div className="space-y-4 w-full">
         <AnimatePresence>
