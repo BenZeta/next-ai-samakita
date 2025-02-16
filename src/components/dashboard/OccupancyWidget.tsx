@@ -48,7 +48,6 @@ export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
       timeRange,
     },
     {
-      enabled: isVerified,
       retry: false,
     }
   );

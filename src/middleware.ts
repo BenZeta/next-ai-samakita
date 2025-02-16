@@ -32,6 +32,8 @@ const protectedApiRoutes = [
   '/api/trpc/maintenance.create',
   '/api/trpc/maintenance.update',
   '/api/trpc/maintenance.delete',
+  '/properties/new',
+  '/tenants/new',
 ];
 
 export async function middleware(request: NextRequest) {
@@ -62,14 +64,7 @@ export async function middleware(request: NextRequest) {
   );
 
   if (!isVerified && isProtectedApiRoute) {
-    return NextResponse.json(
-      {
-        error: 'Business verification required',
-        code: 'BUSINESS_VERIFICATION_REQUIRED',
-        message: 'Please complete business verification to perform this action.',
-      },
-      { status: 403 }
-    );
+    return NextResponse.redirect(new URL('/business-verification', request.url));
   }
 
   return NextResponse.next();

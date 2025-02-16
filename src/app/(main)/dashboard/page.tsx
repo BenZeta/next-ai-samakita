@@ -13,17 +13,12 @@ import { useState } from 'react';
 export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>();
   const { data: session } = useSession();
-  const isVerified = (session as any)?.token?.businessVerified === true;
+  const isVerified = session?.token?.businessVerified === true;
 
-  const { data: propertyData, isLoading: propertiesLoading } = api.property.list.useQuery(
-    {
-      page: 1,
-      limit: 100,
-    },
-    {
-      enabled: isVerified, // Only fetch if verified
-    }
-  );
+  const { data: propertyData, isLoading: propertiesLoading } = api.property.list.useQuery({
+    page: 1,
+    limit: 100,
+  });
 
   if (propertiesLoading) {
     return (
@@ -46,7 +41,7 @@ export default function DashboardPage() {
             Monitor your properties performance and occupancy in real-time
           </p>
         </div>
-        {isVerified && (
+        {properties.length > 0 && (
           <div className="relative">
             <select
               value={selectedPropertyId}
@@ -65,8 +60,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {!isVerified ? (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-900/10">
+      {!isVerified && (
+        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-900/10">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
             <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
@@ -75,8 +70,8 @@ export default function DashboardPage() {
           </div>
           <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
             <p>
-              Please complete the business verification process to access all dashboard features.
-              This includes property management, tenant tracking, and financial analytics.
+              Please complete the business verification process to perform actions like adding
+              properties, managing tenants, and handling payments.
             </p>
             <Link
               href="/business-verification"
@@ -86,14 +81,14 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
-      ) : (
-        <div className="grid gap-6">
-          <OccupancyWidget propertyId={selectedPropertyId} />
-          <MonthlyTrendChart propertyId={selectedPropertyId} />
-          <MaintenanceTracker propertyId={selectedPropertyId} />
-          <TenantOverview propertyId={selectedPropertyId} />
-        </div>
       )}
+
+      <div className="grid gap-6">
+        <OccupancyWidget propertyId={selectedPropertyId} />
+        <MonthlyTrendChart propertyId={selectedPropertyId} />
+        <MaintenanceTracker propertyId={selectedPropertyId} />
+        <TenantOverview propertyId={selectedPropertyId} />
+      </div>
     </div>
   );
 }

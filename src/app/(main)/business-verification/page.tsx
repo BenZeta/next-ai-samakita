@@ -2,6 +2,7 @@
 
 import { api } from '@/lib/trpc/react';
 import { Building2, Upload } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -10,6 +11,7 @@ type BusinessType = 'personal' | 'company';
 
 export default function BusinessVerificationPage() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,8 +36,13 @@ export default function BusinessVerificationPage() {
   const [propertyDocument, setPropertyDocument] = useState<File | null>(null);
 
   const verifyBusiness = api.business.verify.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Business verification submitted successfully!');
+      // Update the session with new verification status
+      await updateSession({
+        businessVerified: true,
+      });
+      // Redirect to dashboard
       router.push('/dashboard');
     },
     onError: error => {

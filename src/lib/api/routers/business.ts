@@ -53,7 +53,7 @@ export const businessRouter = createTRPCRouter({
             businessLicense: business.documents.businessLicense,
             taxDocument: business.documents.taxDocument,
             propertyDocument: business.documents.propertyDocument,
-            verificationStatus: 'PENDING',
+            verificationStatus: 'VERIFIED',
           },
           update: {
             name: business.name,
@@ -64,7 +64,7 @@ export const businessRouter = createTRPCRouter({
             businessLicense: business.documents.businessLicense,
             taxDocument: business.documents.taxDocument,
             propertyDocument: business.documents.propertyDocument,
-            verificationStatus: 'PENDING',
+            verificationStatus: 'VERIFIED',
           },
         });
 

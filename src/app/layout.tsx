@@ -13,13 +13,7 @@ export const metadata = {
   description: 'A modern boarding house management system',
 };
 
-export default async function RootLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { segment: string[] };
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
 
   return (
