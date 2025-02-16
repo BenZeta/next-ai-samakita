@@ -1,29 +1,23 @@
 'use client';
 
-import type { AppRouter } from '@/lib/api/root';
-import { api } from '@/lib/trpc/react';
-import type { TRPCClientErrorLike } from '@trpc/react-query';
-import { signIn } from 'next-auth/react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { Building, ArrowRight, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SignUp() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Step 1 form data
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  
+
   // Step 2 form data
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -46,7 +40,8 @@ export default function SignUp() {
   const handleKtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB
         toast.error('File size should not exceed 5MB');
         return;
       }
@@ -126,21 +121,27 @@ export default function SignUp() {
       {/* Progress Steps */}
       <div className="relative mb-6 flex w-full max-w-[400px] items-center justify-between">
         <div className="absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-muted"></div>
-        <motion.div 
+        <motion.div
           className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-primary"
-          initial={{ width: "0%" }}
-          animate={{ width: step === 1 ? "50%" : "100%" }}
+          initial={{ width: '0%' }}
+          animate={{ width: step === 1 ? '50%' : '100%' }}
           transition={{ duration: 0.3 }}
         ></motion.div>
-        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">1</div>
-        <div className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${step === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>2</div>
+        <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          1
+        </div>
+        <div
+          className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full ${step === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+        >
+          2
+        </div>
       </div>
 
       {/* Signup Card */}
       <div className="group relative w-full max-w-[400px] overflow-hidden rounded-2xl bg-card/90 p-5 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 sm:p-6">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-foreground/10 to-foreground/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
         <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-[0.02] mix-blend-overlay"></div>
-        
+
         <AnimatePresence mode="wait">
           {step === 1 ? (
             <motion.div
@@ -161,7 +162,10 @@ export default function SignUp() {
               <form onSubmit={handleNextStep} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="fullName"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       Full Name
                     </label>
                     <input
@@ -176,7 +180,10 @@ export default function SignUp() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="email"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       Email
                     </label>
                     <input
@@ -193,7 +200,10 @@ export default function SignUp() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="password"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       Password
                     </label>
                     <input
@@ -208,7 +218,10 @@ export default function SignUp() {
                   </div>
 
                   <div>
-                    <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="confirmPassword"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       Confirm
                     </label>
                     <input
@@ -253,7 +266,10 @@ export default function SignUp() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="phone"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       Phone
                     </label>
                     <input
@@ -268,7 +284,10 @@ export default function SignUp() {
                   </div>
 
                   <div>
-                    <label htmlFor="ktpFile" className="mb-1.5 block text-sm font-medium text-foreground">
+                    <label
+                      htmlFor="ktpFile"
+                      className="mb-1.5 block text-sm font-medium text-foreground"
+                    >
                       KTP File
                     </label>
                     <div className="relative">
@@ -283,18 +302,17 @@ export default function SignUp() {
                         htmlFor="ktpFile"
                         className="flex h-[42px] w-full cursor-pointer items-center justify-center rounded-lg border border-input bg-background/80 px-4 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
                       >
-                        {ktpFile ? (
-                          <span className="truncate">{ktpFile.name}</span>
-                        ) : (
-                          'Upload KTP'
-                        )}
+                        {ktpFile ? <span className="truncate">{ktpFile.name}</span> : 'Upload KTP'}
                       </label>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="address" className="mb-1.5 block text-sm font-medium text-foreground">
+                  <label
+                    htmlFor="address"
+                    className="mb-1.5 block text-sm font-medium text-foreground"
+                  >
                     Address
                   </label>
                   <textarea
@@ -343,8 +361,8 @@ export default function SignUp() {
         <div className="mt-5 text-center">
           <p className="text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link 
-              href="/auth/signin" 
+            <Link
+              href="/auth/signin"
               className="font-medium text-primary transition-colors hover:text-primary/90"
             >
               Sign in

@@ -121,7 +121,7 @@ model Room {
   updatedAt           DateTime             @updatedAt
   floor               Int?
   status              RoomStatus           @default(AVAILABLE)
-  type                String
+  type                RoomType             @default(STANDARD)
   maintenanceRequests MaintenanceRequest[]
   property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tenants             Tenant[]
@@ -264,6 +264,13 @@ enum RoomStatus {
   AVAILABLE
   OCCUPIED
   MAINTENANCE
+}
+
+enum RoomType {
+  STANDARD
+  DELUXE
+  SUITE
+  STUDIO
 }
 
 enum TenantStatus {

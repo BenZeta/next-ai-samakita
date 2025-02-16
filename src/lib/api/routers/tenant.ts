@@ -140,18 +140,6 @@ export const tenantRouter = createTRPCRouter({
           },
         });
 
-        // Create deposit payment with immediate due date
-        await tx.payment.create({
-          data: {
-            tenantId: tenant.id,
-            propertyId: room.property.id,
-            amount: depositAmount,
-            type: 'DEPOSIT',
-            status: 'PENDING',
-            dueDate: new Date(startDate),
-          },
-        });
-
         // Update room status
         await tx.room.update({
           where: { id: roomId },
