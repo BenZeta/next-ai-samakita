@@ -1,12 +1,12 @@
 import { db, prisma } from '@/lib/db';
-import { RoomStatus, TenantStatus } from '@prisma/client';
+import { RoomStatus, RoomType, TenantStatus } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const roomSchema = z.object({
   number: z.string().min(1, 'Room number is required'),
-  type: z.nativeEnum(RoomStatus),
+  type: z.nativeEnum(RoomType),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
@@ -19,7 +19,7 @@ const bulkRoomSchema = z.object({
     .number()
     .min(1, 'Number of rooms must be at least 1')
     .max(50, 'Maximum 50 rooms at once'),
-  type: z.nativeEnum(RoomStatus),
+  type: z.nativeEnum(RoomType),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
@@ -79,7 +79,10 @@ export const roomRouter = createTRPCRouter({
     }
 
     return db.room.create({
-      data: input,
+      data: {
+        ...input,
+        status: RoomStatus.AVAILABLE,
+      },
     });
   }),
 
@@ -130,6 +133,7 @@ export const roomRouter = createTRPCRouter({
         amenities,
         price,
         propertyId,
+        status: RoomStatus.AVAILABLE,
       };
     });
 
@@ -148,12 +152,16 @@ export const roomRouter = createTRPCRouter({
       z.object({
         propertyId: z.string().optional(),
         status: z.enum(['available', 'occupied', 'maintenance']).optional(),
+        showOnlyAvailable: z.boolean().optional(),
       })
     )
     .query(async ({ input }) => {
       return prisma.room.findMany({
         where: {
           propertyId: input.propertyId,
+          ...(input.showOnlyAvailable && {
+            status: RoomStatus.AVAILABLE,
+          }),
           ...(input.status === 'available' && {
             tenants: {
               none: {
@@ -188,6 +196,9 @@ export const roomRouter = createTRPCRouter({
               address: true,
             },
           },
+        },
+        orderBy: {
+          number: 'asc',
         },
       });
     }),
@@ -568,20 +579,20 @@ export const roomRouter = createTRPCRouter({
         previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
 
       // Calculate room type breakdown
-      const roomTypes = Object.values(RoomStatus) as RoomStatus[];
-      const roomTypeBreakdown = await Promise.all(
-        roomTypes.map(async (type: RoomStatus) => {
-          const totalRoomsOfType = await db.room.count({
+      const roomStatuses = Object.values(RoomStatus) as RoomStatus[];
+      const roomStatusBreakdown = await Promise.all(
+        roomStatuses.map(async (status: RoomStatus) => {
+          const totalRoomsOfStatus = await db.room.count({
             where: {
               ...baseWhere,
-              status: type,
+              status: status,
             },
           });
 
-          const occupiedRoomsOfType = await db.room.count({
+          const occupiedRoomsOfStatus = await db.room.count({
             where: {
               ...baseWhere,
-              status: type,
+              status: status,
               tenants: {
                 some: {
                   status: TenantStatus.ACTIVE,
@@ -591,9 +602,9 @@ export const roomRouter = createTRPCRouter({
           });
 
           return {
-            type,
+            status,
             occupancyRate:
-              totalRoomsOfType > 0 ? (occupiedRoomsOfType / totalRoomsOfType) * 100 : 0,
+              totalRoomsOfStatus > 0 ? (occupiedRoomsOfStatus / totalRoomsOfStatus) * 100 : 0,
           };
         })
       );
@@ -604,7 +615,7 @@ export const roomRouter = createTRPCRouter({
         totalRooms,
         occupiedRooms,
         history,
-        roomTypeBreakdown,
+        roomStatusBreakdown,
       };
     }),
 });

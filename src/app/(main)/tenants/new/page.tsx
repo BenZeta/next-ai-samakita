@@ -19,6 +19,7 @@ export default function NewTenantPage() {
   const { data: rooms, isLoading: roomsLoading } = api.room.list.useQuery(
     {
       propertyId: selectedPropertyId!,
+      showOnlyAvailable: true,
     },
     {
       enabled: !!selectedPropertyId,
@@ -28,14 +29,14 @@ export default function NewTenantPage() {
   if (propertiesLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">Add New Tenant</h1>
+      <h1 className="mb-8 text-3xl font-bold text-foreground">Add New Tenant</h1>
 
       <div className="mb-8">
         <div className="relative">
@@ -45,7 +46,7 @@ export default function NewTenantPage() {
             placeholder="Search properties..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-md border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
           />
         </div>
       </div>
@@ -54,16 +55,16 @@ export default function NewTenantPage() {
         {properties?.properties.map(property => (
           <div
             key={property.id}
-            className={`cursor-pointer rounded-lg bg-white p-6 shadow transition-all hover:shadow-lg ${selectedPropertyId === property.id ? 'ring-2 ring-indigo-500' : ''}`}
+            className={`cursor-pointer rounded-lg bg-card p-6 shadow transition-all hover:shadow-lg dark:bg-gray-800 ${selectedPropertyId === property.id ? 'ring-2 ring-primary' : ''}`}
             onClick={() => setSelectedPropertyId(property.id)}
           >
             <div className="flex items-center">
-              <div className="rounded-full bg-indigo-100 p-3">
-                <Building2 className="h-6 w-6 text-indigo-600" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">{property.name}</h3>
-                <p className="text-sm text-gray-500">{property.address}</p>
+                <h3 className="text-lg font-medium text-card-foreground">{property.name}</h3>
+                <p className="text-sm text-muted-foreground">{property.address}</p>
               </div>
             </div>
           </div>
@@ -72,14 +73,14 @@ export default function NewTenantPage() {
 
       {selectedPropertyId && (
         <div className="mt-8">
-          <h2 className="mb-4 text-xl font-semibold">Select Room</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">Select Room</h2>
           {roomsLoading ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
-          ) : (
+          ) : rooms && rooms.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {rooms?.map(room => (
+              {rooms.map(room => (
                 <button
                   key={room.id}
                   onClick={() => router.push(`/rooms/${room.id}/tenants/new`)}
@@ -94,6 +95,10 @@ export default function NewTenantPage() {
                   </p>
                 </button>
               ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-input bg-card p-8 text-center dark:bg-gray-800">
+              <p className="text-muted-foreground">No available rooms in this property.</p>
             </div>
           )}
         </div>

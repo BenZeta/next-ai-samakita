@@ -44,7 +44,7 @@ async function main() {
       data: {
         number: '101',
         floor: 1,
-        type: 'Standard',
+        type: 'STANDARD',
         size: 20,
         price: 1000000,
         status: RoomStatus.OCCUPIED,
@@ -55,7 +55,7 @@ async function main() {
       data: {
         number: '102',
         floor: 1,
-        type: 'Deluxe',
+        type: 'DELUXE',
         size: 25,
         price: 1500000,
         status: RoomStatus.OCCUPIED,

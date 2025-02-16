@@ -23,8 +23,8 @@ interface OccupancyHistoryItem {
   rate: number;
 }
 
-interface RoomTypeBreakdown {
-  type: string;
+interface RoomStatusBreakdown {
+  status: string;
   occupancyRate: number;
 }
 
@@ -34,7 +34,7 @@ interface OccupancyData {
   totalRooms: number;
   occupiedRooms: number;
   history: OccupancyHistoryItem[];
-  roomTypeBreakdown: RoomTypeBreakdown[];
+  roomStatusBreakdown: RoomStatusBreakdown[];
 }
 
 export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
@@ -91,7 +91,7 @@ export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
   const currentOccupancy = occupancyData.currentRate;
   const previousOccupancy = occupancyData.previousRate;
   const occupancyChange = currentOccupancy - previousOccupancy;
-  const roomTypeBreakdown = occupancyData.roomTypeBreakdown;
+  const roomStatusBreakdown = occupancyData.roomStatusBreakdown;
   const history = occupancyData.history;
 
   // Custom tooltip content
@@ -191,15 +191,15 @@ export function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Room type breakdown */}
+        {/* Room status breakdown */}
         <div className="mt-10">
-          <h3 className="mb-4 text-sm font-medium text-muted-foreground">Room Type Breakdown</h3>
+          <h3 className="mb-4 text-sm font-medium text-muted-foreground">Room Status Breakdown</h3>
           <div className="space-y-3">
-            {roomTypeBreakdown.map(item => (
-              <div key={item.type}>
+            {roomStatusBreakdown.map(item => (
+              <div key={item.status}>
                 <div className="mb-1 flex items-center justify-between text-sm">
                   <span className="font-medium text-card-foreground">
-                    {item.type.charAt(0).toUpperCase() + item.type.slice(1).toLowerCase()}
+                    {item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase()}
                   </span>
                   <span className="text-muted-foreground">{Math.round(item.occupancyRate)}%</span>
                 </div>
