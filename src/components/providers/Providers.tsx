@@ -2,7 +2,6 @@
 import { ToastContainer } from 'react-toastify';
 import { ThemeProvider } from './ThemeProvider';
 import { TRPCReactProvider } from './TrpcProvider';
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SessionProvider } from "next-auth/react";
 import { type Session } from "next-auth";
