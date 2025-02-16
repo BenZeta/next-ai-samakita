@@ -11,9 +11,13 @@ import {
   Mail,
   MessageCircle,
   Search,
+  User,
+  Home,
+  Calendar,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BillingPage() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
@@ -41,7 +45,11 @@ export default function BillingPage() {
   if (statsLoading || tenantsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-8 w-8 rounded-full border-4 border-indigo-600 border-t-transparent"
+        />
       </div>
     );
   }
@@ -54,81 +62,84 @@ export default function BillingPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Billing Dashboard</h1>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
         <p className="mt-2 text-gray-600">Manage tenant payments and send reminders</p>
-      </div>
+      </motion.div>
 
       {/* Stats Cards */}
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl">
-          <div className="flex items-center">
-            <div className="rounded-full bg-green-100 p-3">
-              <DollarSign className="h-6 w-6 text-green-600" />
+        {[
+          {
+            title: 'Total Revenue',
+            value: `Rp ${stats?.totalRevenue?.toLocaleString() ?? 0}`,
+            icon: DollarSign,
+            color: 'green',
+          },
+          {
+            title: 'Pending Payments',
+            value: stats?.pendingPayments ?? 0,
+            icon: CreditCard,
+            color: 'blue',
+          },
+          {
+            title: 'Due This Week',
+            value: stats?.dueThisWeek ?? 0,
+            icon: Clock,
+            color: 'yellow',
+          },
+          {
+            title: 'Overdue',
+            value: stats?.overduePayments ?? 0,
+            icon: AlertCircle,
+            color: 'red',
+          },
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+          >
+            <div className="flex items-center gap-4">
+              <div className={`rounded-full bg-${stat.color}-100 p-3`}>
+                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+              </div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-semibold text-gray-900">
-                Rp {stats?.totalRevenue?.toLocaleString() ?? 0}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl">
-          <div className="flex items-center">
-            <div className="rounded-full bg-blue-100 p-3">
-              <CreditCard className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Pending Payments</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.pendingPayments ?? 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl">
-          <div className="flex items-center">
-            <div className="rounded-full bg-yellow-100 p-3">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Due This Week</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.dueThisWeek ?? 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl">
-          <div className="flex items-center">
-            <div className="rounded-full bg-red-100 p-3">
-              <AlertCircle className="h-6 w-6 text-red-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Overdue</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats?.overduePayments ?? 0}</p>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Search, Filter, and Payment Type Section */}
-      <div className="mb-6 flex items-center justify-between">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Filters */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+      >
+        <div className="relative w-full lg:max-w-md">
           <input
             type="text"
             placeholder="Search tenant or room number..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            className="w-full rounded-xl border border-gray-300 pl-12 pr-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
           />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-4">
           <select
             value={selectedPaymentType}
             onChange={e => setSelectedPaymentType(e.target.value as PaymentType)}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            className="rounded-xl border border-gray-300 px-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
           >
             {Object.values(PaymentType).map(type => (
               <option key={type} value={type}>
@@ -139,50 +150,74 @@ export default function BillingPage() {
           <select
             value={timeRange}
             onChange={e => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
-            className="rounded-lg border border-gray-300 px-4 py-2 focus:border-indigo-500 focus:ring-indigo-500"
+            className="rounded-xl border border-gray-300 px-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
           >
             <option value="week">Last Week</option>
             <option value="month">Last Month</option>
             <option value="year">Last Year</option>
           </select>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Tenant Payment Cards */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {filteredTenants?.map(tenant => (
-          <div
-            key={tenant.id}
-            className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold">{tenant.name}</h3>
-                <p className="text-sm text-gray-600">Room {tenant.room?.number}</p>
+      {/* Tenant Cards */}
+      <div className="space-y-4 w-full">
+        <AnimatePresence>
+          {filteredTenants?.map((tenant, index) => (
+            <motion.div
+              key={tenant.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: index * 0.05 }}
+              className="group w-full overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-xl hover:bg-gray-50"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-gray-100 p-3">
+                    <User className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{tenant.name}</h3>
+                    <div className="mt-1 flex items-center gap-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Home className="h-4 w-4" />
+                        <span>Room {tenant.room?.number}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>Due in 5 days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSendNotification(tenant.id, 'whatsapp')}
+                    className="rounded-full bg-green-100 p-2 text-green-600 transition-colors hover:bg-green-200"
+                    title={`Send WhatsApp reminder for ${selectedPaymentType.toLowerCase()} payment`}
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleSendNotification(tenant.id, 'email')}
+                    className="rounded-full bg-blue-100 p-2 text-blue-600 transition-colors hover:bg-blue-200"
+                    title={`Send email reminder for ${selectedPaymentType.toLowerCase()} payment`}
+                  >
+                    <Mail className="h-5 w-5" />
+                  </motion.button>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleSendNotification(tenant.id, 'whatsapp')}
-                  className="rounded-full bg-green-100 p-2 text-green-600 hover:bg-green-200"
-                  title={`Send WhatsApp reminder for ${selectedPaymentType.toLowerCase()} payment`}
-                >
-                  <MessageCircle className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => handleSendNotification(tenant.id, 'email')}
-                  className="rounded-full bg-blue-100 p-2 text-blue-600 hover:bg-blue-200"
-                  title={`Send email reminder for ${selectedPaymentType.toLowerCase()} payment`}
-                >
-                  <Mail className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
 
-            <div className="space-y-3">
-              <PaymentList tenantId={tenant.id} paymentType={selectedPaymentType} />
-            </div>
-          </div>
-        ))}
+              <div className="mt-6">
+                <PaymentList tenantId={tenant.id} paymentType={selectedPaymentType} />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
