@@ -127,7 +127,12 @@ export function Sidebar() {
             {/* Sign Out Button */}
             <div className="px-3 pb-4">
               <button
-                onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                onClick={() => {
+                  // Clear stored credentials before signing out
+                  localStorage.removeItem('userEmail');
+                  localStorage.removeItem('userPassword');
+                  signOut({ callbackUrl: '/auth/signin' });
+                }}
                 className="group flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white"
               >
                 <LogOut className="mr-3 h-5 w-5 flex-shrink-0 text-gray-400 group-hover:text-white" />

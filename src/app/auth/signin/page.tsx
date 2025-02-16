@@ -18,6 +18,10 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
+      // Store credentials temporarily for session refresh
+      localStorage.setItem('userEmail', email);
+      localStorage.setItem('userPassword', password);
+
       const result = await signIn('credentials', {
         email,
         password,
@@ -26,12 +30,18 @@ export default function SignIn() {
 
       if (result?.error) {
         toast.error(result.error);
+        // Clear stored credentials on error
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userPassword');
       } else {
         toast.success('Signed in successfully!');
         router.push('/dashboard');
       }
     } catch (error) {
       toast.error('An error occurred during sign in');
+      // Clear stored credentials on error
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userPassword');
     } finally {
       setIsLoading(false);
     }

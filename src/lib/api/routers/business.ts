@@ -30,7 +30,7 @@ export const businessRouter = createTRPCRouter({
     .input(
       z.object({
         business: businessSchema,
-        property: propertySchema,
+        property: propertySchema.optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -68,19 +68,22 @@ export const businessRouter = createTRPCRouter({
           },
         });
 
-        // Create property
-        const newProperty = await tx.property.create({
-          data: {
-            userId: ctx.session.user.id,
-            name: property.name,
-            address: property.address,
-            city: property.city,
-            province: property.province,
-            postalCode: property.postalCode,
-            description: property.description,
-            dueDate: 5, // Default due date is 5th of each month
-          },
-        });
+        let newProperty = null;
+        if (property) {
+          // Create property only if provided
+          newProperty = await tx.property.create({
+            data: {
+              userId: ctx.session.user.id,
+              name: property.name,
+              address: property.address,
+              city: property.city,
+              province: property.province,
+              postalCode: property.postalCode,
+              description: property.description,
+              dueDate: 5, // Default due date is 5th of each month
+            },
+          });
+        }
 
         return {
           businessProfile,
