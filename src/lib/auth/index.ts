@@ -1,12 +1,12 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/db";
-import { getServerSession, type NextAuthOptions, type DefaultSession } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { prisma } from '@/lib/db';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { compare } from 'bcryptjs';
+import { getServerSession, type DefaultSession, type NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
 export enum UserRole {
-  user = "user",
-  admin = "admin",
+  user = 'user',
+  admin = 'admin',
 }
 
 /**
@@ -15,7 +15,7 @@ export enum UserRole {
  *
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
-declare module "next-auth/adapters" {
+declare module 'next-auth/adapters' {
   interface AdapterUser {
     login?: string;
     role?: UserRole;
@@ -24,7 +24,7 @@ declare module "next-auth/adapters" {
   }
 }
 
-declare module "next-auth" {
+declare module 'next-auth' {
   interface Session extends DefaultSession {
     user: {
       id: string;
@@ -58,14 +58,14 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Please enter your email and password");
+          throw new Error('Please enter your email and password');
         }
 
         const user = await prisma.user.findUnique({
@@ -73,13 +73,13 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.hashedPassword) {
-          throw new Error("No user found with this email");
+          throw new Error('No user found with this email');
         }
 
         const isValid = await compare(credentials.password, user.hashedPassword);
 
         if (!isValid) {
-          throw new Error("Invalid password");
+          throw new Error('Invalid password');
         }
 
         return {
@@ -93,7 +93,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
@@ -115,9 +115,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
   pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
-    error: "/auth/error",
+    signIn: '/auth/signin',
+    signOut: '/auth/signout',
+    error: '/auth/error',
   },
 };
 

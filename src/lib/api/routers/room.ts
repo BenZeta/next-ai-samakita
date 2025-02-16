@@ -411,23 +411,22 @@ export const roomRouter = createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const { propertyId, timeRange } = input;
 
+      const baseWhere = {
+        ...(propertyId ? { propertyId } : {}),
+        property: {
+          userId: ctx.session.user.id,
+        },
+      };
+
       // Get total rooms
       const totalRoomsQuery = db.room.count({
-        where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
-        },
+        where: baseWhere,
       });
 
       // Get occupied rooms (rooms with active tenants)
       const occupiedRoomsQuery = db.room.count({
         where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
+          ...baseWhere,
           tenants: {
             some: {
               status: TenantStatus.ACTIVE,
@@ -481,10 +480,7 @@ export const roomRouter = createTRPCRouter({
         historyPoints.map(async ({ date, label }) => {
           const totalRooms = await db.room.count({
             where: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
+              ...baseWhere,
               createdAt: {
                 lte: date,
               },
@@ -493,10 +489,7 @@ export const roomRouter = createTRPCRouter({
 
           const occupiedRooms = await db.room.count({
             where: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
+              ...baseWhere,
               createdAt: {
                 lte: date,
               },
@@ -540,10 +533,7 @@ export const roomRouter = createTRPCRouter({
 
       const previousOccupiedRooms = await db.room.count({
         where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
+          ...baseWhere,
           tenants: {
             some: {
               status: TenantStatus.ACTIVE,
@@ -567,10 +557,7 @@ export const roomRouter = createTRPCRouter({
 
       const previousTotalRooms = await db.room.count({
         where: {
-          ...(propertyId ? { propertyId } : {}),
-          property: {
-            userId: ctx.session.user.id,
-          },
+          ...baseWhere,
           createdAt: {
             lte: previousPeriodStart,
           },
@@ -586,20 +573,14 @@ export const roomRouter = createTRPCRouter({
         roomTypes.map(async (type: RoomStatus) => {
           const totalRoomsOfType = await db.room.count({
             where: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
+              ...baseWhere,
               status: type,
             },
           });
 
           const occupiedRoomsOfType = await db.room.count({
             where: {
-              ...(propertyId ? { propertyId } : {}),
-              property: {
-                userId: ctx.session.user.id,
-              },
+              ...baseWhere,
               status: type,
               tenants: {
                 some: {

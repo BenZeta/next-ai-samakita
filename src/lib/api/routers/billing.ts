@@ -1,17 +1,15 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import { db } from "@/lib/db";
-import { PaymentStatus, PaymentType, TenantStatus, PaymentMethod } from "@prisma/client";
-import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
-import { sendPaymentReminder } from "@/lib/whatsapp";
-import { sendEmail } from "@/lib/email";
-import { createPaymentIntent, retrievePaymentIntent, cancelPaymentIntent } from "@/lib/stripe";
-import { sendInvoiceEmail } from "@/lib/email";
+import { db } from '@/lib/db';
+import { sendInvoiceEmail } from '@/lib/email';
+import { cancelPaymentIntent, createPaymentIntent, retrievePaymentIntent } from '@/lib/stripe';
+import { sendPaymentReminder } from '@/lib/whatsapp';
+import { PaymentMethod, PaymentStatus, PaymentType, TenantStatus } from '@prisma/client';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const paymentSchema = z.object({
-  tenantId: z.string().min(1, "Tenant ID is required"),
-  amount: z.number().min(0, "Amount must be greater than or equal to 0"),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
+  amount: z.number().min(0, 'Amount must be greater than or equal to 0'),
   type: z.nativeEnum(PaymentType),
   method: z.nativeEnum(PaymentMethod),
   dueDate: z.date(),
@@ -21,8 +19,15 @@ const paymentSchema = z.object({
 
 export const billingRouter = createTRPCRouter({
   createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
-    const tenant = await ctx.db.tenant.findUnique({
-      where: { id: input.tenantId },
+    const tenant = await ctx.db.tenant.findFirst({
+      where: {
+        id: input.tenantId,
+        room: {
+          property: {
+            userId: ctx.session.user.id,
+          },
+        },
+      },
       include: {
         room: {
           include: {
@@ -34,8 +39,8 @@ export const billingRouter = createTRPCRouter({
 
     if (!tenant) {
       throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Tenant not found",
+        code: 'NOT_FOUND',
+        message: 'Tenant not found or you do not have access to this tenant',
       });
     }
 
@@ -80,10 +85,10 @@ export const billingRouter = createTRPCRouter({
           stripeClientSecret: stripePayment.clientSecret,
         };
       } catch (error) {
-        console.error("Failed to create Stripe payment:", error);
+        console.error('Failed to create Stripe payment:', error);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create Stripe payment",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create Stripe payment',
         });
       }
     }
@@ -91,8 +96,8 @@ export const billingRouter = createTRPCRouter({
     // Send payment link to tenant
     if (payment.stripePaymentId) {
       const stripeStatus = await retrievePaymentIntent(payment.stripePaymentId);
-      
-      if (stripeStatus.status === "succeeded") {
+
+      if (stripeStatus.status === 'succeeded') {
         await db.payment.update({
           where: { id: payment.id },
           data: {
@@ -124,6 +129,13 @@ export const billingRouter = createTRPCRouter({
             gte: input.startDate,
             lte: input.endDate,
           },
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
         },
         include: {
           tenant: {
@@ -133,13 +145,13 @@ export const billingRouter = createTRPCRouter({
           },
         },
         orderBy: {
-          createdAt: "desc",
+          createdAt: 'desc',
         },
       });
 
       // Check status of pending Stripe payments
       await Promise.all(
-        payments.map(async (payment) => {
+        payments.map(async payment => {
           if (
             payment.method === PaymentMethod.STRIPE &&
             payment.status === PaymentStatus.PENDING &&
@@ -147,21 +159,21 @@ export const billingRouter = createTRPCRouter({
           ) {
             try {
               const stripeStatus = await retrievePaymentIntent(payment.stripePaymentId);
-              
+
               let newStatus: PaymentStatus = payment.status;
               let paidAt = payment.paidAt;
 
               switch (stripeStatus.status) {
-                case "succeeded":
+                case 'succeeded':
                   newStatus = PaymentStatus.PAID;
                   paidAt = new Date();
                   break;
-                case "canceled":
+                case 'canceled':
                   newStatus = PaymentStatus.CANCELLED;
                   break;
-                case "requires_payment_method":
-                case "requires_confirmation":
-                case "requires_action":
+                case 'requires_payment_method':
+                case 'requires_confirmation':
+                case 'requires_action':
                   newStatus = PaymentStatus.PENDING;
                   break;
                 default:
@@ -178,7 +190,10 @@ export const billingRouter = createTRPCRouter({
                 });
               }
             } catch (error) {
-              console.error(`Failed to check Stripe payment status for payment ${payment.id}:`, error);
+              console.error(
+                `Failed to check Stripe payment status for payment ${payment.id}:`,
+                error
+              );
             }
           }
         })
@@ -204,16 +219,16 @@ export const billingRouter = createTRPCRouter({
 
       if (!payment) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found",
+          code: 'NOT_FOUND',
+          message: 'Payment not found',
         });
       }
 
       // Prevent manual status changes for Stripe payments
       if (payment.method === PaymentMethod.STRIPE) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot manually update status of Stripe payments",
+          code: 'FORBIDDEN',
+          message: 'Cannot manually update status of Stripe payments',
         });
       }
 
@@ -244,28 +259,28 @@ export const billingRouter = createTRPCRouter({
 
       if (!payment || !payment.stripePaymentId) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found or no Stripe ID associated",
+          code: 'NOT_FOUND',
+          message: 'Payment not found or no Stripe ID associated',
         });
       }
 
       try {
         const stripeStatus = await retrievePaymentIntent(payment.stripePaymentId);
-        
+
         let newStatus: PaymentStatus = payment.status;
         let paidAt = payment.paidAt;
 
         switch (stripeStatus.status) {
-          case "succeeded":
+          case 'succeeded':
             newStatus = PaymentStatus.PAID;
             paidAt = new Date();
             break;
-          case "canceled":
+          case 'canceled':
             newStatus = PaymentStatus.CANCELLED;
             break;
-          case "requires_payment_method":
-          case "requires_confirmation":
-          case "requires_action":
+          case 'requires_payment_method':
+          case 'requires_confirmation':
+          case 'requires_action':
             newStatus = PaymentStatus.PENDING;
             break;
           default:
@@ -284,10 +299,10 @@ export const billingRouter = createTRPCRouter({
 
         return payment;
       } catch (error) {
-        console.error("Failed to check Stripe payment status:", error);
+        console.error('Failed to check Stripe payment status:', error);
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to check payment status",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to check payment status',
         });
       }
     }),
@@ -309,15 +324,15 @@ export const billingRouter = createTRPCRouter({
 
       if (!payment) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Payment not found",
+          code: 'NOT_FOUND',
+          message: 'Payment not found',
         });
       }
 
       if (payment.type !== PaymentType.DEPOSIT) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "This payment is not a deposit",
+          code: 'BAD_REQUEST',
+          message: 'This payment is not a deposit',
         });
       }
 
@@ -361,7 +376,7 @@ export const billingRouter = createTRPCRouter({
     }
 
     await Promise.all(
-      activeTenants.map((tenant) =>
+      activeTenants.map(tenant =>
         db.payment.create({
           data: {
             tenantId: tenant.id,
@@ -381,7 +396,7 @@ export const billingRouter = createTRPCRouter({
   getStats: protectedProcedure
     .input(
       z.object({
-        timeRange: z.enum(["week", "month", "year"]),
+        timeRange: z.enum(['week', 'month', 'year']),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -389,21 +404,32 @@ export const billingRouter = createTRPCRouter({
       const startDate = new Date();
 
       switch (input.timeRange) {
-        case "week":
+        case 'week':
           startDate.setDate(now.getDate() - 7);
           break;
-        case "month":
+        case 'month':
           startDate.setMonth(now.getMonth() - 1);
           break;
-        case "year":
+        case 'year':
           startDate.setFullYear(now.getFullYear() - 1);
           break;
       }
+
+      const baseWhere = {
+        tenant: {
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        },
+      };
 
       const [totalRevenue, pendingPayments, dueThisWeek, overduePayments] = await Promise.all([
         ctx.db.payment
           .findMany({
             where: {
+              ...baseWhere,
               status: PaymentStatus.PAID,
               paidAt: {
                 gte: startDate,
@@ -414,14 +440,16 @@ export const billingRouter = createTRPCRouter({
               amount: true,
             },
           })
-          .then((payments) => payments.reduce((sum, p) => sum + p.amount, 0)),
+          .then(payments => payments.reduce((sum, p) => sum + p.amount, 0)),
         ctx.db.payment.count({
           where: {
+            ...baseWhere,
             status: PaymentStatus.PENDING,
           },
         }),
         ctx.db.payment.count({
           where: {
+            ...baseWhere,
             status: PaymentStatus.PENDING,
             dueDate: {
               gte: now,
@@ -431,6 +459,7 @@ export const billingRouter = createTRPCRouter({
         }),
         ctx.db.payment.count({
           where: {
+            ...baseWhere,
             status: PaymentStatus.OVERDUE,
           },
         }),
@@ -448,13 +477,20 @@ export const billingRouter = createTRPCRouter({
     .input(
       z.object({
         tenantId: z.string(),
-        method: z.enum(["email", "whatsapp"]),
+        method: z.enum(['email', 'whatsapp']),
         paymentType: z.nativeEnum(PaymentType),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const tenant = await ctx.db.tenant.findUnique({
-        where: { id: input.tenantId },
+      const tenant = await ctx.db.tenant.findFirst({
+        where: {
+          id: input.tenantId,
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        },
         include: {
           payments: {
             where: {
@@ -474,14 +510,14 @@ export const billingRouter = createTRPCRouter({
 
       if (!tenant) {
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Tenant not found",
+          code: 'NOT_FOUND',
+          message: 'Tenant not found or you do not have access to this tenant',
         });
       }
 
       if (tenant.payments.length === 0) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: 'BAD_REQUEST',
           message: `No pending or overdue ${input.paymentType} payments found for this tenant`,
         });
       }
@@ -506,7 +542,7 @@ export const billingRouter = createTRPCRouter({
             },
           });
 
-          if (input.method === "whatsapp") {
+          if (input.method === 'whatsapp') {
             await sendPaymentReminder(tenant, {
               ...payment,
               stripeClientSecret: stripePayment.clientSecret,
@@ -530,9 +566,9 @@ export const billingRouter = createTRPCRouter({
         return { success: true };
       } catch (error) {
         throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
+          code: 'INTERNAL_SERVER_ERROR',
           message: `Failed to send ${input.method} notification`,
-        })
+        });
       }
     }),
 });

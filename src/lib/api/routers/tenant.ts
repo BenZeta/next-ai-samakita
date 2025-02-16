@@ -172,11 +172,16 @@ export const tenantRouter = createTRPCRouter({
         search: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { roomId, status, search } = input;
 
       const where: Prisma.TenantWhereInput = {
-        ...(roomId ? { roomId } : {}),
+        room: {
+          property: {
+            userId: ctx.session.user.id,
+          },
+          ...(roomId ? { id: roomId } : {}),
+        },
         ...(status ? { status } : {}),
         ...(search
           ? {
@@ -227,9 +232,16 @@ export const tenantRouter = createTRPCRouter({
         id: z.string(),
       })
     )
-    .query(async ({ input }) => {
-      const tenant = await db.tenant.findUnique({
-        where: { id: input.id },
+    .query(async ({ input, ctx }) => {
+      const tenant = await db.tenant.findFirst({
+        where: {
+          id: input.id,
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        },
         include: {
           room: {
             include: {
@@ -711,25 +723,30 @@ export const tenantRouter = createTRPCRouter({
         status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { propertyId, status } = input;
       const now = new Date();
       const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
+      const baseWhere = {
+        room: {
+          property: {
+            userId: ctx.session.user.id,
+          },
+          ...(propertyId ? { propertyId } : {}),
+        },
+        ...(status ? { status } : {}),
+      };
+
       // Get tenants with filtering
       const tenants = await db.tenant.findMany({
-        where: {
-          room: {
-            propertyId: propertyId,
-          },
-          ...(status
-            ? {
-                status,
-              }
-            : {}),
-        },
+        where: baseWhere,
         include: {
-          room: true,
+          room: {
+            include: {
+              property: true,
+            },
+          },
           leases: {
             orderBy: {
               startDate: 'desc',
@@ -745,33 +762,23 @@ export const tenantRouter = createTRPCRouter({
       // Get tenant statistics
       const stats = {
         total: await db.tenant.count({
-          where: {
-            room: {
-              propertyId: propertyId,
-            },
-          },
+          where: baseWhere,
         }),
         active: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'ACTIVE',
           },
         }),
         inactive: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'INACTIVE',
           },
         }),
         upcomingMoveOuts: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'ACTIVE',
             endDate: {
               gt: now,

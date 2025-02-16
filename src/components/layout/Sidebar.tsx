@@ -1,11 +1,22 @@
 'use client';
 
-import { Building2, CreditCard, Home, Menu, Receipt, Settings, Users, X } from 'lucide-react';
+import {
+  Building2,
+  CreditCard,
+  FileCheck,
+  Home,
+  Menu,
+  Receipt,
+  Settings,
+  Users,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const navigation = [
+  { name: 'Overview', href: '/business-verification', icon: FileCheck },
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Properties', href: '/properties', icon: Building2 },
   { name: 'Tenants', href: '/tenants', icon: Users },

@@ -44,32 +44,65 @@ export default function BusinessVerificationPage() {
     },
   });
 
+  const handleNextStep = () => {
+    // Validate current step before proceeding
+    if (step === 1) {
+      if (!businessName || !phoneNumber || !address || (businessType === 'company' && !taxId)) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+    } else if (step === 2) {
+      if (
+        !propertyName ||
+        !propertyAddress ||
+        !propertyCity ||
+        !propertyProvince ||
+        !propertyPostalCode
+      ) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+    }
+    setStep(step + 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required documents
+    if (!businessLicense || !propertyDocument || (businessType === 'company' && !taxDocument)) {
+      toast.error('Please upload all required documents');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       // Upload documents first
       const uploadPromises = [];
-      if (businessLicense) {
-        const formData = new FormData();
-        formData.append('file', businessLicense);
+
+      // Business License
+      const businessLicenseFormData = new FormData();
+      businessLicenseFormData.append('file', businessLicense);
+      uploadPromises.push(
+        fetch('/api/upload/business-license', { method: 'POST', body: businessLicenseFormData })
+      );
+
+      // Tax Document (if company)
+      if (businessType === 'company' && taxDocument) {
+        const taxDocumentFormData = new FormData();
+        taxDocumentFormData.append('file', taxDocument);
         uploadPromises.push(
-          fetch('/api/upload/business-license', { method: 'POST', body: formData })
+          fetch('/api/upload/tax-document', { method: 'POST', body: taxDocumentFormData })
         );
       }
-      if (taxDocument) {
-        const formData = new FormData();
-        formData.append('file', taxDocument);
-        uploadPromises.push(fetch('/api/upload/tax-document', { method: 'POST', body: formData }));
-      }
-      if (propertyDocument) {
-        const formData = new FormData();
-        formData.append('file', propertyDocument);
-        uploadPromises.push(
-          fetch('/api/upload/property-document', { method: 'POST', body: formData })
-        );
-      }
+
+      // Property Document
+      const propertyDocumentFormData = new FormData();
+      propertyDocumentFormData.append('file', propertyDocument);
+      uploadPromises.push(
+        fetch('/api/upload/property-document', { method: 'POST', body: propertyDocumentFormData })
+      );
 
       const uploadResults = await Promise.all(uploadPromises);
       const documentUrls = await Promise.all(uploadResults.map(res => res.json()));
@@ -84,8 +117,8 @@ export default function BusinessVerificationPage() {
           address,
           documents: {
             businessLicense: documentUrls[0]?.url,
-            taxDocument: documentUrls[1]?.url,
-            propertyDocument: documentUrls[2]?.url,
+            taxDocument: businessType === 'company' ? documentUrls[1]?.url : undefined,
+            propertyDocument: documentUrls[businessType === 'company' ? 2 : 1]?.url,
           },
         },
         property: {
@@ -377,7 +410,10 @@ export default function BusinessVerificationPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form
+            onSubmit={step === 3 ? handleSubmit : e => e.preventDefault()}
+            className="space-y-8"
+          >
             {renderStep()}
 
             <div className="flex justify-between">
@@ -393,7 +429,7 @@ export default function BusinessVerificationPage() {
               {step < 3 ? (
                 <button
                   type="button"
-                  onClick={() => setStep(step + 1)}
+                  onClick={handleNextStep}
                   className="ml-auto rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
                 >
                   Next

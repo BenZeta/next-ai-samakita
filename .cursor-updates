@@ -2,3 +2,4 @@
 - Implemented business verification system with BusinessProfile and Property models, tRPC router for handling verification process, and API routes for document uploads.
 - Fixed type errors in signup and business verification pages, ensuring proper type safety for form handling and API interactions.
 - Removed edge runtime from upload routes to fix build errors with NextAuth.js requiring Node.js crypto module.
+- Fixed monthly trend in dashboard by properly filtering finance data by user properties in the finance router, ensuring new users see correct financial data.

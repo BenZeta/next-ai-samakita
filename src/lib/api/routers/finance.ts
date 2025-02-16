@@ -1,9 +1,7 @@
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import { db } from "@/lib/db";
-import { PaymentStatus, PaymentType, ExpenseCategory } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { prisma } from '@/lib/db';
+import { PaymentStatus } from '@prisma/client';
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 interface MonthlyTrendItem {
   label: string;
@@ -16,10 +14,10 @@ export const financeRouter = createTRPCRouter({
     .input(
       z.object({
         propertyId: z.string().optional(),
-        timeRange: z.enum(["month", "quarter", "year"]).default("month"),
+        timeRange: z.enum(['month', 'quarter', 'year']).default('month'),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { propertyId, timeRange } = input;
 
       // Get date ranges
@@ -28,28 +26,36 @@ export const financeRouter = createTRPCRouter({
       let previousStartDate = new Date();
 
       switch (timeRange) {
-        case "month":
+        case 'month':
           startDate.setMonth(now.getMonth() - 1);
           previousStartDate.setMonth(now.getMonth() - 2);
           break;
-        case "quarter":
+        case 'quarter':
           startDate.setMonth(now.getMonth() - 3);
           previousStartDate.setMonth(now.getMonth() - 6);
           break;
-        case "year":
+        case 'year':
           startDate.setFullYear(now.getFullYear() - 1);
           previousStartDate.setFullYear(now.getFullYear() - 2);
           break;
       }
 
+      // Base where condition to filter by user's properties
+      const baseWhere = {
+        property: {
+          userId: ctx.session.user.id,
+        },
+        ...(propertyId ? { propertyId } : {}),
+      };
+
       // Calculate total revenue (rent payments + other income)
       const totalRevenue = await prisma.payment.aggregate({
         where: {
-          propertyId: propertyId,
+          ...baseWhere,
           createdAt: {
             gte: startDate,
           },
-          status: "PAID",
+          status: PaymentStatus.PAID,
         },
         _sum: {
           amount: true,
@@ -59,7 +65,7 @@ export const financeRouter = createTRPCRouter({
       // Calculate total expenses
       const totalExpenses = await prisma.expense.aggregate({
         where: {
-          propertyId: propertyId,
+          ...baseWhere,
           createdAt: {
             gte: startDate,
           },
@@ -70,7 +76,7 @@ export const financeRouter = createTRPCRouter({
       });
 
       // Get monthly trend data
-      const monthlyTrend = await getMonthlyTrend(propertyId, timeRange);
+      const monthlyTrend = await getMonthlyTrend(propertyId, timeRange, ctx.session.user.id);
 
       return {
         totalRevenue: totalRevenue._sum.amount ?? 0,
@@ -80,16 +86,28 @@ export const financeRouter = createTRPCRouter({
     }),
 });
 
-async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month" | "quarter" | "year") {
+async function getMonthlyTrend(
+  propertyId: string | undefined,
+  timeRange: 'month' | 'quarter' | 'year',
+  userId: string
+) {
   const now = new Date();
-  const periods = timeRange === "month" ? 30 : timeRange === "quarter" ? 90 : 12;
+  const periods = timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 12;
   const trend = [];
+
+  // Base where condition to filter by user's properties
+  const baseWhere = {
+    property: {
+      userId,
+    },
+    ...(propertyId ? { propertyId } : {}),
+  };
 
   for (let i = 0; i < periods; i++) {
     const date = new Date();
     const endDate = new Date();
 
-    if (timeRange === "year") {
+    if (timeRange === 'year') {
       date.setMonth(now.getMonth() - i);
       endDate.setMonth(now.getMonth() - i + 1);
     } else {
@@ -100,12 +118,12 @@ async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month
     // Get revenue for the period
     const revenue = await prisma.payment.aggregate({
       where: {
-        propertyId: propertyId,
+        ...baseWhere,
         createdAt: {
           gte: date,
           lt: endDate,
         },
-        status: "PAID",
+        status: PaymentStatus.PAID,
       },
       _sum: {
         amount: true,
@@ -115,7 +133,7 @@ async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month
     // Get expenses for the period
     const expenses = await prisma.expense.aggregate({
       where: {
-        propertyId: propertyId,
+        ...baseWhere,
         createdAt: {
           gte: date,
           lt: endDate,
@@ -126,7 +144,10 @@ async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month
       },
     });
 
-    const month = timeRange === "year" ? date.toLocaleDateString("en-US", { month: "short" }) : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const month =
+      timeRange === 'year'
+        ? date.toLocaleDateString('en-US', { month: 'short' })
+        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     trend.push({
       month,
@@ -137,5 +158,5 @@ async function getMonthlyTrend(propertyId: string | undefined, timeRange: "month
   }
 
   // Return only the last 12 entries for year view, or all entries for other views
-  return timeRange === "year" ? trend.reverse() : trend.reverse().slice(0, 30);
+  return timeRange === 'year' ? trend.reverse() : trend.reverse().slice(0, 30);
 }
