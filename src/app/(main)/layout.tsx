@@ -9,6 +9,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  console.log(status, 'status');
+  console.log(session, 'session');
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
