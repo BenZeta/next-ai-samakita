@@ -3,21 +3,21 @@
 import { PaymentList } from '@/components/payment/PaymentList';
 import { api } from '@/lib/trpc/react';
 import { PaymentType } from '@prisma/client';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
+  Calendar,
   Clock,
   CreditCard,
   DollarSign,
+  Home,
   Mail,
   MessageCircle,
   Search,
   User,
-  Home,
-  Calendar,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function BillingPage() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
@@ -45,9 +45,9 @@ export default function BillingPage() {
   if (statsLoading || tenantsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <motion.div 
+        <motion.div
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           className="h-8 w-8 rounded-full border-4 border-indigo-600 border-t-transparent"
         />
       </div>
@@ -62,11 +62,7 @@ export default function BillingPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
         <p className="mt-2 text-gray-600">Manage tenant payments and send reminders</p>
       </motion.div>
@@ -120,7 +116,7 @@ export default function BillingPage() {
       </div>
 
       {/* Search and Filters */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
@@ -158,7 +154,6 @@ export default function BillingPage() {
           </select>
         </div>
       </motion.div>
-
       {/* Tenant Cards */}
       <div className="space-y-4 w-full">
         <AnimatePresence>
