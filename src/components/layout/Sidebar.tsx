@@ -17,6 +17,7 @@ import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 // All navigation items
 const navigation = [
@@ -74,14 +75,24 @@ const Sidebar = () => {
           <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
             <AnimatePresence mode="wait">
               {isOpen && (
-                <motion.h1
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="text-xl font-bold text-white"
+                  className="flex items-center gap-2"
                 >
-                  SamaKita
-                </motion.h1>
+                  <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gray-600">
+                    <Image 
+                      src="https://ik.imagekit.io/matguchi18/sk.png"
+                      alt="Superkos Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <h1 className="text-xl font-bold text-white">
+                    Superkos
+                  </h1>
+                </motion.div>
               )}
             </AnimatePresence>
 

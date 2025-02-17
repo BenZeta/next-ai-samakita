@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import Image from 'next/image';
 
 export default function SignUp() {
   const router = useRouter();
@@ -109,7 +110,20 @@ export default function SignUp() {
       </div>
 
       {/* Logo & Brand Section */}
-      <div className="relative mb-6 text-center">
+      <div className="mb-8 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="group relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-600 dark:bg-gray-700 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/40 via-foreground/40 to-foreground/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            <div className="relative h-14 w-14 overflow-hidden">
+              <Image 
+                src="https://ik.imagekit.io/matguchi18/sk.png"
+                alt="Superkos Logo"
+                fill
+                className="object-contain transition-all duration-300 group-hover:scale-110"
+              />
+            </div>
+          </div>
+        </div>
         <h1 className="relative bg-gradient-to-r from-primary via-foreground to-foreground bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
           Create Account
         </h1>
