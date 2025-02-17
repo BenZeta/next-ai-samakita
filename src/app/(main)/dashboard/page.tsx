@@ -46,7 +46,7 @@ export default function DashboardPage() {
             <select
               value={selectedPropertyId}
               onChange={e => setSelectedPropertyId(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-input bg-background px-4 py-2 pr-10 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
+              className="w-full appearance-none rounded-lg border border-input bg-card px-4 py-2 pr-10 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
             >
               <option value="">All Properties</option>
               {properties.map(property => (
@@ -61,9 +61,9 @@ export default function DashboardPage() {
       </div>
 
       {!isVerified && (
-        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-900/10">
+        <div className="mb-6 rounded-lg border border-yellow-400/20 bg-yellow-400/10 p-4 dark:border-yellow-400/10">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
             <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
               Business Verification Required
             </h3>
@@ -75,7 +75,7 @@ export default function DashboardPage() {
             </p>
             <Link
               href="/business-verification"
-              className="mt-2 inline-flex items-center rounded-md bg-yellow-600 px-3 py-2 text-sm font-semibold text-white hover:bg-yellow-500"
+              className="mt-2 inline-flex items-center rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-yellow-400 dark:bg-yellow-400/20 dark:text-yellow-200 dark:hover:bg-yellow-400/30"
             >
               Complete Verification
             </Link>
@@ -84,10 +84,18 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-6">
-        <OccupancyWidget propertyId={selectedPropertyId} />
-        <MonthlyTrendChart propertyId={selectedPropertyId} />
-        <MaintenanceTracker propertyId={selectedPropertyId} />
-        <TenantOverview propertyId={selectedPropertyId} />
+        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+          <OccupancyWidget propertyId={selectedPropertyId} />
+        </div>
+        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+          <MonthlyTrendChart propertyId={selectedPropertyId} />
+        </div>
+        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+          <MaintenanceTracker propertyId={selectedPropertyId} />
+        </div>
+        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+          <TenantOverview propertyId={selectedPropertyId} />
+        </div>
       </div>
     </div>
   );

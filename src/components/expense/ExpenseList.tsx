@@ -117,6 +117,11 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
       return;
     }
 
+    if (!newExpense.amount || !newExpense.category || !newExpense.date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
       await createMutation.mutateAsync({
         propertyId,
@@ -144,6 +149,13 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-medium text-card-foreground">Expense List</h2>
+        <button
+          onClick={() => setIsAddingExpense(true)}
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <Plus className="h-4 w-4" />
+          Add Expense
+        </button>
       </div>
 
       {/* Filters */}
@@ -192,20 +204,11 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
       {/* Summary Cards */}
       {data && (
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="rounded-lg bg-accent/50 p-4 w-72">
-              <p className="text-sm text-muted-foreground">Total Expenses</p>
-              <p className="mt-1 text-2xl font-semibold text-card-foreground">
-                Rp {data.summary.total.toLocaleString()}
-              </p>
-            </div>
-            <button
-              onClick={() => setIsAddingExpense(true)}
-              className="h-12 w-40 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <Plus className="h-4 w-4" />
-              Add Expense
-            </button>
+          <div className="rounded-lg bg-accent/50 p-4">
+            <p className="text-sm text-muted-foreground">Total Expenses</p>
+            <p className="mt-1 text-2xl font-semibold text-card-foreground">
+              Rp {data.summary.total.toLocaleString()}
+            </p>
           </div>
         </div>
       )}
@@ -285,6 +288,105 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Add Expense Modal */}
+      {isAddingExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-card-foreground">Add New Expense</h3>
+              <button
+                onClick={() => setIsAddingExpense(false)}
+                className="rounded-full p-1 text-muted-foreground hover:bg-accent"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground">Amount</label>
+                <input
+                  type="number"
+                  value={newExpense.amount}
+                  onChange={e => setNewExpense({ ...newExpense, amount: e.target.value })}
+                  placeholder="Enter amount"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground">Category</label>
+                <select
+                  value={newExpense.category}
+                  onChange={e => setNewExpense({ ...newExpense, category: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                >
+                  <option value="">Select category</option>
+                  {Object.values(ExpenseCategory).map(cat => (
+                    <option key={cat} value={cat}>
+                      {cat.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  Description
+                </label>
+                <textarea
+                  value={newExpense.description}
+                  onChange={e => setNewExpense({ ...newExpense, description: e.target.value })}
+                  placeholder="Enter description"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground">Date</label>
+                <input
+                  type="date"
+                  value={newExpense.date}
+                  onChange={e => setNewExpense({ ...newExpense, date: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingExpense(false)}
+                  className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isLoading}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {createMutation.isLoading ? 'Adding...' : 'Add Expense'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
