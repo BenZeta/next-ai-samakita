@@ -15,12 +15,16 @@ export default function NewTenantPage() {
 
   // Fetch properties
   const { data: properties, isLoading: propertiesLoading } = api.property.list.useQuery(
-    {
-      search,
-    },
+    {},
     {
       enabled: step === 1,
     }
+  );
+
+  // Filter properties based on search
+  const filteredProperties = properties?.properties.filter(property =>
+    search ? property.name.toLowerCase().includes(search.toLowerCase()) || 
+             property.address.toLowerCase().includes(search.toLowerCase()) : true
   );
 
   // Fetch rooms when property is selected
@@ -111,7 +115,7 @@ export default function NewTenantPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {properties?.properties.map(property => (
+            {filteredProperties?.map(property => (
               <div
                 key={property.id}
                 onClick={() => {
