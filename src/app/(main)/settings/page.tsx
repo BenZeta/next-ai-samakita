@@ -1,14 +1,19 @@
 'use client';
 
 import { useTheme } from '@/components/providers/ThemeProvider';
-import { Lock, Mail, Phone, User } from 'lucide-react';
+import { api } from '@/lib/trpc/react';
+import { Lock, Mail, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function SettingsPage() {
-  const { data: session, status } = useSession({
+  const {
+    data: session,
+    status,
+    update: updateSession,
+  } = useSession({
     required: true,
     onUnauthenticated() {
       redirect('/auth/signin');
@@ -22,9 +27,24 @@ export default function SettingsPage() {
     name: session?.user?.name || '',
     email: session?.user?.email || '',
     phone: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+  });
+
+  const updateProfile = api.user.updateProfile.useMutation({
+    onSuccess: async data => {
+      toast.success('Profile updated successfully!');
+      setIsEditing(false);
+      // Update the session to reflect the changes
+      await updateSession({
+        ...session,
+        user: {
+          ...session?.user,
+          name: data.name,
+        },
+      });
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
   });
 
   if (status === 'loading') {
@@ -37,235 +57,204 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement settings update
-    toast.success('Settings updated successfully!');
-    setIsEditing(false);
+    updateProfile.mutate({
+      name: formData.name,
+      phone: formData.phone,
+    });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your account and application preferences
-        </p>
-      </div>
+      <h1 className="mb-8 text-3xl font-bold text-foreground">Settings</h1>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-6">
-          <div className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-semibold text-card-foreground">Profile Information</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-card-foreground">
-                    Name
-                  </label>
-                  <div className="relative mt-1">
-                    <User className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="text"
-                      id="name"
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      disabled={!isEditing}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-card-foreground">
-                    Email
-                  </label>
-                  <div className="relative mt-1">
-                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="email"
-                      id="email"
-                      value={formData.email}
-                      onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      disabled={!isEditing}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-card-foreground">
-                    Phone
-                  </label>
-                  <div className="relative mt-1">
-                    <Phone className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="tel"
-                      id="phone"
-                      value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                      disabled={!isEditing}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  {isEditing ? (
-                    <div className="space-x-4">
-                      <button
-                        type="button"
-                        onClick={() => setIsEditing(false)}
-                        className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    >
-                      Edit Profile
-                    </button>
-                  )}
-                </div>
+      <div className="grid grid-cols-2 gap-6">
+        {/* Profile Information - Left Column */}
+        <div className="h-fit rounded-lg bg-card p-6 shadow">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <User className="h-5 w-5 text-primary" />
               </div>
-            </form>
+              <h2 className="text-lg font-semibold text-card-foreground">Profile Information</h2>
+            </div>
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              disabled={updateProfile.isLoading}
+            >
+              {isEditing ? 'Cancel' : 'Edit Profile'}
+            </button>
           </div>
 
-          <div className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-semibold text-card-foreground">Change Password</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="currentPassword"
-                    className="block text-sm font-medium text-card-foreground"
-                  >
-                    Current Password
-                  </label>
-                  <div className="relative mt-1">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      value={formData.currentPassword}
-                      onChange={e => setFormData({ ...formData, currentPassword: e.target.value })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
+                Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                disabled={!isEditing || updateProfile.isLoading}
+                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
 
-                <div>
-                  <label
-                    htmlFor="newPassword"
-                    className="block text-sm font-medium text-card-foreground"
-                  >
-                    New Password
-                  </label>
-                  <div className="relative mt-1">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="password"
-                      id="newPassword"
-                      value={formData.newPassword}
-                      onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
+            <div>
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                disabled={true}
+                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
 
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-medium text-card-foreground"
-                  >
-                    Confirm New Password
-                  </label>
-                  <div className="relative mt-1">
-                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                </div>
+            <div>
+              <label htmlFor="phone" className="mb-2 block text-sm font-medium text-foreground">
+                Phone
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                value={formData.phone}
+                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                disabled={!isEditing || updateProfile.isLoading}
+                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
 
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  >
-                    Update Password
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+            {isEditing && (
+              <button
+                type="submit"
+                disabled={updateProfile.isLoading}
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {updateProfile.isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-r-transparent"></div>
+                    <span className="ml-2">Saving...</span>
+                  </div>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            )}
+          </form>
         </div>
 
+        {/* Right Column - Application Settings and Change Password */}
         <div className="space-y-6">
-          <div className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-semibold text-card-foreground">
-              Application Settings
-            </h2>
+          {/* Application Settings */}
+          <div className="rounded-lg bg-card p-6 shadow">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Mail className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-card-foreground">Application Settings</h2>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-medium text-card-foreground">Dark Mode</h3>
+                  <p className="font-medium text-foreground">Dark Mode</p>
                   <p className="text-sm text-muted-foreground">
-                    Enable dark mode for the application
+                    Toggle between light and dark themes
                   </p>
                 </div>
-                <button
-                  onClick={toggleTheme}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                    theme === 'dark' ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out dark:bg-gray-200 ${
-                      theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  >
-                    <span
-                      className={`absolute inset-0 flex h-full w-full items-center justify-center transition-opacity ${
-                        theme === 'dark'
-                          ? 'opacity-0 duration-100 ease-in'
-                          : 'opacity-100 duration-200 ease-out'
-                      }`}
-                    />
-                    <span
-                      className={`absolute inset-0 flex h-full w-full items-center justify-center transition-opacity ${
-                        theme === 'dark'
-                          ? 'opacity-100 duration-200 ease-out'
-                          : 'opacity-0 duration-100 ease-in'
-                      }`}
-                    />
-                  </span>
-                </button>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={theme === 'dark'}
+                    onChange={toggleTheme}
+                    className="peer sr-only"
+                  />
+                  <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary"></div>
+                  <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-all peer-checked:left-6"></div>
+                </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-medium text-card-foreground">Language</h3>
-                  <p className="text-sm text-muted-foreground">Select your preferred language</p>
+                  <p className="font-medium text-foreground">Email Notifications</p>
+                  <p className="text-sm text-muted-foreground">
+                    Receive email notifications for updates
+                  </p>
                 </div>
-                <select className="h-10 w-32 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                  <option value="en">English</option>
-                  <option value="id">Bahasa Indonesia</option>
-                </select>
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input type="checkbox" className="peer sr-only" />
+                  <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary"></div>
+                  <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-all peer-checked:left-6"></div>
+                </label>
               </div>
             </div>
+          </div>
+
+          {/* Change Password */}
+          <div className="rounded-lg bg-card p-6 shadow">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Lock className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-card-foreground">Change Password</h2>
+            </div>
+
+            <form className="space-y-4">
+              <div>
+                <label
+                  htmlFor="current-password"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  id="current-password"
+                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="new-password"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  id="new-password"
+                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  id="confirm-password"
+                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Update Password
+              </button>
+            </form>
           </div>
         </div>
       </div>
