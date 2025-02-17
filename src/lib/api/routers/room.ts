@@ -581,8 +581,11 @@ export const roomRouter = createTRPCRouter({
 
       return {
         currentRate,
-        history,
+        previousRate,
+        history: historyRates,
         roomStatusBreakdown,
+        totalRooms,
+        occupiedRooms,
       };
     }),
 });
