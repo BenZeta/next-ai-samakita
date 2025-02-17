@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   const html = `
@@ -44,10 +44,9 @@ export async function GET() {
       </body>
     </html>
   `;
-
   return new NextResponse(html, {
     headers: {
-      "Content-Type": "text/html",
+      'Content-Type': 'text/html',
     },
   });
-} 
+}

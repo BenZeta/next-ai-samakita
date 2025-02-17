@@ -158,6 +158,7 @@ export const tenantRouter = createTRPCRouter({
         search: z.string().optional(),
         status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         propertyId: z.string().optional(),
+        roomId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -167,6 +168,9 @@ export const tenantRouter = createTRPCRouter({
           room: {
             propertyId: input.propertyId,
           },
+        }),
+        ...(input.roomId && {
+          roomId: input.roomId,
         }),
         ...(input.search && {
           OR: [
@@ -957,4 +961,86 @@ export const tenantRouter = createTRPCRouter({
 
     return tenants;
   }),
+
+  getStats: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const { propertyId } = input;
+
+      // Get tenants with filtering
+      const tenants = await db.tenant.findMany({
+        where: {
+          room: {
+            propertyId: propertyId,
+          },
+        },
+        orderBy: [
+          {
+            status: 'desc',
+          },
+          {
+            startDate: 'desc',
+          },
+        ],
+        include: {
+          room: true,
+        },
+        take: 5, // Only get the 5 most recent tenants
+      });
+
+      // Get tenant statistics
+      const stats = {
+        total: await db.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+          },
+        }),
+        active: await db.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+            status: 'ACTIVE',
+          },
+        }),
+        inactive: await db.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+            status: 'INACTIVE',
+          },
+        }),
+        upcomingMoveOuts: await db.tenant.count({
+          where: {
+            room: {
+              propertyId: propertyId,
+            },
+            status: 'ACTIVE',
+            endDate: {
+              lte: new Date(new Date().setDate(new Date().getDate() + 30)), // Next 30 days
+            },
+          },
+        }),
+      };
+
+      return {
+        tenants: tenants.map(tenant => ({
+          id: tenant.id,
+          name: tenant.name,
+          room: tenant.room.number,
+          status: tenant.status,
+          leaseStart: tenant.startDate,
+          leaseEnd: tenant.endDate,
+          rent: tenant.rentAmount,
+        })),
+        stats,
+      };
+    }),
 });
