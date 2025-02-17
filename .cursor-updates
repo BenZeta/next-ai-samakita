@@ -4,3 +4,6 @@
 - Removed edge runtime from upload routes to fix build errors with NextAuth.js requiring Node.js crypto module.
 - Fixed monthly trend in dashboard by properly filtering finance data by user properties in the finance router, ensuring new users see correct financial data.
 - Fixed type error in OccupancyWidget by updating interface and usage from `roomTypeBreakdown` to `roomStatusBreakdown` to match the API response structure.
+- Implemented billing functionality with property-based filtering and payment tracking, including new billing model, router, and UI components for creating and managing billings.
+- Fixed billing functionality to handle both all-properties and specific-property cases correctly, ensuring proper tenant payment creation and display in the UI.
+- Updated billing model to use tenant-based billing instead of property-based billing, ensuring billings are created for active tenants only and properly linked to their respective tenants.

@@ -2,7 +2,14 @@ import { db } from '@/lib/db';
 import { sendInvoiceEmail } from '@/lib/email';
 import { cancelPaymentIntent, createPaymentIntent, retrievePaymentIntent } from '@/lib/stripe';
 import { sendPaymentReminder } from '@/lib/whatsapp';
-import { PaymentMethod, PaymentStatus, PaymentType, TenantStatus } from '@prisma/client';
+import {
+  BillingStatus,
+  PaymentMethod,
+  PaymentStatus,
+  PaymentType,
+  Prisma,
+  TenantStatus,
+} from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -15,6 +22,14 @@ const paymentSchema = z.object({
   dueDate: z.date(),
   description: z.string().optional(),
   notes: z.string().optional(),
+});
+
+const billingSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  amount: z.number().min(0),
+  dueDate: z.date(),
+  tenantId: z.string().optional(),
 });
 
 export const billingRouter = createTRPCRouter({
@@ -571,4 +586,331 @@ export const billingRouter = createTRPCRouter({
         });
       }
     }),
+
+  create: protectedProcedure.input(billingSchema).mutation(async ({ input, ctx }) => {
+    const { tenantId, ...data } = input;
+
+    // Get active tenants based on whether tenantId is provided
+    const tenantsQuery = tenantId
+      ? {
+          id: tenantId,
+          status: TenantStatus.ACTIVE,
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        }
+      : {
+          status: TenantStatus.ACTIVE,
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        };
+
+    const tenants = await db.tenant.findMany({
+      where: tenantsQuery,
+      include: {
+        room: {
+          include: {
+            property: true,
+          },
+        },
+      },
+    });
+
+    if (tenants.length === 0) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'No active tenants found',
+      });
+    }
+
+    // Create billings for each tenant
+    const billings = await db.$transaction(
+      tenants.map(tenant =>
+        db.billing.create({
+          data: {
+            ...data,
+            tenantId: tenant.id,
+            status: BillingStatus.DRAFT,
+          },
+          include: {
+            tenant: {
+              include: {
+                room: {
+                  include: {
+                    property: true,
+                  },
+                },
+              },
+            },
+          },
+        })
+      )
+    );
+
+    return billings;
+  }),
+
+  list: protectedProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        propertyId: z.string().optional(),
+        status: z.nativeEnum(BillingStatus).optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { search, propertyId, status } = input;
+
+      const where: Prisma.BillingWhereInput = {
+        tenant: {
+          room: propertyId
+            ? {
+                propertyId,
+                property: {
+                  userId: ctx.session.user.id,
+                },
+              }
+            : {
+                property: {
+                  userId: ctx.session.user.id,
+                },
+              },
+        },
+        status,
+        ...(search && {
+          OR: [
+            {
+              title: {
+                contains: search,
+                mode: 'insensitive' as Prisma.QueryMode,
+              },
+            },
+            {
+              description: {
+                contains: search,
+                mode: 'insensitive' as Prisma.QueryMode,
+              },
+            },
+          ],
+        }),
+      };
+
+      const [billings, total] = await Promise.all([
+        db.billing.findMany({
+          where,
+          include: {
+            tenant: {
+              include: {
+                room: {
+                  include: {
+                    property: true,
+                  },
+                },
+              },
+            },
+            payments: {
+              include: {
+                tenant: {
+                  include: {
+                    room: {
+                      include: {
+                        property: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        db.billing.count({ where }),
+      ]);
+
+      return { billings, total };
+    }),
+
+  get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
+    const billing = await db.billing.findFirst({
+      where: {
+        id: input.id,
+        tenant: {
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        },
+      },
+      include: {
+        tenant: {
+          include: {
+            room: {
+              include: {
+                property: true,
+              },
+            },
+          },
+        },
+        payments: {
+          include: {
+            tenant: {
+              include: {
+                room: {
+                  include: {
+                    property: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!billing) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Billing not found',
+      });
+    }
+
+    return billing;
+  }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        data: billingSchema,
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const billing = await db.billing.findFirst({
+        where: {
+          id: input.id,
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+      });
+
+      if (!billing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      return db.billing.update({
+        where: { id: input.id },
+        data: input.data,
+      });
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const billing = await db.billing.findFirst({
+        where: {
+          id: input.id,
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+      });
+
+      if (!billing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      return db.billing.delete({
+        where: { id: input.id },
+      });
+    }),
+
+  send: protectedProcedure.input(z.object({ id: z.string() })).mutation(async ({ input, ctx }) => {
+    const billing = await db.billing.findFirst({
+      where: {
+        id: input.id,
+        tenant: {
+          room: {
+            property: {
+              userId: ctx.session.user.id,
+            },
+          },
+        },
+      },
+      include: {
+        tenant: {
+          include: {
+            room: {
+              include: {
+                property: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!billing) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Billing not found',
+      });
+    }
+
+    if (!billing.tenant) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Billing has no associated tenant',
+      });
+    }
+
+    if (billing.status !== BillingStatus.DRAFT) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Billing has already been sent',
+      });
+    }
+
+    // Create payment for the tenant
+    await db.$transaction([
+      db.payment.create({
+        data: {
+          amount: billing.amount,
+          type: PaymentType.RENT,
+          status: PaymentStatus.PENDING,
+          dueDate: billing.dueDate,
+          description: billing.description || undefined,
+          billingId: billing.id,
+          tenantId: billing.tenant.id,
+          propertyId: billing.tenant.room.property.id,
+        },
+      }),
+      db.billing.update({
+        where: { id: billing.id },
+        data: { status: BillingStatus.SENT },
+      }),
+    ]);
+
+    return billing;
+  }),
 });

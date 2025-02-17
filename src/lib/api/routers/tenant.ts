@@ -158,15 +158,17 @@ export const tenantRouter = createTRPCRouter({
         roomId: z.string().optional(),
         status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         search: z.string().optional(),
+        propertyId: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { roomId, status, search } = input;
+      const { roomId, status, search, propertyId } = input;
 
       const where: Prisma.TenantWhereInput = {
         room: {
           property: {
             userId: ctx.session.user.id,
+            ...(propertyId && { id: propertyId }),
           },
           ...(roomId ? { id: roomId } : {}),
         },
