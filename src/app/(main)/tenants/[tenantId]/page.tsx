@@ -24,7 +24,7 @@ export default function TenantDetailsPage() {
   const tenantId = params.tenantId as string;
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
+  const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: tenantId });
   const utils = api.useContext();
 
   const generateContractMutation = api.tenant.generateContract.useMutation({
@@ -36,10 +36,10 @@ export default function TenantDetailsPage() {
     },
   });
 
-  const extendLeaseMutation = api.tenant.extendLease.useMutation({
+  const extendLease = api.tenant.extendLease.useMutation({
     onSuccess: () => {
       toast.success('Lease extended successfully');
-      utils.tenant.get.invalidate({ id: tenantId });
+      utils.tenant.detail.invalidate({ id: tenantId });
       setShowConfirmation(false);
     },
     onError: error => {
@@ -66,9 +66,10 @@ export default function TenantDetailsPage() {
 
   const handleExtendLease = async () => {
     try {
-      await extendLeaseMutation.mutateAsync({ tenantId });
+      await extendLease.mutateAsync({ tenantId });
     } catch (error) {
       console.error('Failed to extend lease:', error);
+      toast.error('Failed to extend lease. Please try again.');
     }
   };
 

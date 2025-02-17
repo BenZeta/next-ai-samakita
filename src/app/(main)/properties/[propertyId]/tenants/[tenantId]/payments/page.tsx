@@ -1,14 +1,15 @@
-"use client";
+'use client';
 
-import { PaymentList } from "@/components/tenant/PaymentList";
-import { api } from "@/lib/trpc/react";
-import { useParams } from "next/navigation";
+import { PaymentList } from '@/components/tenant/PaymentList';
+import { api } from '@/lib/trpc/react';
+import { useParams } from 'next/navigation';
 
 export default function TenantPaymentsPage() {
   const params = useParams();
+  const propertyId = params.propertyId as string;
   const tenantId = params.tenantId as string;
 
-  const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
+  const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: tenantId });
 
   if (isLoading) {
     return <div className="text-center">Loading tenant details...</div>;

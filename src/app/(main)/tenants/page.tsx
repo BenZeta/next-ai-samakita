@@ -2,11 +2,18 @@
 
 import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
-import { Building2, CreditCard, Mail, Phone } from 'lucide-react';
+import { Building2, CreditCard, Mail, Phone, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function TenantsPage() {
-  const { data: tenants, isLoading } = api.tenant.list.useQuery({});
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
+
+  const { data: tenants, isLoading } = api.tenant.list.useQuery({
+    search,
+    status: statusFilter === 'ALL' ? undefined : statusFilter,
+  });
 
   if (isLoading) {
     return (
@@ -26,6 +33,30 @@ export default function TenantsPage() {
         >
           Add New Tenant
         </Link>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="mb-8 grid gap-4 md:grid-cols-2">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search tenants by name, email, or room..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value as TenantStatus | 'ALL')}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="INACTIVE">Inactive</option>
+        </select>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
