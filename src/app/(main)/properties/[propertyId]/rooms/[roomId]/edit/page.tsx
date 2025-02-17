@@ -1,9 +1,8 @@
-"use client";
+'use client';
 
-import { RoomForm } from "@/components/room/RoomForm";
-import { api } from "@/lib/trpc/react";
-import { useParams } from "next/navigation";
-import { RoomStatus } from "@prisma/client";
+import { RoomForm } from '@/components/room/RoomForm';
+import { api } from '@/lib/trpc/react';
+import { useParams } from 'next/navigation';
 
 export default function EditRoomPage() {
   const params = useParams();
@@ -29,7 +28,7 @@ export default function EditRoomPage() {
           initialData={{
             id: room.id,
             number: room.number,
-            type: room.status as RoomStatus,
+            type: room.type,
             size: room.size,
             price: room.price,
             amenities: room.amenities,

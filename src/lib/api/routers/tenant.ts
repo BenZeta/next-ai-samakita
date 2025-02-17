@@ -140,18 +140,6 @@ export const tenantRouter = createTRPCRouter({
           },
         });
 
-        // Create deposit payment with immediate due date
-        await tx.payment.create({
-          data: {
-            tenantId: tenant.id,
-            propertyId: room.property.id,
-            amount: depositAmount,
-            type: 'DEPOSIT',
-            status: 'PENDING',
-            dueDate: new Date(startDate),
-          },
-        });
-
         // Update room status
         await tx.room.update({
           where: { id: roomId },
@@ -170,15 +158,17 @@ export const tenantRouter = createTRPCRouter({
         roomId: z.string().optional(),
         status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         search: z.string().optional(),
+        propertyId: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
-      const { roomId, status, search } = input;
+      const { roomId, status, search, propertyId } = input;
 
       const where: Prisma.TenantWhereInput = {
         room: {
           property: {
             userId: ctx.session.user.id,
+            ...(propertyId && { id: propertyId }),
           },
           ...(roomId ? { id: roomId } : {}),
         },

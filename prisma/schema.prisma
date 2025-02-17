@@ -121,7 +121,7 @@ model Room {
   updatedAt           DateTime             @updatedAt
   floor               Int?
   status              RoomStatus           @default(AVAILABLE)
-  type                String
+  type                RoomType             @default(STANDARD)
   maintenanceRequests MaintenanceRequest[]
   property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tenants             Tenant[]
@@ -150,6 +150,7 @@ model Tenant {
   payments        Payment[]
   serviceRequests ServiceRequest[]
   room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  billings        Billing[]
 }
 
 model CheckInItem {
@@ -194,8 +195,10 @@ model Payment {
   stripeCustomerId String?
   tenantId        String
   propertyId      String
+  billingId       String?
   tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  billing         Billing?      @relation(fields: [billingId], references: [id])
 }
 
 model Expense {
@@ -250,6 +253,20 @@ model Transaction {
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model Billing {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  amount      Float
+  dueDate     DateTime
+  status      BillingStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tenantId    String?
+  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+}
+
 enum UserRole {
   user
   admin
@@ -264,6 +281,13 @@ enum RoomStatus {
   AVAILABLE
   OCCUPIED
   MAINTENANCE
+}
+
+enum RoomType {
+  STANDARD
+  DELUXE
+  SUITE
+  STUDIO
 }
 
 enum TenantStatus {
@@ -320,4 +344,9 @@ enum TransactionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum BillingStatus {
+  DRAFT
+  SENT
 }
