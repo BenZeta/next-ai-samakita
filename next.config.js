@@ -7,6 +7,9 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+    domains: [
+      'ik.imagekit.io'
+    ],
   },
 };
 
