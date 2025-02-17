@@ -1,24 +1,48 @@
 'use client';
 
-import { MaintenanceTracker } from '@/components/dashboard/MaintenanceTracker';
-import { MonthlyTrendChart } from '@/components/dashboard/MonthlyTrendChart';
-import { OccupancyWidget } from '@/components/dashboard/OccupancyWidget';
-import { TenantOverview } from '@/components/dashboard/TenantOverview';
 import { api } from '@/lib/trpc/react';
 import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
+
+// Lazy load heavy components
+const MaintenanceTracker = lazy(() => import('@/components/dashboard/MaintenanceTracker'));
+const MonthlyTrendChart = lazy(() => import('@/components/dashboard/MonthlyTrendChart'));
+const OccupancyWidget = lazy(() => import('@/components/dashboard/OccupancyWidget'));
+const TenantOverview = lazy(() => import('@/components/dashboard/TenantOverview'));
+
+// Loading component with shimmer effect
+function WidgetSkeleton() {
+  return (
+    <div className="relative h-[300px] overflow-hidden rounded-lg border border-border bg-card p-6">
+      <div className="animate-pulse">
+        <div className="h-6 w-1/3 rounded bg-muted"></div>
+        <div className="mt-4 space-y-3">
+          <div className="h-4 w-3/4 rounded bg-muted"></div>
+          <div className="h-4 w-1/2 rounded bg-muted"></div>
+        </div>
+      </div>
+      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>();
   const { data: session } = useSession();
   const isVerified = session?.token?.businessVerified === true;
 
-  const { data: propertyData, isLoading: propertiesLoading } = api.property.list.useQuery({
-    page: 1,
-    limit: 100,
-  });
+  const { data: propertyData, isLoading: propertiesLoading } = api.property.list.useQuery(
+    {
+      page: 1,
+      limit: 100,
+    },
+    {
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   if (propertiesLoading) {
     return (
@@ -84,18 +108,29 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-6">
-        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-          <OccupancyWidget propertyId={selectedPropertyId} />
-        </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-          <MonthlyTrendChart propertyId={selectedPropertyId} />
-        </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-          <MaintenanceTracker propertyId={selectedPropertyId} />
-        </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-          <TenantOverview propertyId={selectedPropertyId} />
-        </div>
+        <Suspense fallback={<WidgetSkeleton />}>
+          <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+            <OccupancyWidget propertyId={selectedPropertyId} />
+          </div>
+        </Suspense>
+
+        <Suspense fallback={<WidgetSkeleton />}>
+          <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+            <MonthlyTrendChart propertyId={selectedPropertyId} />
+          </div>
+        </Suspense>
+
+        <Suspense fallback={<WidgetSkeleton />}>
+          <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+            <MaintenanceTracker propertyId={selectedPropertyId} />
+          </div>
+        </Suspense>
+
+        <Suspense fallback={<WidgetSkeleton />}>
+          <div className="rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+            <TenantOverview propertyId={selectedPropertyId} />
+          </div>
+        </Suspense>
       </div>
     </div>
   );

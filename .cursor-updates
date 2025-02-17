@@ -19,3 +19,4 @@
 - Fixed tenants/new page by updating room status value and implementing client-side room search filtering, and fixed occupancy widget by adding missing return values in getOccupancyStats procedure.
 - Updated ExpenseList component with design system colors, fixed TypeScript errors, and improved code organization.
 - Fixed NextAuth API route, Stripe webhook handler, and other missing API routes to resolve build errors and ensure proper payment processing.
+- Fixed duplicate room detail page routes by removing `/app/rooms/[roomId]/page.tsx` and keeping the one in the `(main)` route group.
