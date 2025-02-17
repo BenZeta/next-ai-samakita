@@ -155,7 +155,7 @@ export const roomRouter = createTRPCRouter({
         showOnlyAvailable: z.boolean().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return prisma.room.findMany({
         where: {
           propertyId: input.propertyId,
@@ -377,7 +377,7 @@ export const roomRouter = createTRPCRouter({
         endDate: z.date(),
       })
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const { roomId, propertyId, startDate, endDate } = input;
 
       return db.maintenanceRequest.findMany({
@@ -438,11 +438,7 @@ export const roomRouter = createTRPCRouter({
       const occupiedRoomsQuery = db.room.count({
         where: {
           ...baseWhere,
-          tenants: {
-            some: {
-              status: TenantStatus.ACTIVE,
-            },
-          },
+          status: RoomStatus.OCCUPIED,
         },
       });
 
@@ -471,7 +467,7 @@ export const roomRouter = createTRPCRouter({
           date.setDate(date.getDate() - i * 7);
           historyPoints.push({
             date,
-            label: `Week ${4 - i + 1}`,
+            label: `Week ${i + 1}`,
           });
         }
       } else {
@@ -487,51 +483,25 @@ export const roomRouter = createTRPCRouter({
       }
 
       // Get historical occupancy rates
-      const history: OccupancyHistoryItem[] = await Promise.all(
-        historyPoints.map(async ({ date, label }) => {
+      const historyRates = await Promise.all(
+        historyPoints.map(async ({ date }) => {
           const totalRooms = await db.room.count({
-            where: {
-              ...baseWhere,
-              createdAt: {
-                lte: date,
-              },
-            },
+            where: baseWhere,
           });
 
           const occupiedRooms = await db.room.count({
             where: {
               ...baseWhere,
+              status: RoomStatus.OCCUPIED,
               createdAt: {
                 lte: date,
-              },
-              tenants: {
-                some: {
-                  status: TenantStatus.ACTIVE,
-                  startDate: {
-                    lte: date,
-                  },
-                  OR: [
-                    {
-                      endDate: undefined,
-                    },
-                    {
-                      endDate: {
-                        gt: date,
-                      },
-                    },
-                  ],
-                },
               },
             },
           });
 
-          return {
-            rate: totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0,
-            label,
-          };
+          return totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
         })
       );
-
       // Get previous period rate for comparison
       const previousPeriodStart = new Date(now);
       if (timeRange === 'week') {
@@ -611,9 +581,6 @@ export const roomRouter = createTRPCRouter({
 
       return {
         currentRate,
-        previousRate,
-        totalRooms,
-        occupiedRooms,
         history,
         roomStatusBreakdown,
       };
