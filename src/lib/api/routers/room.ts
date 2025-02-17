@@ -6,7 +6,7 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 
 const roomSchema = z.object({
   number: z.string().min(1, 'Room number is required'),
-  type: z.nativeEnum(RoomStatus),
+  type: z.string().min(1, 'Room type is required'),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
@@ -19,7 +19,7 @@ const bulkRoomSchema = z.object({
     .number()
     .min(1, 'Number of rooms must be at least 1')
     .max(50, 'Maximum 50 rooms at once'),
-  type: z.nativeEnum(RoomStatus),
+  type: z.string().min(1, 'Room type is required'),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
@@ -79,7 +79,10 @@ export const roomRouter = createTRPCRouter({
     }
 
     return db.room.create({
-      data: input,
+      data: {
+        ...input,
+        status: RoomStatus.AVAILABLE,
+      },
     });
   }),
 
@@ -130,6 +133,7 @@ export const roomRouter = createTRPCRouter({
         amenities,
         price,
         propertyId,
+        status: RoomStatus.AVAILABLE,
       };
     });
 
@@ -147,31 +151,14 @@ export const roomRouter = createTRPCRouter({
     .input(
       z.object({
         propertyId: z.string().optional(),
-        status: z.enum(['available', 'occupied', 'maintenance']).optional(),
+        status: z.nativeEnum(RoomStatus).optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       return prisma.room.findMany({
         where: {
           propertyId: input.propertyId,
-          ...(input.status === 'available' && {
-            tenants: {
-              none: {
-                endDate: {
-                  gt: new Date(),
-                },
-              },
-            },
-          }),
-          ...(input.status === 'occupied' && {
-            tenants: {
-              some: {
-                endDate: {
-                  gt: new Date(),
-                },
-              },
-            },
-          }),
+          ...(input.status && { status: input.status }),
         },
         include: {
           tenants: {
@@ -366,7 +353,7 @@ export const roomRouter = createTRPCRouter({
         endDate: z.date(),
       })
     )
-    .query(async ({ input, ctx }) => {
+    .query(async ({ input }) => {
       const { roomId, propertyId, startDate, endDate } = input;
 
       return db.maintenanceRequest.findMany({
@@ -427,11 +414,7 @@ export const roomRouter = createTRPCRouter({
       const occupiedRoomsQuery = db.room.count({
         where: {
           ...baseWhere,
-          tenants: {
-            some: {
-              status: TenantStatus.ACTIVE,
-            },
-          },
+          status: RoomStatus.OCCUPIED,
         },
       });
 
@@ -460,7 +443,7 @@ export const roomRouter = createTRPCRouter({
           date.setDate(date.getDate() - i * 7);
           historyPoints.push({
             date,
-            label: `Week ${4 - i + 1}`,
+            label: `Week ${i + 1}`,
           });
         }
       } else {
@@ -476,135 +459,34 @@ export const roomRouter = createTRPCRouter({
       }
 
       // Get historical occupancy rates
-      const history: OccupancyHistoryItem[] = await Promise.all(
-        historyPoints.map(async ({ date, label }) => {
+      const historyRates = await Promise.all(
+        historyPoints.map(async ({ date }) => {
           const totalRooms = await db.room.count({
-            where: {
-              ...baseWhere,
-              createdAt: {
-                lte: date,
-              },
-            },
+            where: baseWhere,
           });
 
           const occupiedRooms = await db.room.count({
             where: {
               ...baseWhere,
+              status: RoomStatus.OCCUPIED,
               createdAt: {
                 lte: date,
               },
-              tenants: {
-                some: {
-                  status: TenantStatus.ACTIVE,
-                  startDate: {
-                    lte: date,
-                  },
-                  OR: [
-                    {
-                      endDate: undefined,
-                    },
-                    {
-                      endDate: {
-                        gt: date,
-                      },
-                    },
-                  ],
-                },
-              },
             },
           });
 
-          return {
-            rate: totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0,
-            label,
-          };
+          return totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
         })
       );
 
-      // Get previous period rate for comparison
-      const previousPeriodStart = new Date(now);
-      if (timeRange === 'week') {
-        previousPeriodStart.setDate(previousPeriodStart.getDate() - 14);
-      } else if (timeRange === 'month') {
-        previousPeriodStart.setMonth(previousPeriodStart.getMonth() - 1);
-      } else {
-        previousPeriodStart.setFullYear(previousPeriodStart.getFullYear() - 1);
-      }
-
-      const previousOccupiedRooms = await db.room.count({
-        where: {
-          ...baseWhere,
-          tenants: {
-            some: {
-              status: TenantStatus.ACTIVE,
-              startDate: {
-                lte: previousPeriodStart,
-              },
-              OR: [
-                {
-                  endDate: undefined,
-                },
-                {
-                  endDate: {
-                    gt: previousPeriodStart,
-                  },
-                },
-              ],
-            },
-          },
-        },
-      });
-
-      const previousTotalRooms = await db.room.count({
-        where: {
-          ...baseWhere,
-          createdAt: {
-            lte: previousPeriodStart,
-          },
-        },
-      });
-
-      const previousRate =
-        previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
-
-      // Calculate room type breakdown
-      const roomTypes = Object.values(RoomStatus) as RoomStatus[];
-      const roomTypeBreakdown = await Promise.all(
-        roomTypes.map(async (type: RoomStatus) => {
-          const totalRoomsOfType = await db.room.count({
-            where: {
-              ...baseWhere,
-              status: type,
-            },
-          });
-
-          const occupiedRoomsOfType = await db.room.count({
-            where: {
-              ...baseWhere,
-              status: type,
-              tenants: {
-                some: {
-                  status: TenantStatus.ACTIVE,
-                },
-              },
-            },
-          });
-
-          return {
-            type,
-            occupancyRate:
-              totalRoomsOfType > 0 ? (occupiedRoomsOfType / totalRoomsOfType) * 100 : 0,
-          };
-        })
-      );
+      const history: OccupancyHistoryItem[] = historyPoints.map(({ label }, index) => ({
+        rate: historyRates[index],
+        label,
+      }));
 
       return {
         currentRate,
-        previousRate,
-        totalRooms,
-        occupiedRooms,
         history,
-        roomTypeBreakdown,
       };
     }),
 });
