@@ -69,7 +69,7 @@ export default function SettingsPage() {
                       value={formData.name}
                       onChange={e => setFormData({ ...formData, name: e.target.value })}
                       disabled={!isEditing}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary disabled:bg-muted"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export default function SettingsPage() {
                       value={formData.email}
                       onChange={e => setFormData({ ...formData, email: e.target.value })}
                       disabled={!isEditing}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary disabled:bg-muted"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -103,7 +103,7 @@ export default function SettingsPage() {
                       value={formData.phone}
                       onChange={e => setFormData({ ...formData, phone: e.target.value })}
                       disabled={!isEditing}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary disabled:bg-muted"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                       id="currentPassword"
                       value={formData.currentPassword}
                       onChange={e => setFormData({ ...formData, currentPassword: e.target.value })}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                       id="newPassword"
                       value={formData.newPassword}
                       onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                       id="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="w-full rounded-md border-input bg-background pl-10 text-foreground focus:border-primary focus:ring-primary"
+                      className="h-10 w-full rounded-md border border-input bg-background px-3 pl-10 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -214,41 +214,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
-            <h2 className="mb-4 text-xl font-semibold text-card-foreground">Notifications</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-card-foreground">Email Notifications</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for important updates
-                  </p>
-                </div>
-                <button className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-700">
-                  <span className="translate-x-0 pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out dark:bg-gray-200">
-                    <span className="opacity-0 duration-100 ease-in absolute inset-0 flex h-full w-full items-center justify-center transition-opacity" />
-                    <span className="opacity-100 duration-200 ease-out absolute inset-0 flex h-full w-full items-center justify-center transition-opacity" />
-                  </span>
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-medium text-card-foreground">SMS Notifications</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Receive SMS notifications for urgent matters
-                  </p>
-                </div>
-                <button className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-700">
-                  <span className="translate-x-0 pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out dark:bg-gray-200">
-                    <span className="opacity-0 duration-100 ease-in absolute inset-0 flex h-full w-full items-center justify-center transition-opacity" />
-                    <span className="opacity-100 duration-200 ease-out absolute inset-0 flex h-full w-full items-center justify-center transition-opacity" />
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-
           <div className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
             <h2 className="mb-4 text-xl font-semibold text-card-foreground">
               Application Settings
@@ -295,7 +260,7 @@ export default function SettingsPage() {
                   <h3 className="text-sm font-medium text-card-foreground">Language</h3>
                   <p className="text-sm text-muted-foreground">Select your preferred language</p>
                 </div>
-                <select className="rounded-md border-input bg-background text-sm text-foreground focus:border-primary focus:ring-primary">
+                <select className="h-10 w-32 rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   <option value="en">English</option>
                   <option value="id">Bahasa Indonesia</option>
                 </select>
