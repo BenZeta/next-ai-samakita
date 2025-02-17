@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { api } from "@/lib/trpc/react";
-import { useParams } from "next/navigation";
-import { PaymentForm } from "@/components/payment/PaymentForm";
+import { PaymentForm } from '@/components/payment/PaymentForm';
+import { api } from '@/lib/trpc/react';
+import { useParams } from 'next/navigation';
 
 export default function NewPaymentPage() {
   const params = useParams();
   const tenantId = params.tenantId as string;
 
-  const { data: tenant, isLoading } = api.tenant.get.useQuery({ id: tenantId });
+  const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: tenantId });
 
   if (isLoading) {
     return <div>Loading...</div>;

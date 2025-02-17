@@ -9,7 +9,7 @@ export default function TenantDetails({ tenant }: { tenant: Tenant }) {
   const extendLease = api.tenant.extendLease.useMutation({
     onSuccess: () => {
       toast.success('Lease extended successfully');
-      utils.tenant.get.invalidate({ id: tenant.id });
+      utils.tenant.detail.invalidate({ id: tenant.id });
       setShowConfirmation(false);
     },
     onError: error => {

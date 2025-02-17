@@ -155,51 +155,46 @@ export const tenantRouter = createTRPCRouter({
   list: protectedProcedure
     .input(
       z.object({
-        roomId: z.string().optional(),
-        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         search: z.string().optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         propertyId: z.string().optional(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      const { roomId, status, search, propertyId } = input;
-
+    .query(async ({ ctx, input }) => {
       const where: Prisma.TenantWhereInput = {
-        room: {
-          property: {
-            userId: ctx.session.user.id,
-            ...(propertyId && { id: propertyId }),
+        ...(input.status && { status: input.status }),
+        ...(input.propertyId && {
+          room: {
+            propertyId: input.propertyId,
           },
-          ...(roomId ? { id: roomId } : {}),
-        },
-        ...(status ? { status } : {}),
-        ...(search
-          ? {
-              OR: [
-                {
-                  name: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
+        }),
+        ...(input.search && {
+          OR: [
+            {
+              name: {
+                contains: input.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: input.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              room: {
+                number: {
+                  contains: input.search,
+                  mode: 'insensitive',
                 },
-                {
-                  email: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                },
-                {
-                  phone: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                },
-              ],
-            }
-          : {}),
+              },
+            },
+          ],
+        }),
       };
 
-      const tenants = await db.tenant.findMany({
+      return ctx.db.tenant.findMany({
         where,
         include: {
           room: {
@@ -212,26 +207,17 @@ export const tenantRouter = createTRPCRouter({
           createdAt: 'desc',
         },
       });
-
-      return tenants;
     }),
 
-  get: protectedProcedure
+  detail: protectedProcedure
     .input(
       z.object({
         id: z.string(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      const tenant = await db.tenant.findFirst({
-        where: {
-          id: input.id,
-          room: {
-            property: {
-              userId: ctx.session.user.id,
-            },
-          },
-        },
+    .query(async ({ ctx, input }) => {
+      const tenant = await ctx.db.tenant.findUnique({
+        where: { id: input.id },
         include: {
           room: {
             include: {
@@ -243,10 +229,7 @@ export const tenantRouter = createTRPCRouter({
       });
 
       if (!tenant) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Tenant not found',
-        });
+        throw new Error('Tenant not found');
       }
 
       return tenant;
@@ -256,39 +239,18 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        data: tenantSchema.partial(),
+        status: z.enum(['ACTIVE', 'INACTIVE']),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      const tenant = await db.tenant.findUnique({
+    .mutation(async ({ ctx, input }) => {
+      const tenant = await ctx.db.tenant.update({
         where: { id: input.id },
-        include: {
-          room: {
-            include: {
-              property: true,
-            },
-          },
+        data: {
+          status: input.status,
         },
       });
 
-      if (!tenant) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Tenant not found',
-        });
-      }
-
-      if (tenant.room.property.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'You do not have permission to update this tenant',
-        });
-      }
-
-      return db.tenant.update({
-        where: { id: input.id },
-        data: input.data,
-      });
+      return tenant;
     }),
 
   addCheckInItem: protectedProcedure.input(checkInItemSchema).mutation(async ({ input, ctx }) => {
