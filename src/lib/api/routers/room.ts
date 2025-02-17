@@ -551,33 +551,20 @@ export const roomRouter = createTRPCRouter({
       const previousRate =
         previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
 
-      // Calculate room type breakdown
+      // Calculate room status breakdown
       const roomStatuses = Object.values(RoomStatus) as RoomStatus[];
       const roomStatusBreakdown = await Promise.all(
         roomStatuses.map(async (status: RoomStatus) => {
-          const totalRoomsOfStatus = await db.room.count({
+          const roomsWithStatus = await db.room.count({
             where: {
               ...baseWhere,
               status: status,
-            },
-          });
-
-          const occupiedRoomsOfStatus = await db.room.count({
-            where: {
-              ...baseWhere,
-              status: status,
-              tenants: {
-                some: {
-                  status: TenantStatus.ACTIVE,
-                },
-              },
             },
           });
 
           return {
             status,
-            occupancyRate:
-              totalRoomsOfStatus > 0 ? (occupiedRoomsOfStatus / totalRoomsOfStatus) * 100 : 0,
+            occupancyRate: totalRooms > 0 ? (roomsWithStatus / totalRooms) * 100 : 0,
           };
         })
       );
@@ -590,5 +577,44 @@ export const roomRouter = createTRPCRouter({
         totalRooms,
         occupiedRooms,
       };
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        status: z.nativeEnum(RoomStatus),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { roomId, status } = input;
+
+      // Check if room exists and user has access
+      const room = await db.room.findUnique({
+        where: { id: roomId },
+        include: {
+          property: true,
+        },
+      });
+
+      if (!room) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Room not found',
+        });
+      }
+
+      if (room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this room',
+        });
+      }
+
+      // Update room status
+      return db.room.update({
+        where: { id: roomId },
+        data: { status },
+      });
     }),
 });

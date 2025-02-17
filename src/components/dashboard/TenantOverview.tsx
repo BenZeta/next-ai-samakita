@@ -26,7 +26,7 @@ interface TenantSummary {
   rent: number;
 }
 
-export function TenantOverview({ propertyId }: TenantOverviewProps) {
+export default function TenantOverview({ propertyId }: TenantOverviewProps) {
   const { data: tenantData, isLoading } = api.tenant.getStats.useQuery({
     propertyId,
   });

@@ -1,63 +1,85 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { MaintenanceStatus } from '@prisma/client';
-import { AlertTriangle, CheckCircle, Clock, Wrench } from 'lucide-react';
+import { MaintenancePriority, MaintenanceStatus } from '@prisma/client';
+import { AlertTriangle, CheckCircle2, Clock, Settings2, Wrench } from 'lucide-react';
 import Link from 'next/link';
+import { memo, useMemo } from 'react';
 
 interface MaintenanceTrackerProps {
   propertyId?: string;
 }
 
-export function MaintenanceTracker({ propertyId }: MaintenanceTrackerProps) {
-  const { data: maintenanceData, isLoading } = api.maintenance.getStats.useQuery({
-    propertyId,
-  });
+const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
+  const { data: maintenanceData, isLoading } = api.maintenance.getStats.useQuery(
+    {
+      propertyId,
+    },
+    {
+      staleTime: 30000, // Cache data for 30 seconds
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+    }
+  );
 
-  if (isLoading) {
-    return (
-      <div className="h-[400px] rounded-lg bg-card p-6 shadow-sm">
-        <div className="flex h-full items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = maintenanceData?.stats ?? {
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-  };
-
-  const requests = maintenanceData?.requests ?? [];
+  // Memoize stats calculations
+  const stats = useMemo(() => {
+    if (!maintenanceData) return null;
+    return {
+      total: maintenanceData.requests.length,
+      pending: maintenanceData.requests.filter(r => r.status === 'PENDING').length,
+      inProgress: maintenanceData.requests.filter(r => r.status === 'IN_PROGRESS').length,
+      completed: maintenanceData.requests.filter(r => r.status === 'COMPLETED').length,
+    };
+  }, [maintenanceData]);
 
   const getStatusColor = (status: MaintenanceStatus) => {
     switch (status) {
-      case MaintenanceStatus.PENDING:
-        return 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-200';
-      case MaintenanceStatus.IN_PROGRESS:
-        return 'bg-blue-50 text-blue-800 dark:bg-blue-400/10 dark:text-blue-200';
-      case MaintenanceStatus.COMPLETED:
-        return 'bg-green-50 text-green-800 dark:bg-green-400/10 dark:text-green-200';
+      case 'PENDING':
+        return 'text-yellow-500';
+      case 'IN_PROGRESS':
+        return 'text-blue-500';
+      case 'COMPLETED':
+        return 'text-green-500';
       default:
-        return 'bg-gray-50 text-gray-800 dark:bg-gray-400/10 dark:text-gray-200';
+        return 'text-muted-foreground';
     }
   };
 
   const getStatusIcon = (status: MaintenanceStatus) => {
     switch (status) {
-      case MaintenanceStatus.PENDING:
-        return <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
-      case MaintenanceStatus.IN_PROGRESS:
-        return <Wrench className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
-      case MaintenanceStatus.COMPLETED:
-        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+      case 'PENDING':
+        return <Clock className="h-4 w-4" />;
+      case 'IN_PROGRESS':
+        return <Settings2 className="h-4 w-4" />;
+      case 'COMPLETED':
+        return <CheckCircle2 className="h-4 w-4" />;
       default:
-        return <AlertTriangle className="h-4 w-4 text-gray-600 dark:text-gray-400" />;
+        return <AlertTriangle className="h-4 w-4" />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-[400px] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800">
+        <div className="flex h-full items-center justify-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading maintenance data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!maintenanceData || maintenanceData.requests.length === 0) {
+    return (
+      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            No maintenance requests
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg bg-card p-6 shadow-sm">
@@ -77,38 +99,40 @@ export function MaintenanceTracker({ propertyId }: MaintenanceTrackerProps) {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-background/80 p-4 dark:bg-secondary/50">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-primary" />
-            <p className="text-sm font-medium text-foreground">Total Requests</p>
-          </div>
-          <p className="mt-2 text-2xl font-bold text-foreground">{stats.total}</p>
-        </div>
         <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-400/10">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Pending</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-yellow-900 dark:text-yellow-300">
-            {stats.pending}
+          <p className="mt-2 text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
+            {stats?.pending}
           </p>
         </div>
         <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-400/10">
           <div className="flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <Settings2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <p className="text-sm font-medium text-blue-800 dark:text-blue-200">In Progress</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-blue-900 dark:text-blue-300">
-            {stats.inProgress}
+          <p className="mt-2 text-2xl font-semibold text-blue-900 dark:text-blue-100">
+            {stats?.inProgress}
           </p>
         </div>
         <div className="rounded-lg bg-green-50 p-4 dark:bg-green-400/10">
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
             <p className="text-sm font-medium text-green-800 dark:text-green-200">Completed</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-green-900 dark:text-green-300">
-            {stats.completed}
+          <p className="mt-2 text-2xl font-semibold text-green-900 dark:text-green-100">
+            {stats?.completed}
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Total</p>
+          </div>
+          <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            {stats?.total}
           </p>
         </div>
       </div>
@@ -153,7 +177,7 @@ export function MaintenanceTracker({ propertyId }: MaintenanceTrackerProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {requests.map(request => (
+                  {maintenanceData.requests.map(request => (
                     <tr key={request.id} className="hover:bg-muted/50">
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
                         <div className="flex items-center">
@@ -185,9 +209,9 @@ export function MaintenanceTracker({ propertyId }: MaintenanceTrackerProps) {
                       <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
                         <span
                           className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            request.priority === 'HIGH'
+                            request.priority === MaintenancePriority.HIGH
                               ? 'bg-red-50 text-red-800 dark:bg-red-400/10 dark:text-red-200'
-                              : request.priority === 'MEDIUM'
+                              : request.priority === MaintenancePriority.MEDIUM
                                 ? 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-200'
                                 : 'bg-green-50 text-green-800 dark:bg-green-400/10 dark:text-green-200'
                           }`}
@@ -205,4 +229,6 @@ export function MaintenanceTracker({ propertyId }: MaintenanceTrackerProps) {
       </div>
     </div>
   );
-}
+};
+
+export default memo(MaintenanceTracker);
