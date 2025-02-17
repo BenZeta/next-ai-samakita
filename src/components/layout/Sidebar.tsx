@@ -14,10 +14,10 @@ import {
   X,
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 
 // All navigation items
 const navigation = [
@@ -82,16 +82,14 @@ const Sidebar = () => {
                   className="flex items-center gap-2"
                 >
                   <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-gray-600">
-                    <Image 
+                    <Image
                       src="https://ik.imagekit.io/matguchi18/sk.png"
                       alt="Superkos Logo"
                       fill
                       className="object-contain"
                     />
                   </div>
-                  <h1 className="text-xl font-bold text-white">
-                    Superkos
-                  </h1>
+                  <h1 className="text-xl font-bold text-white">SamaKita</h1>
                 </motion.div>
               )}
             </AnimatePresence>
