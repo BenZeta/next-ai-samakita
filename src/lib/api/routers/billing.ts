@@ -1,5 +1,11 @@
 import { db } from '@/lib/db';
 import { sendInvoiceEmail } from '@/lib/email';
+import {
+  sendBillingEmail,
+  sendBillingWhatsApp,
+  sendPaymentReminderEmail,
+  sendPaymentReminderWhatsApp,
+} from '@/lib/notifications';
 import { cancelPaymentIntent, createPaymentIntent, retrievePaymentIntent } from '@/lib/stripe';
 import { sendPaymentReminder } from '@/lib/whatsapp';
 import {
@@ -31,6 +37,8 @@ const billingSchema = z.object({
   dueDate: z.date(),
   tenantId: z.string().optional(),
 });
+
+const notificationMethodSchema = z.enum(['email', 'whatsapp']);
 
 export const billingRouter = createTRPCRouter({
   createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
@@ -491,21 +499,33 @@ export const billingRouter = createTRPCRouter({
   sendNotification: protectedProcedure
     .input(
       z.object({
-        tenantId: z.string(),
+        tenantId: z.string().optional(),
         method: z.enum(['email', 'whatsapp']),
         paymentType: z.nativeEnum(PaymentType),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const tenant = await ctx.db.tenant.findFirst({
-        where: {
-          id: input.tenantId,
-          room: {
-            property: {
-              userId: ctx.session.user.id,
+      // If tenantId is provided, send to specific tenant
+      // Otherwise, send to all tenants with pending payments
+      const tenantsQuery = input.tenantId
+        ? {
+            id: input.tenantId,
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
             },
-          },
-        },
+          }
+        : {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          };
+
+      const tenants = await db.tenant.findMany({
+        where: tenantsQuery,
         include: {
           payments: {
             where: {
@@ -523,68 +543,96 @@ export const billingRouter = createTRPCRouter({
         },
       });
 
-      if (!tenant) {
+      if (tenants.length === 0) {
         throw new TRPCError({
           code: 'NOT_FOUND',
-          message: 'Tenant not found or you do not have access to this tenant',
+          message: 'No tenants found with pending payments',
         });
       }
 
-      if (tenant.payments.length === 0) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `No pending or overdue ${input.paymentType} payments found for this tenant`,
-        });
-      }
-
-      try {
-        for (const payment of tenant.payments) {
-          // Generate Stripe payment link
-          const stripePayment = await createPaymentIntent({
-            amount: payment.amount,
-            customerEmail: tenant.email,
-            customerName: tenant.name,
-            orderId: payment.id,
-            description: `${payment.type} payment for ${tenant.room.property.name} - Room ${tenant.room.number}`,
-          });
-
-          // Update payment with Stripe details
-          await ctx.db.payment.update({
-            where: { id: payment.id },
-            data: {
-              stripePaymentId: stripePayment.paymentIntentId,
-              stripeClientSecret: stripePayment.clientSecret,
-            },
-          });
-
-          if (input.method === 'whatsapp') {
-            await sendPaymentReminder(tenant, {
-              ...payment,
-              stripeClientSecret: stripePayment.clientSecret,
-            });
-          } else {
-            // Send email with proper formatting
-            await sendInvoiceEmail({
-              email: tenant.email,
-              tenantName: tenant.name,
-              propertyName: tenant.room.property.name,
-              roomNumber: tenant.room.number,
-              amount: payment.amount,
-              dueDate: payment.dueDate,
-              paymentLink: stripePayment.checkoutUrl || undefined,
-              paymentType: payment.type,
-              invoiceNumber: `INV-${payment.id}`,
-            });
+      const results = await Promise.allSettled(
+        tenants.map(async tenant => {
+          if (tenant.payments.length === 0) {
+            return;
           }
-        }
 
-        return { success: true };
-      } catch (error) {
+          for (const payment of tenant.payments) {
+            try {
+              // Generate Stripe payment link if not already present
+              if (!payment.stripePaymentId) {
+                const stripePayment = await createPaymentIntent({
+                  amount: payment.amount,
+                  customerEmail: tenant.email,
+                  customerName: tenant.name,
+                  orderId: payment.id,
+                  description: `${payment.type} payment for ${tenant.room.property.name} - Room ${tenant.room.number}`,
+                });
+
+                // Update payment with Stripe details
+                await ctx.db.payment.update({
+                  where: { id: payment.id },
+                  data: {
+                    stripePaymentId: stripePayment.paymentIntentId,
+                    stripeClientSecret: stripePayment.clientSecret,
+                  },
+                });
+
+                if (input.method === 'whatsapp') {
+                  await sendPaymentReminder(tenant, {
+                    ...payment,
+                    stripeClientSecret: stripePayment.clientSecret,
+                  });
+                } else {
+                  await sendInvoiceEmail({
+                    email: tenant.email,
+                    tenantName: tenant.name,
+                    propertyName: tenant.room.property.name,
+                    roomNumber: tenant.room.number,
+                    amount: payment.amount,
+                    dueDate: payment.dueDate,
+                    paymentLink: `https://checkout.stripe.com/pay/${stripePayment.paymentIntentId}`,
+                    paymentType: payment.type,
+                    invoiceNumber: `INV-${payment.id}`,
+                  });
+                }
+              } else {
+                // Use existing Stripe payment link
+                if (input.method === 'whatsapp') {
+                  await sendPaymentReminder(tenant, payment);
+                } else {
+                  await sendInvoiceEmail({
+                    email: tenant.email,
+                    tenantName: tenant.name,
+                    propertyName: tenant.room.property.name,
+                    roomNumber: tenant.room.number,
+                    amount: payment.amount,
+                    dueDate: payment.dueDate,
+                    paymentLink: `https://checkout.stripe.com/pay/${payment.stripePaymentId}`,
+                    paymentType: payment.type,
+                    invoiceNumber: `INV-${payment.id}`,
+                  });
+                }
+              }
+            } catch (error) {
+              console.error(
+                `Failed to send ${input.method} notification to tenant ${tenant.id}:`,
+                error
+              );
+              throw error;
+            }
+          }
+        })
+      );
+
+      const failures = results.filter(result => result.status === 'rejected');
+      if (failures.length > 0) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: `Failed to send ${input.method} notification`,
+          message: `Failed to send some notifications: ${failures.length} failures`,
         });
       }
+
+      return { success: true };
     }),
 
   create: protectedProcedure.input(billingSchema).mutation(async ({ input, ctx }) => {
@@ -913,4 +961,175 @@ export const billingRouter = createTRPCRouter({
 
     return billing;
   }),
+
+  sendBillingNotification: protectedProcedure
+    .input(
+      z.object({
+        billingId: z.string(),
+        method: notificationMethodSchema,
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { billingId, method } = input;
+
+      const billing = await db.billing.findFirst({
+        where: {
+          id: billingId,
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          tenant: {
+            include: {
+              room: {
+                include: {
+                  property: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!billing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      if (!billing.tenant) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Billing has no tenant assigned',
+        });
+      }
+
+      // Send notification based on method
+      if (method === 'email') {
+        await sendBillingEmail({
+          to: billing.tenant.email,
+          tenant: billing.tenant,
+          billing,
+        });
+      } else {
+        await sendBillingWhatsApp({
+          phone: billing.tenant.phone,
+          tenant: billing.tenant,
+          billing,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  sendPaymentNotification: protectedProcedure
+    .input(
+      z.object({
+        billingId: z.string(),
+        tenantId: z.string(),
+        method: notificationMethodSchema,
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { billingId, tenantId, method } = input;
+
+      const billing = await db.billing.findFirst({
+        where: {
+          id: billingId,
+          tenant: {
+            id: tenantId,
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          tenant: {
+            include: {
+              room: {
+                include: {
+                  property: true,
+                },
+              },
+            },
+          },
+          payments: {
+            where: {
+              tenantId,
+            },
+          },
+        },
+      });
+
+      if (!billing) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      if (!billing.tenant) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Billing has no tenant assigned',
+        });
+      }
+
+      // Send notification based on method
+      if (method === 'email') {
+        await sendPaymentReminderEmail({
+          to: billing.tenant.email,
+          tenant: billing.tenant,
+          billing,
+        });
+      } else {
+        await sendPaymentReminderWhatsApp({
+          phone: billing.tenant.phone,
+          tenant: billing.tenant,
+          billing,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  uploadPaymentProof: protectedProcedure
+    .input(
+      z.object({
+        paymentId: z.string(),
+        receiptUrl: z.string().url(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const payment = await db.payment.findUnique({
+        where: { id: input.paymentId },
+      });
+
+      if (!payment) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Payment not found',
+        });
+      }
+
+      // Update payment with receipt and mark as paid
+      await db.payment.update({
+        where: { id: input.paymentId },
+        data: {
+          proofOfPayment: input.receiptUrl,
+          status: PaymentStatus.PAID,
+          paidAt: new Date(),
+        },
+      });
+
+      return { success: true };
+    }),
 });
