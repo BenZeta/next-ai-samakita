@@ -484,7 +484,7 @@ export const roomRouter = createTRPCRouter({
 
       // Get historical occupancy rates
       const historyRates = await Promise.all(
-        historyPoints.map(async ({ date }) => {
+        historyPoints.map(async ({ date, label }) => {
           const totalRooms = await db.room.count({
             where: baseWhere,
           });
@@ -499,7 +499,10 @@ export const roomRouter = createTRPCRouter({
             },
           });
 
-          return totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0;
+          return {
+            label,
+            rate: totalRooms > 0 ? (occupiedRooms / totalRooms) * 100 : 0,
+          };
         })
       );
       // Get previous period rate for comparison
@@ -581,8 +584,11 @@ export const roomRouter = createTRPCRouter({
 
       return {
         currentRate,
-        history,
+        previousRate,
+        history: historyRates,
         roomStatusBreakdown,
+        totalRooms,
+        occupiedRooms,
       };
     }),
 });

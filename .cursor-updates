@@ -16,3 +16,4 @@
 - Reverted billing details page styling to previous design while keeping new notification features
 - Added proper error handling and loading states for billing operations
 - Fixed date formatting in billing details page
+- Fixed tenants/new page by updating room status value and implementing client-side room search filtering, and fixed occupancy widget by adding missing return values in getOccupancyStats procedure.
