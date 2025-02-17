@@ -9,6 +9,7 @@ import { RoomStatus } from '@prisma/client';
 export default function NewTenantPage() {
     const router = useRouter();
     const [search, setSearch] = useState('');
+    const [roomSearch, setRoomSearch] = useState('');
     const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const [step, setStep] = useState<1 | 2>(1);
@@ -16,6 +17,8 @@ export default function NewTenantPage() {
     // Fetch properties
     const { data: properties, isLoading: propertiesLoading } = api.property.list.useQuery({
         search,
+    }, {
+        enabled: step === 1,
     });
 
     // Fetch rooms when property is selected
@@ -23,19 +26,28 @@ export default function NewTenantPage() {
         {
             propertyId: selectedPropertyId!,
             status: RoomStatus.AVAILABLE,
+            search: roomSearch,
         },
         {
-            enabled: !!selectedPropertyId,
+            enabled: !!selectedPropertyId && step === 2,
         }
     );
 
-    if (propertiesLoading) {
+    if (propertiesLoading && step === 1) {
         return (
             <div className="flex h-full items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
         );
     }
+
+    const handlePropertySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(e.target.value);
+    };
+
+    const handleRoomSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setRoomSearch(e.target.value);
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -79,7 +91,7 @@ export default function NewTenantPage() {
                                 type="text"
                                 placeholder="Search properties..."
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                onChange={handlePropertySearch}
                                 className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                         </div>
@@ -114,6 +126,19 @@ export default function NewTenantPage() {
             ) : (
                 <>
                     {/* Room selection */}
+                    <div className="mb-6">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search rooms by number..."
+                                value={roomSearch}
+                                onChange={handleRoomSearch}
+                                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                        </div>
+                    </div>
+
                     {roomsLoading ? (
                         <div className="flex h-32 items-center justify-center">
                             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
@@ -141,15 +166,24 @@ export default function NewTenantPage() {
                         </div>
                     ) : (
                         <div className="rounded-lg border border-gray-200 p-8 text-center">
-                            <p className="text-gray-500">No available rooms in this property.</p>
+                            <p className="text-gray-500">No available rooms found.</p>
+                            {roomSearch ? (
+                                <p className="mt-2 text-sm text-gray-400">Try different search terms or clear the search</p>
+                            ) : (
+                                <p className="mt-2 text-sm text-gray-400">This property has no available rooms</p>
+                            )}
                             <button
                                 onClick={() => {
-                                    setSelectedPropertyId(null);
-                                    setStep(1);
+                                    if (roomSearch) {
+                                        setRoomSearch('');
+                                    } else {
+                                        setSelectedPropertyId(null);
+                                        setStep(1);
+                                    }
                                 }}
                                 className="mt-4 text-sm font-medium text-primary hover:underline"
                             >
-                                Select another property
+                                {roomSearch ? 'Clear search' : 'Select another property'}
                             </button>
                         </div>
                     )}

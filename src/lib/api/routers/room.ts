@@ -152,6 +152,7 @@ export const roomRouter = createTRPCRouter({
       z.object({
         propertyId: z.string().optional(),
         status: z.nativeEnum(RoomStatus).optional(),
+        search: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -159,6 +160,12 @@ export const roomRouter = createTRPCRouter({
         where: {
           propertyId: input.propertyId,
           ...(input.status && { status: input.status }),
+          ...(input.search && {
+            number: {
+              contains: input.search,
+              mode: 'insensitive',
+            },
+          }),
         },
         include: {
           tenants: {
