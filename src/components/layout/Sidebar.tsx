@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Building2,
   CreditCard,
@@ -12,7 +13,6 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -37,7 +37,7 @@ const Sidebar = () => {
   // Auto-close sidebar on mobile with debounce
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const handleResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
@@ -65,7 +65,7 @@ const Sidebar = () => {
         initial={false}
         animate={{
           width: isOpen ? 256 : 80,
-          transition: { duration: 0.3, type: "spring", stiffness: 200, damping: 25 }
+          transition: { duration: 0.3, type: 'spring', stiffness: 200, damping: 25 },
         }}
         className="fixed left-0 top-0 z-50 h-screen overflow-hidden border-r border-gray-800 bg-gray-900 shadow-xl"
       >
@@ -80,11 +80,11 @@ const Sidebar = () => {
                   exit={{ opacity: 0, x: -20 }}
                   className="text-xl font-bold text-white"
                 >
-                  Superkos CMS
+                  SamaKita
                 </motion.h1>
               )}
             </AnimatePresence>
-            
+
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -93,7 +93,7 @@ const Sidebar = () => {
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                  key={isOpen ? "close" : "open"}
+                  key={isOpen ? 'close' : 'open'}
                   initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   exit={{ rotate: 90, opacity: 0 }}
@@ -121,18 +121,18 @@ const Sidebar = () => {
                   <Link href={item.href}>
                     <motion.div
                       className={`group relative flex items-center rounded-xl p-2 text-sm font-medium ${
-                        isActive 
-                          ? 'bg-gray-800/90 text-white' 
+                        isActive
+                          ? 'bg-gray-800/90 text-white'
                           : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
                       }`}
                       whileHover={{ x: 4 }}
                     >
                       <motion.div
                         whileHover={{ scale: 1.2 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                         className={`relative z-10 ${!isOpen && 'mx-auto'}`}
                       >
-                        <Icon 
+                        <Icon
                           className={`h-5 w-5 ${
                             isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
                           }`}
@@ -156,7 +156,7 @@ const Sidebar = () => {
                         <motion.div
                           className="absolute inset-0 rounded-xl bg-gray-800/90"
                           layoutId="activeBackground"
-                          transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                          transition={{ type: 'spring', stiffness: 200, damping: 30 }}
                         />
                       )}
                     </motion.div>
@@ -176,7 +176,7 @@ const Sidebar = () => {
             >
               <motion.div
                 whileHover={{ rotate: 180 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className={!isOpen ? 'mx-auto' : ''}
               >
                 <LogOut className="h-5 w-5 text-gray-400 group-hover:text-red-400" />
@@ -206,13 +206,13 @@ const Sidebar = () => {
                   className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
                 >
                   <motion.div
-                    animate={{ 
+                    animate={{
                       scale: [1, 1.2, 1],
                     }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
-                      repeatType: "reverse",
+                      repeatType: 'reverse',
                     }}
                     className={!isOpen ? 'mx-auto' : ''}
                   >
@@ -241,8 +241,8 @@ const Sidebar = () => {
       <motion.div
         initial={false}
         animate={{
-          marginLeft: isOpen ? "256px" : "80px",
-          transition: { duration: 0.3, type: "spring", stiffness: 200, damping: 25 }
+          marginLeft: isOpen ? '256px' : '80px',
+          transition: { duration: 0.3, type: 'spring', stiffness: 200, damping: 25 },
         }}
         className="flex-1 overflow-auto"
       >

@@ -1,218 +1,185 @@
 'use client';
 
-import { PaymentList } from '@/components/payment/PaymentList';
 import { api } from '@/lib/trpc/react';
-import { PaymentType } from '@prisma/client';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  AlertCircle,
-  Calendar,
-  Clock,
-  CreditCard,
-  DollarSign,
-  Home,
-  Mail,
-  MessageCircle,
-  Search,
-  User,
-} from 'lucide-react';
+import { BillingStatus } from '@prisma/client';
+import { Building2, Plus, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 
 export default function BillingPage() {
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPaymentType, setSelectedPaymentType] = useState<PaymentType>(PaymentType.RENT);
+  const [search, setSearch] = useState('');
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<BillingStatus | 'ALL'>('ALL');
 
-  const { data: stats, isLoading: statsLoading } = api.billing.getStats.useQuery({ timeRange });
-  const { data: tenants, isLoading: tenantsLoading } = api.tenant.getAll.useQuery();
+  const { data: properties, isLoading: propertiesLoading } = api.property.list.useQuery({
+    search,
+  });
 
-  const sendNotificationMutation = api.billing.sendNotification.useMutation();
+  const { data: billings, isLoading: billingsLoading } = api.billing.list.useQuery({
+    propertyId: selectedPropertyId || undefined,
+    status: selectedStatus === 'ALL' ? undefined : selectedStatus,
+  });
 
-  const handleSendNotification = async (tenantId: string, method: 'email' | 'whatsapp') => {
-    try {
-      await sendNotificationMutation.mutateAsync({
-        tenantId,
-        method,
-        paymentType: selectedPaymentType,
-      });
-      toast.success(`${selectedPaymentType} payment reminder sent via ${method}`);
-    } catch (error) {
-      toast.error(`Failed to send ${method} notification`);
-    }
-  };
-
-  if (statsLoading || tenantsLoading) {
+  if (propertiesLoading || billingsLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="h-8 w-8 rounded-full border-4 border-indigo-600 border-t-transparent"
-        />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
 
-  const filteredTenants = tenants?.filter(
-    tenant =>
-      tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tenant.room?.number.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Billing Dashboard</h1>
-        <p className="mt-2 text-gray-600">Manage tenant payments and send reminders</p>
-      </motion.div>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Billing</h1>
+          <p className="mt-2 text-muted-foreground">Manage and track tenant billings</p>
+        </div>
+        <Link
+          href="/billing/new"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+          Create Billing
+        </Link>
+      </div>
 
-      {/* Stats Cards */}
-      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          {
-            title: 'Total Revenue',
-            value: `Rp ${stats?.totalRevenue?.toLocaleString() ?? 0}`,
-            icon: DollarSign,
-            color: 'green',
-          },
-          {
-            title: 'Pending Payments',
-            value: stats?.pendingPayments ?? 0,
-            icon: CreditCard,
-            color: 'blue',
-          },
-          {
-            title: 'Due This Week',
-            value: stats?.dueThisWeek ?? 0,
-            icon: Clock,
-            color: 'yellow',
-          },
-          {
-            title: 'Overdue',
-            value: stats?.overduePayments ?? 0,
-            icon: AlertCircle,
-            color: 'red',
-          },
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+      <div className="mb-8 grid gap-6 md:grid-cols-2">
+        {/* Property Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search properties..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+        </div>
+
+        {/* Status Filter */}
+        <select
+          value={selectedStatus}
+          onChange={e => setSelectedStatus(e.target.value as BillingStatus | 'ALL')}
+          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+        >
+          <option value="ALL">All Status</option>
+          <option value="DRAFT">Draft</option>
+          <option value="SENT">Sent</option>
+        </select>
+      </div>
+
+      {/* Property List */}
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          className={`cursor-pointer rounded-lg bg-card p-6 shadow transition-all hover:shadow-lg ${
+            !selectedPropertyId ? 'ring-2 ring-primary' : ''
+          }`}
+          onClick={() => setSelectedPropertyId(null)}
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-primary/10 p-3">
+              <Building2 className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium text-foreground">All Properties</h3>
+              <p className="text-sm text-muted-foreground">View all billings</p>
+            </div>
+          </div>
+        </div>
+
+        {properties?.properties.map(property => (
+          <div
+            key={property.id}
+            className={`cursor-pointer rounded-lg bg-card p-6 shadow transition-all hover:shadow-lg ${
+              selectedPropertyId === property.id ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => setSelectedPropertyId(property.id)}
           >
-            <div className="flex items-center gap-4">
-              <div className={`rounded-full bg-${stat.color}-100 p-3`}>
-                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-primary/10 p-3">
+                <Building2 className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+                <h3 className="font-medium text-foreground">{property.name}</h3>
+                <p className="text-sm text-muted-foreground">{property.address}</p>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
-      {/* Search and Filters */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-      >
-        <div className="relative w-full lg:max-w-md">
-          <input
-            type="text"
-            placeholder="Search tenant or room number..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 pl-12 pr-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
-          />
-          <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+      {/* Billings List */}
+      <div className="rounded-lg bg-card shadow">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Tenant
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Property
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Due Date
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-muted-foreground">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {billings?.billings.map(billing => (
+                <tr key={billing.id} className="hover:bg-muted/50">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
+                    {billing.title}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
+                    {billing.tenant?.name} - Room {billing.tenant?.room.number}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
+                    {billing.tenant?.room.property.name}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
+                    Rp {billing.amount.toLocaleString()}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
+                    {new Date(billing.dueDate).toLocaleDateString()}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        billing.status === 'SENT'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      }`}
+                    >
+                      {billing.status}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm">
+                    <Link
+                      href={`/billing/${billing.id}`}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      View Details
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <select
-            value={selectedPaymentType}
-            onChange={e => setSelectedPaymentType(e.target.value as PaymentType)}
-            className="rounded-xl border border-gray-300 px-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            {Object.values(PaymentType).map(type => (
-              <option key={type} value={type}>
-                {type.charAt(0) + type.slice(1).toLowerCase()} Payments
-              </option>
-            ))}
-          </select>
-          <select
-            value={timeRange}
-            onChange={e => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
-            className="rounded-xl border border-gray-300 px-4 py-3 focus:border-indigo-500 focus:ring-indigo-500"
-          >
-            <option value="week">Last Week</option>
-            <option value="month">Last Month</option>
-            <option value="year">Last Year</option>
-          </select>
-        </div>
-      </motion.div>
-      {/* Tenant Cards */}
-      <div className="space-y-4 w-full">
-        <AnimatePresence>
-          {filteredTenants?.map((tenant, index) => (
-            <motion.div
-              key={tenant.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: index * 0.05 }}
-              className="group w-full overflow-hidden rounded-xl bg-white p-6 shadow-lg transition-all hover:shadow-xl hover:bg-gray-50"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full bg-gray-100 p-3">
-                    <User className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{tenant.name}</h3>
-                    <div className="mt-1 flex items-center gap-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Home className="h-4 w-4" />
-                        <span>Room {tenant.room?.number}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Due in 5 days</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSendNotification(tenant.id, 'whatsapp')}
-                    className="rounded-full bg-green-100 p-2 text-green-600 transition-colors hover:bg-green-200"
-                    title={`Send WhatsApp reminder for ${selectedPaymentType.toLowerCase()} payment`}
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSendNotification(tenant.id, 'email')}
-                    className="rounded-full bg-blue-100 p-2 text-blue-600 transition-colors hover:bg-blue-200"
-                    title={`Send email reminder for ${selectedPaymentType.toLowerCase()} payment`}
-                  >
-                    <Mail className="h-5 w-5" />
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <PaymentList tenantId={tenant.id} paymentType={selectedPaymentType} />
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
       </div>
     </div>
   );
