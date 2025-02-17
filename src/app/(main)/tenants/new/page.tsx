@@ -196,7 +196,7 @@ export default function NewTenantPage() {
                     setStep(1);
                   }
                 }}
-                className="mt-4 text-sm font-medium text-primary hover:underline"
+                className="mt-4 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 {roomSearch ? 'Clear search' : 'Select another property'}
               </button>
@@ -209,7 +209,7 @@ export default function NewTenantPage() {
                 setSelectedPropertyId(null);
                 setStep(1);
               }}
-              className="text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               ← Back to property selection
             </button>

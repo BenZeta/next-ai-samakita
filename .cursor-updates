@@ -17,3 +17,4 @@
 - Added proper error handling and loading states for billing operations
 - Fixed date formatting in billing details page
 - Fixed tenants/new page by updating room status value and implementing client-side room search filtering, and fixed occupancy widget by adding missing return values in getOccupancyStats procedure.
+- Updated ExpenseList component with design system colors, fixed TypeScript errors, and improved code organization.
