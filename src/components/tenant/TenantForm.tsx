@@ -54,39 +54,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         return;
       }
 
-      // Upload KTP file if provided
-      let ktpFileUrl = undefined;
-      if (ktpFile) {
-        const formData = new FormData();
-        formData.append("file", ktpFile);
-        const response = await fetch("/api/upload/document", {
-          method: "POST",
-          body: formData,
-        });
-        const result = await response.json();
-        ktpFileUrl = result.url;
-      }
-
-      // Upload KK file if provided
-      let kkFileUrl = undefined;
-      if (kkFile) {
-        const formData = new FormData();
-        formData.append("file", kkFile);
-        const response = await fetch("/api/upload/document", {
-          method: "POST",
-          body: formData,
-        });
-        const result = await response.json();
-        kkFileUrl = result.url;
-      }
-
-      // Create tenant with file URLs and room price
+      // Create tenant with room price
       await createMutation.mutateAsync({
         ...data,
         roomId,
         rentAmount: room.price,
-        ktpFile: ktpFileUrl,
-        kkFile: kkFileUrl,
       });
 
       toast.success("Tenant created successfully!");
@@ -202,32 +174,6 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
           {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate.message}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="ktpFile" className="block text-sm font-medium text-gray-700">
-            KTP File (Optional)
-          </label>
-          <input
-            type="file"
-            id="ktpFile"
-            accept="image/*,.pdf"
-            onChange={(e) => setKtpFile(e.target.files?.[0] || null)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="kkFile" className="block text-sm font-medium text-gray-700">
-            KK File (Optional)
-          </label>
-          <input
-            type="file"
-            id="kkFile"
-            accept="image/*,.pdf"
-            onChange={(e) => setKkFile(e.target.files?.[0] || null)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
         </div>
       </div>
 
