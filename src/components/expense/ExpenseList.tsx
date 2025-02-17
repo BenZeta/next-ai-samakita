@@ -152,10 +152,161 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
 
   if (!propertyId) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow">
-        <div className="flex items-center justify-center">
-          <p className="text-gray-500">Please select a property to view expenses.</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">All Properties Expenses</h2>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Hide Filters" : "Show Filters"}
+            </button>
+            <button
+              onClick={() => setIsAddingExpense(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+              <Plus className="h-4 w-4" />
+              Add Expense
+            </button>
+          </div>
         </div>
+
+        {showFilters && (
+          <div className="rounded-lg border bg-white p-4 shadow">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Category</label>
+                <select
+                  value={category ?? "all"}
+                  onChange={(e) => setCategory(e.target.value === "all" ? undefined : (e.target.value as ExpenseCategory))}
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                  <option value="all">All Categories</option>
+                  {Object.values(ExpenseCategory).map((cat) => (
+                    <option
+                      key={cat}
+                      value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {data?.summary && (
+          <div className="rounded-lg bg-white p-6 shadow">
+            <h3 className="text-lg font-medium text-gray-900">Summary</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm text-gray-500">Total Expenses</p>
+                <p className="mt-1 text-2xl font-semibold text-gray-900">Rp {data.summary.total.toLocaleString()}</p>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-4">
+                <p className="text-sm text-gray-500">Categories</p>
+                <div className="mt-2 space-y-1 text-sm">
+                  {Object.entries(data.summary.byCategory)
+                    .sort(([, a], [, b]) => (b as number) - (a as number))
+                    .slice(0, 3)
+                    .map(([category, amount]) => (
+                      <div
+                        key={category}
+                        className="flex justify-between">
+                        <span className="capitalize text-gray-700">{category.toLowerCase()}</span>
+                        <span className="font-medium text-gray-900">Rp {(amount as number).toLocaleString()}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto rounded-lg border bg-white shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Property</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tenant</th>
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {data?.expenses.map((expense) => (
+                <tr
+                  key={expense.id}
+                  className="hover:bg-gray-50">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{new Date(expense.date).toLocaleDateString()}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                    <span className="capitalize">{expense.category.toLowerCase()}</span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">{expense.description}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">Rp {expense.amount.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{expense.property.name}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                    {expense.property.rooms?.flatMap(room => 
+                      room.tenants?.filter(tenant => tenant.status === 'ACTIVE')
+                        .map(tenant => tenant.name)
+                    ).flat().join(', ') || '-'}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleDelete(expense.id)}
+                      className="text-red-600 hover:text-red-900">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {data?.expenses.length === 0 && <div className="py-8 text-center text-gray-500">No expenses found for the selected filters.</div>}
+
+        {data?.pagination.totalPages > 1 && (
+          <div className="mt-6 flex justify-center space-x-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              Previous
+            </button>
+            <span className="flex items-center text-sm text-gray-500">
+              Page {page} of {data?.pagination.totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(data?.pagination.totalPages ?? 1, p + 1))}
+              disabled={page === data?.pagination.totalPages}
+              className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+              Next
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -387,6 +538,7 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Description</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Property</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tenant</th>
               <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
             </tr>
           </thead>
@@ -402,6 +554,12 @@ export function ExpenseList({ propertyId }: ExpenseListProps) {
                 <td className="px-6 py-4 text-sm text-gray-900">{expense.description}</td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">Rp {expense.amount.toLocaleString()}</td>
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{expense.property.name}</td>
+                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                  {expense.property.rooms?.flatMap(room => 
+                    room.tenants?.filter(tenant => tenant.status === 'ACTIVE')
+                      .map(tenant => tenant.name)
+                  ).flat().join(', ') || '-'}
+                </td>
                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                   <button
                     onClick={() => handleDelete(expense.id)}
