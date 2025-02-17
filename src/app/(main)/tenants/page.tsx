@@ -1,30 +1,12 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { PaymentMethod, TenantStatus } from '@prisma/client';
+import { TenantStatus } from '@prisma/client';
 import { Building2, CreditCard, Mail, Phone } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
-import { toast } from 'react-toastify';
 
 export default function TenantsPage() {
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-
   const { data: tenants, isLoading } = api.tenant.list.useQuery({});
-  const sendInvoiceMutation = api.tenant.sendInvoice.useMutation({
-    onSuccess: () => {
-      toast.success('Invoice sent successfully!');
-      setShowPaymentModal(false);
-    },
-    onError: error => {
-      toast.error(error.message);
-    },
-  });
-
-  const handleSendInvoice = (tenantId: string, method: PaymentMethod) => {
-    sendInvoiceMutation.mutate({ tenantId, paymentMethod: method });
-  };
 
   if (isLoading) {
     return (
@@ -85,55 +67,15 @@ export default function TenantsPage() {
               </div>
             </div>
 
-            <div className="flex space-x-2">
-              <Link
-                href={`/tenants/${tenant.id}`}
-                className="flex-1 rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
-              >
-                View Details
-              </Link>
-              <button
-                onClick={() => {
-                  setSelectedTenantId(tenant.id);
-                  setShowPaymentModal(true);
-                }}
-                className="flex-1 rounded-md bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Send Invoice
-              </button>
-            </div>
+            <Link
+              href={`/tenants/${tenant.id}`}
+              className="block w-full rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+            >
+              View Details
+            </Link>
           </div>
         ))}
       </div>
-
-      {/* Payment Method Modal */}
-      {showPaymentModal && selectedTenantId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-lg font-medium">Select Payment Method</h2>
-            <div className="space-y-4">
-              <button
-                onClick={() => handleSendInvoice(selectedTenantId, PaymentMethod.MANUAL)}
-                className="w-full rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-              >
-                Manual Bank Transfer
-              </button>
-              <button
-                onClick={() => handleSendInvoice(selectedTenantId, PaymentMethod.STRIPE)}
-                className="w-full rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
-              >
-                Pay with Stripe
-              </button>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="w-full rounded-md bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

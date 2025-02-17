@@ -448,14 +448,14 @@ export function PropertyForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+              className="rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
               {isLoading ? "Creating..." : "Create Property"}
             </button>
           ) : (
             <button
               type="button"
               onClick={handleNext}
-              className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+              className="rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2">
               Next
             </button>
           )}
