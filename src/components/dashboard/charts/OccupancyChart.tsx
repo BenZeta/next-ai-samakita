@@ -57,9 +57,9 @@ function OccupancyChart({ data }: OccupancyChartProps) {
   const chartData = data.length > 0 ? data : [{ label: 'No data', rate: 0 }];
 
   return (
-    <div style={{ width: '100%', height: '200px', position: 'relative' }}>
+    <div className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
           <ChartGradients />
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
           <XAxis
@@ -68,8 +68,10 @@ function OccupancyChart({ data }: OccupancyChartProps) {
             tickLine={false}
             axisLine={false}
             className="text-muted-foreground"
-            height={20}
+            height={40}
             interval="preserveStartEnd"
+            tickMargin={10}
+            angle={-15}
           />
           <YAxis
             tickFormatter={value => `${Number(value).toFixed(0)}%`}
@@ -77,8 +79,9 @@ function OccupancyChart({ data }: OccupancyChartProps) {
             tickLine={false}
             axisLine={false}
             className="text-muted-foreground"
-            width={40}
+            width={45}
             domain={[0, 100]}
+            tickMargin={8}
           />
           <Tooltip content={props => <ChartTooltip {...props} />} />
           <Area

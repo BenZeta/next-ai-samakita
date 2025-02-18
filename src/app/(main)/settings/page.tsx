@@ -1,9 +1,11 @@
 'use client';
 
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { api } from '@/lib/trpc/react';
-import { Lock, Mail, User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -21,6 +23,8 @@ export default function SettingsPage() {
   });
 
   const { theme, toggleTheme } = useTheme();
+  const { locale, changeLanguage } = useLanguage();
+  const t = useTranslations();
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -65,7 +69,10 @@ export default function SettingsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold text-foreground">Settings</h1>
+      <div className="mb-8">
+        <h1 className="mb-2 text-3xl font-bold text-foreground">{t('settings.title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('settings.subtitle')}</p>
+      </div>
 
       <div className="grid grid-cols-2 gap-6">
         {/* Profile Information - Left Column */}
@@ -151,11 +158,28 @@ export default function SettingsPage() {
 
         {/* Right Column - Application Settings and Change Password */}
         <div className="space-y-6">
+          {/* Language Settings */}
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="text-lg font-medium text-foreground">{t('settings.language')}</h2>
+            <div className="mt-4">
+              <select
+                value={locale}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  changeLanguage(e.target.value)
+                }
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="en">{t('settings.languageOptions.en')}</option>
+                <option value="id">{t('settings.languageOptions.id')}</option>
+              </select>
+            </div>
+          </div>
+
           {/* Application Settings */}
           <div className="rounded-lg bg-card p-6 shadow">
             <div className="mb-6 flex items-center gap-2">
               <div className="rounded-lg bg-primary/10 p-2">
-                <Mail className="h-5 w-5 text-primary" />
+                <User className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-lg font-semibold text-card-foreground">Application Settings</h2>
             </div>
@@ -172,23 +196,9 @@ export default function SettingsPage() {
                   <input
                     type="checkbox"
                     checked={theme === 'dark'}
-                    onChange={toggleTheme}
+                    onChange={e => toggleTheme(e.target.checked ? 'dark' : 'light')}
                     className="peer sr-only"
                   />
-                  <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary"></div>
-                  <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-all peer-checked:left-6"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for updates
-                  </p>
-                </div>
-                <label className="relative inline-flex cursor-pointer items-center">
-                  <input type="checkbox" className="peer sr-only" />
                   <div className="h-6 w-11 rounded-full bg-muted peer-checked:bg-primary"></div>
                   <div className="absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-all peer-checked:left-6"></div>
                 </label>

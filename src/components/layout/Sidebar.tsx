@@ -84,12 +84,12 @@ const Sidebar = () => {
                   <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-muted">
                     <Image
                       src="https://ik.imagekit.io/matguchi18/sk.png"
-                      alt="Superkos Logo"
+                      alt="Sama Kita Logo"
                       fill
                       className="object-contain"
                     />
                   </div>
-                  <h1 className="text-xl font-bold text-white">SamaKita</h1>
+                  <h1 className="text-xl font-bold text-black dark:text-white">SamaKita</h1>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -99,7 +99,7 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-6">
+      <div className="flex min-h-[400px] flex-col gap-4 p-6">
         <div className="flex items-center gap-2">
           <div className="h-10 w-10 animate-pulse rounded-lg bg-muted"></div>
           <div className="h-7 w-48 animate-pulse rounded bg-muted"></div>
@@ -116,7 +116,7 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
 
   if (!occupancyData) {
     return (
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div className="flex min-h-[400px] items-center justify-center rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
         <div className="flex items-center gap-2">
           <Building className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">No occupancy data</p>
@@ -126,7 +126,7 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="flex min-h-[400px] flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-primary/10 p-2">
@@ -151,7 +151,7 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
         timeRange={timeRange}
       />
 
-      <div className="mt-6">
+      <div className="mt-auto h-[200px] w-full">
         <Chart data={occupancyData.history} />
       </div>
     </div>

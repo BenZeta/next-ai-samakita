@@ -1,0 +1,90 @@
+{
+  "common": {
+    "loading": "Memuat...",
+    "noData": "Data tidak tersedia",
+    "error": "Terjadi kesalahan",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "add": "Tambah",
+    "search": "Cari",
+    "filter": "Filter",
+    "actions": "Aksi"
+  },
+  "navigation": {
+    "dashboard": "Dasbor",
+    "properties": "Properti",
+    "tenants": "Penyewa",
+    "expenses": "Pengeluaran",
+    "billing": "Tagihan",
+    "settings": "Pengaturan"
+  },
+  "dashboard": {
+    "title": "Dasbor",
+    "subtitle": "Pantau kinerja dan okupansi properti Anda secara real-time",
+    "occupancyRate": "Tingkat Okupansi",
+    "monthlyTrend": "Tren Bulanan",
+    "maintenanceTracker": "Pelacak Pemeliharaan",
+    "tenantOverview": "Ikhtisar Penyewa"
+  },
+  "properties": {
+    "title": "Properti",
+    "subtitle": "Kelola properti dan kamar Anda",
+    "addProperty": "Tambah Properti",
+    "searchProperties": "Cari properti...",
+    "noProperties": "Tidak ada properti ditemukan",
+    "propertyDetails": "Detail Properti",
+    "rooms": "Kamar"
+  },
+  "tenants": {
+    "title": "Penyewa",
+    "subtitle": "Kelola penyewa Anda",
+    "addTenant": "Tambah Penyewa",
+    "searchTenants": "Cari penyewa...",
+    "noTenants": "Tidak ada penyewa ditemukan",
+    "status": {
+      "active": "Aktif",
+      "inactive": "Tidak Aktif"
+    }
+  },
+  "expenses": {
+    "title": "Pengeluaran",
+    "subtitle": "Lacak pengeluaran properti Anda",
+    "addExpense": "Tambah Pengeluaran",
+    "searchExpenses": "Cari pengeluaran...",
+    "noExpenses": "Tidak ada pengeluaran ditemukan",
+    "category": "Kategori",
+    "amount": "Jumlah",
+    "date": "Tanggal",
+    "description": "Deskripsi",
+    "property": "Properti"
+  },
+  "billing": {
+    "title": "Tagihan",
+    "subtitle": "Kelola tagihan dan pembayaran penyewa",
+    "addBilling": "Tambah Tagihan",
+    "searchBilling": "Cari tagihan...",
+    "noBilling": "Tidak ada tagihan ditemukan",
+    "status": {
+      "paid": "Lunas",
+      "pending": "Menunggu",
+      "overdue": "Terlambat"
+    }
+  },
+  "settings": {
+    "title": "Pengaturan",
+    "subtitle": "Kelola pengaturan aplikasi",
+    "language": "Bahasa",
+    "languageOptions": {
+      "en": "English",
+      "id": "Bahasa Indonesia"
+    },
+    "theme": "Tema",
+    "themeOptions": {
+      "light": "Terang",
+      "dark": "Gelap",
+      "system": "Sistem"
+    }
+  }
+}
