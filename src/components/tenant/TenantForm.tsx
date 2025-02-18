@@ -1,8 +1,11 @@
 'use client';
 
+import { countryCodes } from '@/lib/constants/countryCodes';
 import { api } from '@/lib/trpc/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { ChevronsUpDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
@@ -10,7 +13,12 @@ import { z } from 'zod';
 const tenantFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
+  phone: z
+    .string()
+    .regex(
+      /^\+[1-9]\d{1,14}$/,
+      'Invalid phone number format. Must start with + followed by country code and number'
+    ),
   ktpNumber: z.string().optional(),
   depositAmount: z.number().min(1, 'Deposit amount is required'),
   startDate: z.string().min(1, 'Start date is required'),
@@ -26,9 +34,16 @@ interface TenantFormProps {
 }
 
 export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [kkFile, setKkFile] = useState<File | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(
+    countryCodes.find(c => c.code === 'ID') || countryCodes[0]
+  );
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
   const createMutation = api.tenant.create.useMutation();
 
   // Fetch room details to get the price
@@ -37,6 +52,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<TenantFormData>({
     resolver: zodResolver(tenantFormSchema),
@@ -44,6 +60,25 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       references: [],
     },
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    // Update the phone field whenever country code or phone number changes
+    setValue('phone', `${selectedCountry.dial_code}${phoneNumber}`);
+  }, [selectedCountry, phoneNumber, setValue]);
 
   const onSubmit = async (data: TenantFormData) => {
     try {
@@ -62,7 +97,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       });
 
       toast.success('Tenant created successfully!');
-      onSuccess?.();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push('/tenants');
+      }
     } catch (error) {
       console.error('Failed to save tenant:', error);
       toast.error('Failed to create tenant. Please try again.');
@@ -104,12 +143,51 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
           <label htmlFor="phone" className="block text-sm font-medium text-foreground">
             Phone
           </label>
-          <input
-            type="tel"
-            id="phone"
-            {...register('phone')}
-            className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
+          <div className="relative mt-1 flex w-full items-center gap-2">
+            <div className="relative" ref={countryDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                className="flex h-[42px] items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <span className="text-base">{selectedCountry.flag}</span>
+                <span className="text-sm font-medium">{selectedCountry.dial_code}</span>
+                <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+
+              {isCountryDropdownOpen && (
+                <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-[250px] overflow-auto rounded-lg border border-input bg-card p-1 shadow-md">
+                  {countryCodes.map(country => (
+                    <button
+                      key={country.code}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCountry(country);
+                        setIsCountryDropdownOpen(false);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
+                    >
+                      <span className="text-base">{country.flag}</span>
+                      <span className="font-medium">{country.name}</span>
+                      <span className="ml-auto text-sm text-muted-foreground">
+                        {country.dial_code}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <input
+              type="tel"
+              value={phoneNumber}
+              onChange={e => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setPhoneNumber(value);
+              }}
+              className="h-[42px] flex-1 rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Enter phone number"
+            />
+          </div>
           {errors.phone && <p className="mt-1 text-sm text-destructive">{errors.phone.message}</p>}
         </div>
 

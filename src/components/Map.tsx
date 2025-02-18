@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import { useCallback, useEffect, useState } from 'react';
 
 const containerStyle = {
-  width: "100%",
-  height: "100%",
+  width: '100%',
+  height: '100%',
 };
 
 const defaultCenter = {
@@ -15,10 +15,19 @@ const defaultCenter = {
 
 interface MapProps {
   onLocationSelect: (location: { lat: number; lng: number }) => void;
+  selectedLocation?: { lat: number; lng: number } | null;
 }
 
-export default function Map({ onLocationSelect }: MapProps) {
-  const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(null);
+export default function Map({ onLocationSelect, selectedLocation }: MapProps) {
+  const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(
+    selectedLocation || null
+  );
+
+  useEffect(() => {
+    if (selectedLocation) {
+      setMarker(selectedLocation);
+    }
+  }, [selectedLocation]);
 
   const handleMapClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
@@ -39,7 +48,8 @@ export default function Map({ onLocationSelect }: MapProps) {
       mapContainerStyle={containerStyle}
       center={marker || defaultCenter}
       zoom={13}
-      onClick={handleMapClick}>
+      onClick={handleMapClick}
+    >
       {marker && <Marker position={marker} />}
     </GoogleMap>
   );

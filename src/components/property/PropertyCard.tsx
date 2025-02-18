@@ -1,6 +1,6 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Building2, Home, Users } from "lucide-react";
+import { Building2, Home, Users } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface PropertyCardProps {
   property: {
@@ -18,58 +18,67 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property }: PropertyCardProps) {
   const totalRooms = property.rooms.length;
-  const occupiedRooms = property.rooms.filter((room) => room.tenants.length > 0).length;
+  const occupiedRooms = property.rooms.filter(room => room.tenants.length > 0).length;
   const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
 
   return (
     <Link
       href={`/properties/${property.id}`}
-      className="group overflow-hidden rounded-lg bg-white shadow transition-shadow hover:shadow-lg">
-      <div className="aspect-video relative">
+      className="group overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all hover:shadow-md"
+    >
+      <div className="relative aspect-video">
         {property.images[0] ? (
           <Image
             src={property.images[0]}
             alt={property.name}
             fill
             className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-gray-100">
-            <Building2 className="h-12 w-12 text-gray-400" />
+          <div className="flex h-full items-center justify-center bg-muted">
+            <Building2 className="h-12 w-12 text-muted-foreground" />
           </div>
         )}
       </div>
 
       <div className="p-4">
-        <h2 className="mb-1 text-lg font-semibold text-gray-900 group-hover:text-indigo-600">{property.name}</h2>
-        <p className="mb-4 text-sm text-gray-600">{property.address}</p>
+        <h2 className="mb-1 text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
+          {property.name}
+        </h2>
+        <p className="mb-4 text-sm text-muted-foreground">{property.address}</p>
 
         <div className="mb-4 grid grid-cols-2 gap-4">
           <div className="flex items-center space-x-2">
-            <Home className="h-5 w-5 text-gray-400" />
+            <Home className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{totalRooms}</p>
-              <p className="text-xs text-gray-500">Rooms</p>
+              <p className="text-sm font-medium text-foreground">{totalRooms}</p>
+              <p className="text-xs text-muted-foreground">Rooms</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Users className="h-5 w-5 text-gray-400" />
+            <Users className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{occupancyRate}%</p>
-              <p className="text-xs text-gray-500">Occupied</p>
+              <p className="text-sm font-medium text-foreground">{occupancyRate}%</p>
+              <p className="text-xs text-muted-foreground">Occupied</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {property.facilities.slice(0, 3).map((facility) => (
+          {property.facilities.slice(0, 3).map(facility => (
             <span
               key={facility}
-              className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+              className="rounded-full bg-accent px-2 py-1 text-xs text-accent-foreground"
+            >
               {facility}
             </span>
           ))}
-          {property.facilities.length > 3 && <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">+{property.facilities.length - 3} more</span>}
+          {property.facilities.length > 3 && (
+            <span className="rounded-full bg-accent px-2 py-1 text-xs text-accent-foreground">
+              +{property.facilities.length - 3} more
+            </span>
+          )}
         </div>
       </div>
     </Link>

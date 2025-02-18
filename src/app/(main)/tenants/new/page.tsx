@@ -154,7 +154,7 @@ export default function NewTenantPage() {
 
           {roomsLoading ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
             </div>
           ) : rooms && rooms.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

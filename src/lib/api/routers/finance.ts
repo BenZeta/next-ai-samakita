@@ -37,18 +37,34 @@ export const financeRouter = createTRPCRouter({
           break;
       }
 
-      // Base where condition to filter by user's properties
-      const baseWhere = {
-        property: {
-          userId: ctx.session.user.id,
-        },
-        ...(propertyId ? { propertyId } : {}),
-      };
+      // Base where condition for expenses
+      const expenseWhere = propertyId
+        ? {
+            // Property-specific expenses
+            propertyId,
+            property: { userId: ctx.session.user.id },
+          }
+        : {
+            // All expenses (property-specific and general)
+            OR: [
+              { property: { userId: ctx.session.user.id } },
+              { userId: ctx.session.user.id, propertyId: null },
+            ],
+          };
+
+      // Base where condition for revenue
+      const revenueWhere = propertyId
+        ? {
+            tenant: { room: { propertyId, property: { userId: ctx.session.user.id } } },
+          }
+        : {
+            tenant: { room: { property: { userId: ctx.session.user.id } } },
+          };
 
       // Calculate total revenue (rent payments + other income)
       const totalRevenue = await prisma.payment.aggregate({
         where: {
-          ...baseWhere,
+          ...revenueWhere,
           createdAt: {
             gte: startDate,
             lt: endDate,
@@ -63,7 +79,7 @@ export const financeRouter = createTRPCRouter({
       // Calculate total expenses
       const totalExpenses = await prisma.expense.aggregate({
         where: {
-          ...baseWhere,
+          ...expenseWhere,
           createdAt: {
             gte: startDate,
             lt: endDate,
@@ -94,13 +110,25 @@ async function getMonthlyTrend(
   const periods = timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 12;
   const trend = [];
 
-  // Base where condition to filter by user's properties
-  const baseWhere = {
-    property: {
-      userId,
-    },
-    ...(propertyId ? { propertyId } : {}),
-  };
+  // Base where conditions
+  const expenseWhere = propertyId
+    ? {
+        // Property-specific expenses
+        propertyId,
+        property: { userId },
+      }
+    : {
+        // All expenses (property-specific and general)
+        OR: [{ property: { userId } }, { userId, propertyId: null }],
+      };
+
+  const revenueWhere = propertyId
+    ? {
+        tenant: { room: { propertyId, property: { userId } } },
+      }
+    : {
+        tenant: { room: { property: { userId } } },
+      };
 
   for (let i = 0; i < periods; i++) {
     const date = new Date();
@@ -121,7 +149,7 @@ async function getMonthlyTrend(
     // Get revenue for the period
     const revenue = await prisma.payment.aggregate({
       where: {
-        ...baseWhere,
+        ...revenueWhere,
         createdAt: {
           gte: date,
           lt: endDate,
@@ -136,7 +164,7 @@ async function getMonthlyTrend(
     // Get expenses for the period
     const expenses = await prisma.expense.aggregate({
       where: {
-        ...baseWhere,
+        ...expenseWhere,
         createdAt: {
           gte: date,
           lt: endDate,

@@ -10,7 +10,10 @@ const emailSchema = z.string().email();
 const passwordSchema = z.string().min(5);
 const phoneSchema = z
   .string()
-  .regex(/^(\+62|62|0)8[1-9][0-9]{6,9}$/, 'Invalid Indonesian phone number');
+  .regex(
+    /^\+[1-9]\d{1,14}$/,
+    'Invalid phone number format. Must start with + followed by country code and number'
+  );
 
 export const authRouter = createTRPCRouter({
   register: publicProcedure

@@ -38,7 +38,7 @@ export default function TenantsPage() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function TenantsPage() {
         <h1 className="text-3xl font-bold text-foreground">Tenants</h1>
         <Link
           href="/tenants/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
         >
           Add New Tenant
         </Link>
@@ -65,14 +65,14 @@ export default function TenantsPage() {
             placeholder="Search tenants by name, email, or room..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value as TenantStatus | 'ALL')}
-          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="ALL">All Status</option>
           <option value="ACTIVE">Active</option>
@@ -81,7 +81,7 @@ export default function TenantsPage() {
       </div>
 
       {!tenants?.length ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-background p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-input bg-background p-12 text-center">
           <Users className="h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">No tenants found</h3>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -91,7 +91,7 @@ export default function TenantsPage() {
           </p>
           <Link
             href="/tenants/new"
-            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Add New Tenant
@@ -100,14 +100,14 @@ export default function TenantsPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {tenants.map(tenant => (
-            <div key={tenant.id} className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
+            <div key={tenant.id} className="rounded-lg bg-card p-6 shadow">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="rounded-full bg-primary/10 p-3">
                     <Building2 className="h-6 w-6 text-primary" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-card-foreground">{tenant.name}</h3>
+                    <h3 className="text-lg font-medium text-foreground">{tenant.name}</h3>
                     <p className="text-sm text-muted-foreground">Room {tenant.room.number}</p>
                   </div>
                 </div>
@@ -139,7 +139,7 @@ export default function TenantsPage() {
 
               <Link
                 href={`/tenants/${tenant.id}`}
-                className="block w-full rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+                className="block w-full rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 View Details
               </Link>

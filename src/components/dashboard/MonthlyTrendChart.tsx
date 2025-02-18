@@ -2,18 +2,14 @@
 
 import { api } from '@/lib/trpc/react';
 import { DollarSign } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Legend,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+
+// Dynamically import heavy chart component
+const Chart = dynamic(() => import('./charts/MonthlyTrendChart').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <ChartSkeleton />,
+});
 
 interface MonthlyTrendChartProps {
   propertyId?: string;
@@ -26,89 +22,41 @@ interface MonthlyTrendItem {
   profit: number;
 }
 
-// Memoized chart component
-const TrendChart = memo(function TrendChart({ data }: { data: MonthlyTrendItem[] }) {
+// Loading skeleton for chart
+function ChartSkeleton() {
+  return <div className="h-[400px] w-full animate-pulse rounded-lg bg-muted" />;
+}
+
+// Stats display component to reduce re-renders
+const StatsDisplay = memo(function StatsDisplay({
+  summary,
+}: {
+  summary: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    profitMargin: number;
+  };
+}) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-        <defs>
-          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-          </linearGradient>
-          <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.05} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
-        <XAxis
-          dataKey="month"
-          tick={{ fontSize: 12 }}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <YAxis
-          tickFormatter={value => `Rp ${(value / 1000000).toFixed(1)}M`}
-          tick={{ fontSize: 12 }}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-          domain={[0, 'auto']}
-        />
-        <Tooltip
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            const data = payload[0]?.payload as MonthlyTrendItem;
-            if (!data) return null;
-            return (
-              <div className="rounded-lg bg-background p-3 shadow-lg ring-1 ring-black/5">
-                <p className="mb-1 font-medium">{data.month}</p>
-                <div className="space-y-1">
-                  <p className="text-sm text-green-500">
-                    Revenue: Rp {data.revenue.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-red-500">
-                    Expenses: Rp {data.expenses.toLocaleString()}
-                  </p>
-                  <p className="text-sm text-primary">Profit: Rp {data.profit.toLocaleString()}</p>
-                </div>
-              </div>
-            );
-          }}
-        />
-        <Legend />
-        <Area
-          type="monotone"
-          dataKey="revenue"
-          name="Revenue"
-          stroke="#22c55e"
-          fill="url(#colorRevenue)"
-          strokeWidth={2}
-        />
-        <Area
-          type="monotone"
-          dataKey="expenses"
-          name="Expenses"
-          stroke="#ef4444"
-          fill="url(#colorExpenses)"
-          strokeWidth={2}
-        />
-        <Line
-          type="monotone"
-          dataKey="profit"
-          name="Profit"
-          stroke="#6366f1"
-          strokeWidth={2}
-          dot={{ fill: '#6366f1', strokeWidth: 2 }}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-lg bg-accent/50 p-4">
+        <p className="text-sm font-medium text-muted-foreground">Revenue</p>
+        <p className="mt-1 text-xl font-bold">Rp {summary.totalRevenue.toLocaleString()}</p>
+      </div>
+      <div className="rounded-lg bg-accent/50 p-4">
+        <p className="text-sm font-medium text-muted-foreground">Expenses</p>
+        <p className="mt-1 text-xl font-bold">Rp {summary.totalExpenses.toLocaleString()}</p>
+      </div>
+      <div className="rounded-lg bg-accent/50 p-4">
+        <p className="text-sm font-medium text-muted-foreground">Net Profit</p>
+        <p className="mt-1 text-xl font-bold">Rp {summary.netProfit.toLocaleString()}</p>
+      </div>
+      <div className="rounded-lg bg-accent/50 p-4">
+        <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>
+        <p className="mt-1 text-xl font-bold">{summary.profitMargin.toFixed(2)}%</p>
+      </div>
+    </div>
   );
 });
 
@@ -141,10 +89,17 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
 
   if (isLoading) {
     return (
-      <div className="h-[400px] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800">
-        <div className="flex h-full items-center justify-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading financial data...</p>
+      <div className="space-y-4 p-6">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted"></div>
+          <div className="h-7 w-48 animate-pulse rounded bg-muted"></div>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-lg bg-muted"></div>
+          ))}
+        </div>
+        <div className="h-[400px] animate-pulse rounded-lg bg-muted"></div>
       </div>
     );
   }
@@ -182,27 +137,10 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
         </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-accent/50 p-4">
-          <p className="text-sm font-medium text-muted-foreground">Revenue</p>
-          <p className="mt-1 text-xl font-bold">Rp {summary.totalRevenue.toLocaleString()}</p>
-        </div>
-        <div className="rounded-lg bg-accent/50 p-4">
-          <p className="text-sm font-medium text-muted-foreground">Expenses</p>
-          <p className="mt-1 text-xl font-bold">Rp {summary.totalExpenses.toLocaleString()}</p>
-        </div>
-        <div className="rounded-lg bg-accent/50 p-4">
-          <p className="text-sm font-medium text-muted-foreground">Net Profit</p>
-          <p className="mt-1 text-xl font-bold">Rp {summary.netProfit.toLocaleString()}</p>
-        </div>
-        <div className="rounded-lg bg-accent/50 p-4">
-          <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>
-          <p className="mt-1 text-xl font-bold">{summary.profitMargin.toFixed(2)}%</p>
-        </div>
-      </div>
+      <StatsDisplay summary={summary} />
 
       <div className="mt-6">
-        <TrendChart data={financeData.monthlyTrend} />
+        <Chart data={financeData.monthlyTrend} />
       </div>
     </div>
   );

@@ -1,20 +1,19 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { toast } from "react-toastify";
-import { api } from "@/lib/trpc/react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { useLoadScript } from "@react-google-maps/api";
-import Image from "next/image";
+import { api } from '@/lib/trpc/react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import { z } from 'zod';
+
+import { useLoadScript } from '@react-google-maps/api';
+import Image from 'next/image';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const locationSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -22,39 +21,50 @@ const locationSchema = z.object({
 });
 
 const propertySchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  province: z.string().min(1, "Province is required"),
-  postalCode: z.string().min(1, "Postal code is required"),
+  name: z.string().min(1, 'Name is required'),
+  address: z.string().min(1, 'Address is required'),
+  city: z.string().min(1, 'City is required'),
+  province: z.string().min(1, 'Province is required'),
+  postalCode: z.string().min(1, 'Postal code is required'),
   description: z.string().optional(),
   location: z.string().optional(),
   facilities: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),
-  dueDate: z.number().min(1, "Due date is required").max(31, "Due date must be between 1 and 31"),
+  dueDate: z.number().min(1, 'Due date is required').max(31, 'Due date must be between 1 and 31'),
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
 
 // Dynamically import the map component to avoid SSR issues
-const Map = dynamic(() => import("@/components/Map"), {
+const Map = dynamic(() => import('@/components/Map'), {
   ssr: false,
 });
 
 // List of common facilities
-const FACILITIES = ["AC", "WiFi", "Laundry", "Parking", "Security", "CCTV", "Kitchen", "Water Heater"];
+const FACILITIES = [
+  'AC',
+  'WiFi',
+  'Laundry',
+  'Parking',
+  'Security',
+  'CCTV',
+  'Kitchen',
+  'Water Heater',
+];
 
 export function PropertyForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ["places"],
+    libraries: ['places'],
   });
 
   const {
@@ -72,15 +82,15 @@ export function PropertyForm() {
     },
   });
 
-  const selectedFacilities = watch("facilities");
+  const selectedFacilities = watch('facilities');
 
   const propertyMutation = api.property.create.useMutation({
     onSuccess: () => {
-      toast.success("Property created successfully!");
-      router.push("/properties");
+      toast.success('Property created successfully!');
+      router.push('/properties');
       router.refresh();
     },
-    onError: (error) => {
+    onError: error => {
       toast.error(error.message);
     },
   });
@@ -113,31 +123,31 @@ export function PropertyForm() {
   const handleNext = async () => {
     const isValid = await validateStep();
     if (isValid) {
-      setCurrentStep((prev) => Math.min(prev + 1, 5));
+      setCurrentStep(prev => Math.min(prev + 1, 5));
     }
   };
 
   const handleBack = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
+    setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
   const onSubmit = async (data: PropertyFormData) => {
     // Final validation before submit
     if (!selectedLocation) {
       setCurrentStep(3);
-      toast.error("Please select a location on the map");
+      toast.error('Please select a location on the map');
       return;
     }
 
     if (selectedFacilities.length === 0) {
       setCurrentStep(4);
-      toast.error("Please select at least one facility");
+      toast.error('Please select at least one facility');
       return;
     }
 
     if (!imageFiles || imageFiles.length === 0) {
       setCurrentStep(5);
-      toast.error("Please upload at least one image");
+      toast.error('Please upload at least one image');
       return;
     }
 
@@ -149,15 +159,15 @@ export function PropertyForm() {
         for (let i = 0; i < imageFiles.length; i++) {
           const file = imageFiles[i];
           const formData = new FormData();
-          formData.append("file", file);
+          formData.append('file', file);
 
-          const response = await fetch("/api/upload/property-image", {
-            method: "POST",
+          const response = await fetch('/api/upload/property-image', {
+            method: 'POST',
             body: formData,
           });
 
           if (!response.ok) {
-            throw new Error("Failed to upload image");
+            throw new Error('Failed to upload image');
           }
 
           const { url } = await response.json();
@@ -169,11 +179,11 @@ export function PropertyForm() {
       await propertyMutation.mutateAsync({
         ...data,
         images: imageUrls,
-        location: selectedLocation ? `${selectedLocation.lat},${selectedLocation.lng}` : "",
+        location: selectedLocation ? `${selectedLocation.lat},${selectedLocation.lng}` : '',
       });
     } catch (error) {
-      toast.error("Failed to create property");
-      console.error("Error creating property:", error);
+      toast.error('Failed to create property');
+      console.error('Error creating property:', error);
     } finally {
       setIsLoading(false);
     }
@@ -181,13 +191,15 @@ export function PropertyForm() {
 
   const handleLocationSelect = (location: { lat: number; lng: number }) => {
     setSelectedLocation(location);
-    setValue("location", `${location.lat},${location.lng}`);
+    setValue('location', `${location.lat},${location.lng}`);
   };
 
   const toggleFacility = (facility: string) => {
-    const currentFacilities = watch("facilities");
-    const newFacilities = currentFacilities.includes(facility) ? currentFacilities.filter((f) => f !== facility) : [...currentFacilities, facility];
-    setValue("facilities", newFacilities);
+    const currentFacilities = watch('facilities');
+    const newFacilities = currentFacilities.includes(facility)
+      ? currentFacilities.filter(f => f !== facility)
+      : [...currentFacilities, facility];
+    setValue('facilities', newFacilities);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +210,7 @@ export function PropertyForm() {
 
     // Create preview URLs for the selected images
     const previews: string[] = [];
-    Array.from(files).forEach((file) => {
+    Array.from(files).forEach(file => {
       const previewUrl = URL.createObjectURL(file);
       previews.push(previewUrl);
     });
@@ -208,7 +220,7 @@ export function PropertyForm() {
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
     };
   }, [imagePreviews]);
 
@@ -222,44 +234,58 @@ export function PropertyForm() {
         return (
           <div className="space-y-6">
             <div>
-              <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-900">
+              <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
                 Property Name
               </label>
               <input
                 type="text"
                 id="name"
                 placeholder="Enter property name"
-                {...register("name")}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                {...register('name')}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
-              {errors.name && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.name.message}</p>}
+              {errors.name && (
+                <p className="mt-1.5 text-sm font-medium text-destructive">{errors.name.message}</p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="description" className="mb-2 block text-sm font-medium text-gray-900">
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-medium text-foreground"
+              >
                 Description
               </label>
               <textarea
                 id="description"
-                placeholder="Enter property description"
-                {...register("description")}
                 rows={4}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                placeholder="Enter property description"
+                {...register('description')}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
-              {errors.description && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.description.message}</p>}
+              {errors.description && (
+                <p className="mt-1.5 text-sm font-medium text-destructive">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label htmlFor="address" className="mb-2 block text-sm font-medium text-gray-900">
+              <label htmlFor="address" className="mb-2 block text-sm font-medium text-foreground">
                 Address
               </label>
-              <textarea
+              <input
+                type="text"
                 id="address"
                 placeholder="Enter property address"
-                {...register("address")}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                {...register('address')}
+                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
-              {errors.address && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.address.message}</p>}
+              {errors.address && (
+                <p className="mt-1.5 text-sm font-medium text-destructive">
+                  {errors.address.message}
+                </p>
+              )}
             </div>
           </div>
         );
@@ -268,124 +294,180 @@ export function PropertyForm() {
           <div className="space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="city" className="mb-2 block text-sm font-medium text-gray-900">
+                <label htmlFor="city" className="mb-2 block text-sm font-medium text-foreground">
                   City
                 </label>
                 <input
                   type="text"
                   id="city"
                   placeholder="Enter city"
-                  {...register("city")}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  {...register('city')}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
-                {errors.city && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.city.message}</p>}
+                {errors.city && (
+                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                    {errors.city.message}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="province" className="mb-2 block text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="province"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
                   Province
                 </label>
                 <input
                   type="text"
                   id="province"
                   placeholder="Enter province"
-                  {...register("province")}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  {...register('province')}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
-                {errors.province && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.province.message}</p>}
+                {errors.province && (
+                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                    {errors.province.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="postalCode" className="mb-2 block text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="postalCode"
+                  className="mb-2 block text-sm font-medium text-foreground"
+                >
                   Postal Code
                 </label>
                 <input
                   type="text"
                   id="postalCode"
                   placeholder="Enter postal code"
-                  {...register("postalCode")}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  {...register('postalCode')}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
-                {errors.postalCode && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.postalCode.message}</p>}
+                {errors.postalCode && (
+                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                    {errors.postalCode.message}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="dueDate" className="mb-2 block text-sm font-medium text-gray-900">
-                  Rent Due Date
+                <label htmlFor="dueDate" className="mb-2 block text-sm font-medium text-foreground">
+                  Due Date
                 </label>
                 <input
                   type="number"
                   id="dueDate"
-                  placeholder="Enter due date (1-31)"
                   min="1"
                   max="31"
-                  {...register("dueDate", { valueAsNumber: true })}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Enter due date (1-31)"
+                  {...register('dueDate', { valueAsNumber: true })}
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
-                {errors.dueDate && <p className="mt-1.5 text-sm font-medium text-red-500">{errors.dueDate.message}</p>}
+                {errors.dueDate && (
+                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                    {errors.dueDate.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         );
       case 3:
         return (
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-lg border border-gray-200">
-              <div className="aspect-video w-full">
-                <Map onLocationSelect={handleLocationSelect} />
+          <div className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">
+                Select Location
+              </label>
+              <div className="h-[400px] overflow-hidden rounded-lg border border-input">
+                <Map onLocationSelect={handleLocationSelect} selectedLocation={selectedLocation} />
               </div>
             </div>
-            {!selectedLocation && <p className="text-sm font-medium text-red-500">Please select a location on the map</p>}
           </div>
         );
       case 4:
         return (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {FACILITIES.map((facility) => (
-              <button
-                key={facility}
-                type="button"
-                onClick={() => toggleFacility(facility)}
-                className={`flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                  selectedFacilities.includes(facility)
-                    ? "bg-indigo-50 text-indigo-700 ring-2 ring-indigo-600"
-                    : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 hover:text-gray-900 hover:ring-gray-300"
-                }`}>
-                {facility}
-              </button>
-            ))}
+          <div className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">
+                Select Facilities
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {FACILITIES.map(facility => (
+                  <button
+                    key={facility}
+                    type="button"
+                    onClick={() => toggleFacility(facility)}
+                    className={`flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                      selectedFacilities.includes(facility)
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-input bg-background text-foreground hover:bg-accent'
+                    }`}
+                  >
+                    {facility}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         );
       case 5:
         return (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-6">
-            <input
-              type="file"
-              accept={ACCEPTED_FILE_TYPES.join(",")}
-              multiple
-              onChange={handleImageChange}
-              className="w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-indigo-600 hover:file:bg-indigo-100"
-            />
-            <p className="mt-2 text-xs text-gray-500">Maximum file size: 5MB</p>
-
-            {imagePreviews.length > 0 && (
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                {imagePreviews.map((preview, index) => (
-                  <div
-                    key={index}
-                    className="group relative aspect-video overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                    <Image
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
+          <div className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">
+                Upload Property Images
+              </label>
+              <div className="grid gap-4">
+                <div className="flex items-center justify-center">
+                  <label
+                    htmlFor="images"
+                    className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input bg-background px-4 transition-colors hover:bg-accent"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <p className="mb-2 text-sm text-foreground">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG or WEBP (MAX. 5MB per image)
+                      </p>
+                    </div>
+                    <input
+                      id="images"
+                      type="file"
+                      multiple
+                      accept=".jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={handleImageChange}
                     />
+                  </label>
+                </div>
+
+                {imagePreviews.length > 0 && (
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div
+                        key={index}
+                        className="relative aspect-square overflow-hidden rounded-lg border border-input"
+                      >
+                        <Image
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          className="object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
           </div>
         );
       default:
@@ -394,72 +476,59 @@ export function PropertyForm() {
   };
 
   const stepTitles = [
-    "Basic Information",
-    "Location Details",
-    "Map Location",
-    "Facilities",
-    "Images"
+    'Basic Information',
+    'Location Details',
+    'Map Location',
+    'Facilities',
+    'Images',
   ];
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between border-b border-gray-200 pb-5">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Create New Property</h2>
-          <p className="mt-1 text-sm text-gray-500">Step {currentStep} of 5: {stepTitles[currentStep - 1]}</p>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <div className="relative mb-8">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            Step {currentStep} of 5: {stepTitles[currentStep - 1]}
+          </h2>
+          <span className="text-sm text-muted-foreground">{calculateProgress()}% Complete</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-600">{calculateProgress()}% Complete</span>
-          <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
-            <div 
-              className="h-full rounded-full bg-indigo-600 transition-all duration-300" 
-              style={{ width: `${calculateProgress()}%` }}>
-            </div>
-          </div>
+        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className="h-full bg-primary transition-all duration-300 ease-in-out"
+            style={{ width: `${calculateProgress()}%` }}
+          />
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="border-b border-gray-200 bg-gray-50 px-6 py-4">
-          <h3 className="text-base font-medium text-gray-900">{stepTitles[currentStep - 1]}</h3>
-          <p className="mt-1 text-sm text-gray-500">Fill in the details below</p>
-        </div>
-        <div className="p-6">
-          {renderStepContent()}
-        </div>
-      </div>
+      {renderStepContent()}
 
-      <div className="mt-6 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={handleBack}
-          className={`rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 ${currentStep === 1 ? 'invisible' : ''}`}>
-          Back
-        </button>
-        <div className="flex items-center gap-4">
+      <div className="flex justify-between space-x-4">
+        {currentStep > 1 && (
           <button
             type="button"
-            className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900">
-            Cancel
+            onClick={handleBack}
+            className="rounded-lg border border-input bg-background px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            Back
           </button>
-          {currentStep === 5 ? (
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-              {isLoading ? "Creating..." : "Create Property"}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2">
-              Next
-            </button>
-          )}
-        </div>
+        )}
+        {currentStep < 5 ? (
+          <button
+            type="button"
+            onClick={handleNext}
+            className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? 'Creating...' : 'Create Property'}
+          </button>
+        )}
       </div>
     </form>
   );

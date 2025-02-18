@@ -46,7 +46,7 @@ export default function BillingPage() {
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
       </div>
     );
   }
