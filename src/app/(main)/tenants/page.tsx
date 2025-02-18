@@ -2,7 +2,7 @@
 
 import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
-import { Building2, CreditCard, Mail, Phone, Search } from 'lucide-react';
+import { Building2, CreditCard, Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
@@ -80,54 +80,73 @@ export default function TenantsPage() {
         </select>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {tenants?.map(tenant => (
-          <div key={tenant.id} className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Building2 className="h-6 w-6 text-primary" />
+      {!tenants?.length ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-background p-12 text-center">
+          <Users className="h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">No tenants found</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {search || statusFilter !== 'ALL'
+              ? "Try adjusting your search or filter to find what you're looking for."
+              : 'Get started by adding your first tenant.'}
+          </p>
+          <Link
+            href="/tenants/new"
+            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add New Tenant
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {tenants.map(tenant => (
+            <div key={tenant.id} className="rounded-lg bg-card p-6 shadow dark:bg-gray-800">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="rounded-full bg-primary/10 p-3">
+                    <Building2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-lg font-medium text-card-foreground">{tenant.name}</h3>
+                    <p className="text-sm text-muted-foreground">Room {tenant.room.number}</p>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-card-foreground">{tenant.name}</h3>
-                  <p className="text-sm text-muted-foreground">Room {tenant.room.number}</p>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    tenant.status === TenantStatus.ACTIVE
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  }`}
+                >
+                  {tenant.status}
+                </span>
+              </div>
+
+              <div className="mb-4 space-y-2">
+                <div className="flex items-center text-muted-foreground">
+                  <Mail className="mr-2 h-4 w-4" />
+                  {tenant.email}
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <Phone className="mr-2 h-4 w-4" />
+                  {tenant.phone}
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Rp {tenant.room.price.toLocaleString()} /month
                 </div>
               </div>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                  tenant.status === TenantStatus.ACTIVE
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                }`}
+
+              <Link
+                href={`/tenants/${tenant.id}`}
+                className="block w-full rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
               >
-                {tenant.status}
-              </span>
+                View Details
+              </Link>
             </div>
-
-            <div className="mb-4 space-y-2">
-              <div className="flex items-center text-muted-foreground">
-                <Mail className="mr-2 h-4 w-4" />
-                {tenant.email}
-              </div>
-              <div className="flex items-center text-muted-foreground">
-                <Phone className="mr-2 h-4 w-4" />
-                {tenant.phone}
-              </div>
-              <div className="flex items-center text-muted-foreground">
-                <CreditCard className="mr-2 h-4 w-4" />
-                Rp {tenant.room.price.toLocaleString()} /month
-              </div>
-            </div>
-
-            <Link
-              href={`/tenants/${tenant.id}`}
-              className="block w-full rounded-md bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
-            >
-              View Details
-            </Link>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

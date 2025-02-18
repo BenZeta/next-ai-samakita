@@ -21,7 +21,7 @@ export const authRouter = createTRPCRouter({
         phone: phoneSchema,
         name: z.string().min(1),
         address: z.string().min(1),
-        ktpFile: z.string().url(),
+        ktpFile: z.string().url().optional().or(z.literal('')),
       })
     )
     .mutation(async ({ input }) => {
@@ -50,7 +50,7 @@ export const authRouter = createTRPCRouter({
           name,
           phone,
           address,
-          ktpFile,
+          ...(ktpFile && { ktpFile }), // Only include ktpFile if provided
         },
       });
 

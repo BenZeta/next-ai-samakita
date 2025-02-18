@@ -60,15 +60,53 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      if (!ktpFile) {
-        toast.error('Please upload your KTP');
-        return;
+      let ktpUrl = '';
+
+      // Only upload KTP if file is provided
+      if (ktpFile) {
+        const formData = new FormData();
+        formData.append('file', ktpFile);
+
+        const response = await fetch('/api/upload/ktp', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload KTP');
+        }
+
+        const data = await response.json();
+        ktpUrl = data.url;
       }
-      // API call untuk signup akan ditambahkan nanti
+
+      // Register user via tRPC
+      const result = await fetch('/api/trpc/auth.register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          json: {
+            email,
+            password,
+            name: fullName,
+            phone,
+            address,
+            ktpFile: ktpUrl || '', // Send empty string if no KTP URL
+          },
+        }),
+      });
+
+      if (!result.ok) {
+        const error = await result.json();
+        throw new Error(error.error?.message || 'Failed to create account');
+      }
+
       toast.success('Account created successfully!');
       router.push('/auth/signin');
     } catch (error) {
-      toast.error('An error occurred during sign up');
+      toast.error(error instanceof Error ? error.message : 'An error occurred during sign up');
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +340,7 @@ export default function SignUp() {
                       htmlFor="ktpFile"
                       className="mb-1.5 block text-sm font-medium text-foreground"
                     >
-                      KTP File
+                      KTP File (Optional)
                     </label>
                     <div className="relative">
                       <input
