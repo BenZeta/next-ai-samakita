@@ -2,17 +2,14 @@
 
 import { api } from '@/lib/trpc/react';
 import { ArrowDown, ArrowUp, Building } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+
+// Dynamically import heavy chart components
+const Chart = dynamic(() => import('./charts/OccupancyChart').then(mod => mod.default), {
+  ssr: false,
+  loading: () => <ChartSkeleton />,
+});
 
 interface OccupancyWidgetProps {
   propertyId?: string;
@@ -37,62 +34,51 @@ interface OccupancyData {
   roomStatusBreakdown: RoomStatusBreakdown[];
 }
 
-// Memoized chart component to prevent unnecessary re-renders
-const OccupancyChart = memo(function OccupancyChart({ data }: { data: OccupancyHistoryItem[] }) {
+// Loading skeleton for chart
+function ChartSkeleton() {
+  return <div className="h-[200px] w-full animate-pulse rounded-lg bg-muted" />;
+}
+
+// Stats display component to reduce re-renders
+const StatsDisplay = memo(function StatsDisplay({
+  occupancyData,
+  rateDifference,
+  timeRange,
+}: {
+  occupancyData: OccupancyData;
+  rateDifference: string;
+  timeRange: string;
+}) {
   return (
-    <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-        <defs>
-          <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
-        <XAxis
-          dataKey="label"
-          tick={{ fontSize: 12 }}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <YAxis
-          tickFormatter={value => `${Number(value).toFixed(0)}%`}
-          tick={{ fontSize: 12 }}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <Tooltip
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            const value = payload[0]?.value;
-            if (typeof value !== 'number') return null;
-            return (
-              <div className="rounded-lg bg-background p-3 shadow-lg ring-1 ring-black/5">
-                <p className="font-medium">{payload[0].payload.label}</p>
-                <p className="text-sm text-muted-foreground">Occupancy: {value.toFixed(2)}%</p>
-              </div>
-            );
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="rate"
-          stroke="#6366f1"
-          strokeWidth={2}
-          fillOpacity={1}
-          fill="url(#colorRate)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="rounded-lg bg-accent/50 p-4">
+        <p className="text-sm font-medium text-muted-foreground">Current Rate</p>
+        <p className="mt-1 text-2xl font-semibold">{occupancyData.currentRate.toFixed(2)}%</p>
+        <div className="mt-1 flex items-center gap-1 text-sm">
+          {Number(rateDifference) > 0 ? (
+            <ArrowUp className="h-4 w-4 text-green-600" />
+          ) : (
+            <ArrowDown className="h-4 w-4 text-red-600" />
+          )}
+          <span className={Number(rateDifference) > 0 ? 'text-green-600' : 'text-red-600'}>
+            {Math.abs(Number(rateDifference))}%
+          </span>
+          <span className="text-muted-foreground">vs previous {timeRange}</span>
+        </div>
+      </div>
+
+      {occupancyData.roomStatusBreakdown.map(status => (
+        <div key={status.status} className="rounded-lg bg-accent/50 p-4">
+          <p className="text-sm font-medium text-muted-foreground">{status.status}</p>
+          <p className="mt-1 text-2xl font-semibold">{status.occupancyRate.toFixed(2)}%</p>
+        </div>
+      ))}
+    </div>
   );
 });
 
 function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
-  const { data: session } = useSession();
-  const isVerified = session?.token?.businessVerified === true;
 
   const { data: occupancyData, isLoading } = api.room.getOccupancyStats.useQuery(
     {
@@ -100,30 +86,37 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
       timeRange,
     },
     {
-      staleTime: 30000, // Cache data for 30 seconds
-      refetchOnWindowFocus: false, // Don't refetch on window focus
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
     }
   );
 
   // Memoize the rate difference calculation
   const rateDifference = useMemo(() => {
-    if (!occupancyData) return 0;
+    if (!occupancyData) return '0';
     return (occupancyData.currentRate - occupancyData.previousRate).toFixed(2);
   }, [occupancyData]);
 
   if (isLoading) {
     return (
-      <div className="h-[400px] animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800">
-        <div className="flex h-full items-center justify-center">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading occupancy data...</p>
+      <div className="flex min-h-[400px] flex-col gap-4 p-6">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted"></div>
+          <div className="h-7 w-48 animate-pulse rounded bg-muted"></div>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-24 animate-pulse rounded-lg bg-muted"></div>
+          ))}
+        </div>
+        <div className="h-[200px] animate-pulse rounded-lg bg-muted"></div>
       </div>
     );
   }
 
   if (!occupancyData) {
     return (
-      <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+      <div className="flex min-h-[400px] items-center justify-center rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
         <div className="flex items-center gap-2">
           <Building className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">No occupancy data</p>
@@ -133,7 +126,7 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="flex min-h-[400px] flex-col gap-4 p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-primary/10 p-2">
@@ -152,33 +145,14 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
         </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-accent/50 p-4">
-          <p className="text-sm font-medium text-muted-foreground">Current Rate</p>
-          <p className="mt-1 text-2xl font-semibold">{occupancyData.currentRate.toFixed(2)}%</p>
-          <div className="mt-1 flex items-center gap-1 text-sm">
-            {Number(rateDifference) > 0 ? (
-              <ArrowUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <ArrowDown className="h-4 w-4 text-red-600" />
-            )}
-            <span className={Number(rateDifference) > 0 ? 'text-green-600' : 'text-red-600'}>
-              {Math.abs(Number(rateDifference))}%
-            </span>
-            <span className="text-muted-foreground">vs previous {timeRange}</span>
-          </div>
-        </div>
+      <StatsDisplay
+        occupancyData={occupancyData}
+        rateDifference={rateDifference}
+        timeRange={timeRange}
+      />
 
-        {occupancyData.roomStatusBreakdown.map(status => (
-          <div key={status.status} className="rounded-lg bg-accent/50 p-4">
-            <p className="text-sm font-medium text-muted-foreground">{status.status}</p>
-            <p className="mt-1 text-2xl font-semibold">{status.occupancyRate.toFixed(2)}%</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-6">
-        <OccupancyChart data={occupancyData.history} />
+      <div className="mt-auto h-[200px] w-full">
+        <Chart data={occupancyData.history} />
       </div>
     </div>
   );

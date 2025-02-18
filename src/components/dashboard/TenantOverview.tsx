@@ -158,14 +158,7 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
                     <tr key={tenant.id} className="hover:bg-muted/50">
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                              <Users className="h-5 w-5 text-primary" />
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="font-medium text-foreground">{tenant.name}</div>
-                          </div>
+                          <div className="font-medium text-foreground">{tenant.name}</div>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-foreground">

@@ -139,7 +139,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
       </div>
     );
   }

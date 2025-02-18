@@ -466,9 +466,14 @@ export const roomRouter = createTRPCRouter({
         for (let i = 4; i >= 0; i--) {
           const date = new Date(now);
           date.setDate(date.getDate() - i * 7);
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+
           historyPoints.push({
             date,
-            label: `Week ${i + 1}`,
+            label: `${weekStart.getDate()}/${weekStart.getMonth() + 1} - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}`,
           });
         }
       } else {

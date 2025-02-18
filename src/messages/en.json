@@ -1,0 +1,90 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "noData": "No data available",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "tenants": "Tenants",
+    "expenses": "Expenses",
+    "billing": "Billing",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Monitor your properties performance and occupancy in real-time",
+    "occupancyRate": "Occupancy Rate",
+    "monthlyTrend": "Monthly Trend",
+    "maintenanceTracker": "Maintenance Tracker",
+    "tenantOverview": "Tenant Overview"
+  },
+  "properties": {
+    "title": "Properties",
+    "subtitle": "Manage your properties and rooms",
+    "addProperty": "Add Property",
+    "searchProperties": "Search properties...",
+    "noProperties": "No properties found",
+    "propertyDetails": "Property Details",
+    "rooms": "Rooms"
+  },
+  "tenants": {
+    "title": "Tenants",
+    "subtitle": "Manage your tenants",
+    "addTenant": "Add Tenant",
+    "searchTenants": "Search tenants...",
+    "noTenants": "No tenants found",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  },
+  "expenses": {
+    "title": "Expenses",
+    "subtitle": "Track your property expenses",
+    "addExpense": "Add Expense",
+    "searchExpenses": "Search expenses...",
+    "noExpenses": "No expenses found",
+    "category": "Category",
+    "amount": "Amount",
+    "date": "Date",
+    "description": "Description",
+    "property": "Property"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Manage your tenant billing and payments",
+    "addBilling": "Add Billing",
+    "searchBilling": "Search billing...",
+    "noBilling": "No billing found",
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "overdue": "Overdue"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your application settings",
+    "language": "Language",
+    "languageOptions": {
+      "en": "English",
+      "id": "Bahasa Indonesia"
+    },
+    "theme": "Theme",
+    "themeOptions": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
+  }
+}
