@@ -1,8 +1,8 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { MaintenancePriority, MaintenanceStatus } from '@prisma/client';
-import { AlertTriangle, CheckCircle2, Clock, Settings2, Wrench } from 'lucide-react';
+import { MaintenanceStatus } from '@prisma/client';
+import { AlertTriangle, CheckCircle2, Clock, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { memo, useMemo } from 'react';
 
@@ -36,8 +36,6 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
     switch (status) {
       case 'PENDING':
         return 'text-yellow-500';
-      case 'IN_PROGRESS':
-        return 'text-blue-500';
       case 'COMPLETED':
         return 'text-green-500';
       default:
@@ -49,8 +47,6 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
     switch (status) {
       case 'PENDING':
         return <Clock className="h-4 w-4" />;
-      case 'IN_PROGRESS':
-        return <Settings2 className="h-4 w-4" />;
       case 'COMPLETED':
         return <CheckCircle2 className="h-4 w-4" />;
       default:
@@ -98,7 +94,7 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
         <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-400/10">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
@@ -106,15 +102,6 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
           </div>
           <p className="mt-2 text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
             {stats?.pending}
-          </p>
-        </div>
-        <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-400/10">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">In Progress</p>
-          </div>
-          <p className="mt-2 text-2xl font-semibold text-blue-900 dark:text-blue-100">
-            {stats?.inProgress}
           </p>
         </div>
         <div className="rounded-lg bg-green-50 p-4 dark:bg-green-400/10">
@@ -168,12 +155,6 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
                     >
                       Reported
                     </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-right text-sm font-semibold text-muted-foreground"
-                    >
-                      Priority
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -205,19 +186,6 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-foreground">
                         {new Date(request.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
-                        <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            request.priority === MaintenancePriority.HIGH
-                              ? 'bg-red-50 text-red-800 dark:bg-red-400/10 dark:text-red-200'
-                              : request.priority === MaintenancePriority.MEDIUM
-                                ? 'bg-yellow-50 text-yellow-800 dark:bg-yellow-400/10 dark:text-yellow-200'
-                                : 'bg-green-50 text-green-800 dark:bg-green-400/10 dark:text-green-200'
-                          }`}
-                        >
-                          {request.priority}
-                        </span>
                       </td>
                     </tr>
                   ))}

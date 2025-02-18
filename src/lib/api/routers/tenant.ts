@@ -247,14 +247,45 @@ export const tenantRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const tenant = await ctx.db.tenant.update({
+      // Get tenant with room details
+      const tenant = await ctx.db.tenant.findUnique({
         where: { id: input.id },
-        data: {
-          status: input.status,
+        include: {
+          room: true,
         },
       });
 
-      return tenant;
+      if (!tenant) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Tenant not found',
+        });
+      }
+
+      // Update tenant and room status in a transaction
+      const result = await ctx.db.$transaction(async tx => {
+        // Update tenant status
+        const updatedTenant = await tx.tenant.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+          },
+        });
+
+        // If tenant is being deactivated, update room status to AVAILABLE
+        if (input.status === 'INACTIVE') {
+          await tx.room.update({
+            where: { id: tenant.roomId },
+            data: {
+              status: 'AVAILABLE',
+            },
+          });
+        }
+
+        return updatedTenant;
+      });
+
+      return result;
     }),
 
   addCheckInItem: protectedProcedure.input(checkInItemSchema).mutation(async ({ input, ctx }) => {

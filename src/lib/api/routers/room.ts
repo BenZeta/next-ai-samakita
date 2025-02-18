@@ -192,6 +192,7 @@ export const roomRouter = createTRPCRouter({
           },
           property: {
             select: {
+              id: true,
               name: true,
               address: true,
             },
@@ -584,10 +585,11 @@ export const roomRouter = createTRPCRouter({
       z.object({
         roomId: z.string(),
         status: z.nativeEnum(RoomStatus),
+        description: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { roomId, status } = input;
+      const { roomId, status, description } = input;
 
       // Check if room exists and user has access
       const room = await db.room.findUnique({
@@ -608,6 +610,34 @@ export const roomRouter = createTRPCRouter({
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'You do not have permission to update this room',
+        });
+      }
+
+      // Create maintenance request if status is being set to MAINTENANCE
+      if (status === RoomStatus.MAINTENANCE) {
+        await db.maintenanceRequest.create({
+          data: {
+            title: `Room ${room.number} Maintenance`,
+            description: description || `Maintenance started for Room ${room.number}`,
+            status: 'PENDING',
+            priority: 'MEDIUM',
+            roomId: room.id,
+            propertyId: room.propertyId,
+          },
+        });
+      }
+
+      // Update maintenance request status to COMPLETED when room status changes from MAINTENANCE to AVAILABLE
+      if (room.status === RoomStatus.MAINTENANCE && status === RoomStatus.AVAILABLE) {
+        await db.maintenanceRequest.updateMany({
+          where: {
+            roomId: room.id,
+            status: 'PENDING',
+          },
+          data: {
+            status: 'COMPLETED',
+            updatedAt: new Date(),
+          },
         });
       }
 

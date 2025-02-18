@@ -4,21 +4,41 @@ import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
 import { Building2, CreditCard, Mail, Phone, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function TenantsPage() {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: tenants, isLoading } = api.tenant.list.useQuery({
-    search,
-    status: statusFilter === 'ALL' ? undefined : statusFilter,
-  });
+  // Use debounced search value for the API query
+  const { data: tenants, isLoading } = api.tenant.list.useQuery(
+    {
+      search: debouncedSearch,
+      status: statusFilter === 'ALL' ? undefined : statusFilter,
+    },
+    {
+      staleTime: 30000, // Cache results for 30 seconds
+      refetchOnWindowFocus: false, // Prevent refetch on window focus
+    }
+  );
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      // Restore focus to the input after search
+      searchInputRef.current?.focus();
+    }, 300); // Wait for 300ms of no typing before updating search
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
       </div>
     );
   }
@@ -40,6 +60,7 @@ export default function TenantsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search tenants by name, email, or room..."
             value={search}

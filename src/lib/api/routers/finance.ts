@@ -23,20 +23,17 @@ export const financeRouter = createTRPCRouter({
       // Get date ranges
       const now = new Date();
       let startDate = new Date();
-      let previousStartDate = new Date();
+      let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1); // Include today
 
       switch (timeRange) {
         case 'month':
           startDate.setMonth(now.getMonth() - 1);
-          previousStartDate.setMonth(now.getMonth() - 2);
           break;
         case 'quarter':
           startDate.setMonth(now.getMonth() - 3);
-          previousStartDate.setMonth(now.getMonth() - 6);
           break;
         case 'year':
           startDate.setFullYear(now.getFullYear() - 1);
-          previousStartDate.setFullYear(now.getFullYear() - 2);
           break;
       }
 
@@ -54,6 +51,7 @@ export const financeRouter = createTRPCRouter({
           ...baseWhere,
           createdAt: {
             gte: startDate,
+            lt: endDate,
           },
           status: PaymentStatus.PAID,
         },
@@ -68,6 +66,7 @@ export const financeRouter = createTRPCRouter({
           ...baseWhere,
           createdAt: {
             gte: startDate,
+            lt: endDate,
           },
         },
         _sum: {
@@ -114,6 +113,10 @@ async function getMonthlyTrend(
       date.setDate(now.getDate() - i);
       endDate.setDate(now.getDate() - i + 1);
     }
+
+    // Set hours to start and end of day
+    date.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
 
     // Get revenue for the period
     const revenue = await prisma.payment.aggregate({
