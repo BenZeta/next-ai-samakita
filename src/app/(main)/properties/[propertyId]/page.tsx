@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useParams } from "next/navigation";
-import { api } from "@/lib/trpc/react";
-import { Building2, Plus, Calendar } from "lucide-react";
-import { ImageGallery } from "@/components/property/ImageGallery";
-import { RoomStatus } from "@prisma/client";
+import { ImageGallery } from '@/components/property/ImageGallery';
+import { api } from '@/lib/trpc/react';
+import { RoomStatus } from '@prisma/client';
+import { Calendar, Plus } from 'lucide-react';
+import { useParams } from 'next/navigation';
 
 interface Property {
   id: string;
@@ -56,13 +56,15 @@ export default function PropertyDetailsPage() {
         <div className="flex space-x-4">
           <a
             href={`/properties/${property.id}/calendar`}
-            className="flex items-center rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50">
+            className="flex items-center rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50"
+          >
             <Calendar className="mr-2 h-5 w-5" />
             Calendar
           </a>
           <a
             href={`/properties/${property.id}/rooms/new`}
-            className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700">
+            className="flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700"
+          >
             <Plus className="mr-2 h-5 w-5" />
             Add Room
           </a>
@@ -92,7 +94,8 @@ export default function PropertyDetailsPage() {
                   {property.facilities.map((facility: string) => (
                     <span
                       key={facility}
-                      className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800">
+                      className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800"
+                    >
                       {facility}
                     </span>
                   ))}
@@ -105,10 +108,8 @@ export default function PropertyDetailsPage() {
         <div>
           <h2 className="mb-4 text-xl font-semibold">Rooms</h2>
           <div className="space-y-4">
-            {property.rooms.map((room) => (
-              <div
-                key={room.id}
-                className="rounded-lg bg-white p-6 shadow">
+            {property.rooms.map(room => (
+              <div key={room.id} className="rounded-lg bg-white p-6 shadow">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-medium text-gray-900">Room {room.number}</h3>
@@ -119,17 +120,25 @@ export default function PropertyDetailsPage() {
                   <div>
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        room.status === "AVAILABLE" ? "bg-green-100 text-green-800" : room.status === "OCCUPIED" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
-                      }`}>
+                        room.status === 'AVAILABLE'
+                          ? 'bg-green-100 text-green-800'
+                          : room.status === 'OCCUPIED'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
                       {room.status}
                     </span>
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
-                  <p className="text-lg font-semibold text-gray-900">Rp {room.price.toLocaleString()}</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    Rp {room.price.toLocaleString()}
+                  </p>
                   <a
                     href={`/properties/${property.id}/rooms/${room.id}`}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  >
                     View Details
                   </a>
                 </div>

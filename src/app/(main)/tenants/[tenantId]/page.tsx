@@ -7,12 +7,12 @@ import {
   Calendar,
   ClipboardList,
   CreditCard,
-  FileSignature,
   FileText,
   Home,
   Mail,
   Phone,
   Upload,
+  UserX,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,6 +23,7 @@ export default function TenantDetailsPage() {
   const params = useParams();
   const tenantId = params.tenantId as string;
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
 
   const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: tenantId });
   const utils = api.useContext();
@@ -48,6 +49,18 @@ export default function TenantDetailsPage() {
     },
   });
 
+  const deactivateTenantMutation = api.tenant.update.useMutation({
+    onSuccess: () => {
+      toast.success('Tenant deactivated successfully');
+      utils.tenant.detail.invalidate({ id: tenantId });
+      setShowDeactivateModal(false);
+    },
+    onError: error => {
+      toast.error(error.message);
+      setShowDeactivateModal(false);
+    },
+  });
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -70,6 +83,17 @@ export default function TenantDetailsPage() {
     } catch (error) {
       console.error('Failed to extend lease:', error);
       toast.error('Failed to extend lease. Please try again.');
+    }
+  };
+
+  const handleDeactivate = async () => {
+    try {
+      await deactivateTenantMutation.mutateAsync({
+        id: tenantId,
+        status: 'INACTIVE',
+      });
+    } catch (error) {
+      console.error('Failed to deactivate tenant:', error);
     }
   };
 
@@ -104,13 +128,15 @@ export default function TenantDetailsPage() {
             <Calendar className="h-4 w-4" />
             Extend Lease
           </button>
-          <button
-            onClick={handleGenerateContract}
-            className="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
-          >
-            <FileSignature className="h-4 w-4" />
-            Generate Contract
-          </button>
+          {tenant?.status === 'ACTIVE' && (
+            <button
+              onClick={() => setShowDeactivateModal(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+            >
+              <UserX className="h-4 w-4" />
+              Deactivate Tenant
+            </button>
+          )}
         </div>
       </div>
 
@@ -337,6 +363,42 @@ export default function TenantDetailsPage() {
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
               >
                 Confirm Extension
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivation Confirmation Modal */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setShowDeactivateModal(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
+            <div className="mb-4 flex items-center">
+              <div className="mr-4 rounded-full bg-destructive/10 p-3">
+                <UserX className="h-6 w-6 text-destructive" />
+              </div>
+              <h3 className="text-lg font-medium text-card-foreground">Deactivate Tenant</h3>
+            </div>
+            <p className="mb-6 text-muted-foreground">
+              Are you sure you want to deactivate this tenant? This will also mark their room as
+              available. This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowDeactivateModal(false)}
+                className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeactivate}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+              >
+                Deactivate
               </button>
             </div>
           </div>

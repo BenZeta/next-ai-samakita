@@ -9,14 +9,20 @@ export const maintenanceRouter = createTRPCRouter({
         propertyId: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { propertyId } = input;
+
+      // Base where condition to filter by user's properties
+      const baseWhere = {
+        property: {
+          userId: ctx.session.user.id,
+        },
+        ...(propertyId ? { propertyId } : {}),
+      };
 
       // Get maintenance requests with filtering
       const requests = await prisma.maintenanceRequest.findMany({
-        where: {
-          propertyId: propertyId,
-        },
+        where: baseWhere,
         orderBy: [
           {
             priority: 'desc',
@@ -27,6 +33,7 @@ export const maintenanceRouter = createTRPCRouter({
         ],
         include: {
           room: true,
+          property: true,
         },
         take: 5, // Only get the 5 most recent requests
       });
@@ -34,25 +41,23 @@ export const maintenanceRouter = createTRPCRouter({
       // Get request statistics
       const stats = {
         total: await prisma.maintenanceRequest.count({
-          where: {
-            propertyId: propertyId,
-          },
+          where: baseWhere,
         }),
         pending: await prisma.maintenanceRequest.count({
           where: {
-            propertyId: propertyId,
+            ...baseWhere,
             status: 'PENDING',
           },
         }),
         inProgress: await prisma.maintenanceRequest.count({
           where: {
-            propertyId: propertyId,
+            ...baseWhere,
             status: 'IN_PROGRESS',
           },
         }),
         completed: await prisma.maintenanceRequest.count({
           where: {
-            propertyId: propertyId,
+            ...baseWhere,
             status: 'COMPLETED',
           },
         }),
@@ -66,6 +71,7 @@ export const maintenanceRouter = createTRPCRouter({
           priority: request.priority,
           createdAt: request.createdAt,
           room: request.room.number,
+          propertyName: request.property.name,
         })),
         stats,
       };

@@ -4,10 +4,11 @@ import { api } from '@/lib/trpc/react';
 import { DollarSign } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import {
-  Bar,
-  BarChart,
+  Area,
   CartesianGrid,
+  ComposedChart,
   Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -29,19 +30,19 @@ interface MonthlyTrendItem {
 const TrendChart = memo(function TrendChart({ data }: { data: MonthlyTrendItem[] }) {
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+      <ComposedChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
         <defs>
           <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.2} />
+            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05} />
           </linearGradient>
           <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.2} />
+            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
           </linearGradient>
           <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.2} />
+            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.05} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
@@ -53,11 +54,12 @@ const TrendChart = memo(function TrendChart({ data }: { data: MonthlyTrendItem[]
           className="text-muted-foreground"
         />
         <YAxis
-          tickFormatter={value => `Rp ${(value / 1000000).toFixed(2)}M`}
+          tickFormatter={value => `Rp ${(value / 1000000).toFixed(1)}M`}
           tick={{ fontSize: 12 }}
           tickLine={false}
           axisLine={false}
           className="text-muted-foreground"
+          domain={[0, 'auto']}
         />
         <Tooltip
           content={({ active, payload }) => {
@@ -81,10 +83,31 @@ const TrendChart = memo(function TrendChart({ data }: { data: MonthlyTrendItem[]
           }}
         />
         <Legend />
-        <Bar dataKey="revenue" name="Revenue" fill="url(#colorRevenue)" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="expenses" name="Expenses" fill="url(#colorExpenses)" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="profit" name="Profit" fill="url(#colorProfit)" radius={[4, 4, 0, 0]} />
-      </BarChart>
+        <Area
+          type="monotone"
+          dataKey="revenue"
+          name="Revenue"
+          stroke="#22c55e"
+          fill="url(#colorRevenue)"
+          strokeWidth={2}
+        />
+        <Area
+          type="monotone"
+          dataKey="expenses"
+          name="Expenses"
+          stroke="#ef4444"
+          fill="url(#colorExpenses)"
+          strokeWidth={2}
+        />
+        <Line
+          type="monotone"
+          dataKey="profit"
+          name="Profit"
+          stroke="#6366f1"
+          strokeWidth={2}
+          dot={{ fill: '#6366f1', strokeWidth: 2 }}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
 });
