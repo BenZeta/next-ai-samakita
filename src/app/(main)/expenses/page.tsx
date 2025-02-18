@@ -2,7 +2,8 @@
 
 import { ExpenseList } from '@/components/expense/ExpenseList';
 import { api } from '@/lib/trpc/react';
-import { Building2, Check, ChevronsUpDown, Search } from 'lucide-react';
+import { Building2, Check, ChevronsUpDown, Plus, Receipt, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 export default function ExpensesPage() {
@@ -15,6 +16,12 @@ export default function ExpensesPage() {
 
   const { data: properties } = api.property.list.useQuery({
     search: debouncedSearch,
+  });
+
+  const { data: expenses, isLoading } = api.expense.list.useQuery({
+    propertyId: selectedPropertyId ?? undefined,
+    page: 1,
+    limit: 10,
   });
 
   useEffect(() => {
@@ -35,6 +42,14 @@ export default function ExpensesPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -104,7 +119,26 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      <ExpenseList propertyId={selectedPropertyId ?? undefined} />
+      {!expenses?.expenses.length ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-background p-12 text-center">
+          <Receipt className="h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold text-foreground">No expenses found</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {selectedPropertyId
+              ? 'No expenses recorded for this property yet.'
+              : 'Get started by adding your first expense.'}
+          </p>
+          <Link
+            href="/expenses/new"
+            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Expense
+          </Link>
+        </div>
+      ) : (
+        <ExpenseList propertyId={selectedPropertyId ?? undefined} />
+      )}
     </div>
   );
 }

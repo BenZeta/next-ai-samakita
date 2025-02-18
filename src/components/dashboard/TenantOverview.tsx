@@ -115,9 +115,9 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
       </div>
 
       <div className="mt-8">
-        <div className="flow-root">
-          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <div className="rounded-lg border border-border">
+          <div className="overflow-x-auto">
+            {tenants.length > 0 ? (
               <table className="min-w-full divide-y divide-border">
                 <thead>
                   <tr>
@@ -192,7 +192,21 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mt-4 text-lg font-medium text-foreground">No tenants yet</h3>
+                <p className="mt-2 text-center text-sm text-muted-foreground">
+                  Get started by adding your first tenant.
+                </p>
+                <Link
+                  href="/tenants/new"
+                  className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Add Tenant
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

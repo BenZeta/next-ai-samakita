@@ -164,14 +164,17 @@ export const tenantRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const where: Prisma.TenantWhereInput = {
         ...(input.status && { status: input.status }),
-        ...(input.propertyId && {
-          room: {
-            propertyId: input.propertyId,
+        room: {
+          property: {
+            userId: ctx.session.user.id,
           },
-        }),
-        ...(input.roomId && {
-          roomId: input.roomId,
-        }),
+          ...(input.propertyId && {
+            propertyId: input.propertyId,
+          }),
+          ...(input.roomId && {
+            id: input.roomId,
+          }),
+        },
         ...(input.search && {
           OR: [
             {
@@ -999,16 +1002,22 @@ export const tenantRouter = createTRPCRouter({
         propertyId: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const { propertyId } = input;
 
       // Get tenants with filtering
-      const tenants = await db.tenant.findMany({
-        where: {
-          room: {
-            propertyId: propertyId,
+      const baseWhere = {
+        room: {
+          property: {
+            userId: ctx.session.user.id,
           },
+          ...(propertyId ? { propertyId } : {}),
         },
+      };
+
+      // Get tenants with filtering
+      const tenants = await db.tenant.findMany({
+        where: baseWhere,
         orderBy: [
           {
             status: 'desc',
@@ -1026,33 +1035,23 @@ export const tenantRouter = createTRPCRouter({
       // Get tenant statistics
       const stats = {
         total: await db.tenant.count({
-          where: {
-            room: {
-              propertyId: propertyId,
-            },
-          },
+          where: baseWhere,
         }),
         active: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'ACTIVE',
           },
         }),
         inactive: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'INACTIVE',
           },
         }),
         upcomingMoveOuts: await db.tenant.count({
           where: {
-            room: {
-              propertyId: propertyId,
-            },
+            ...baseWhere,
             status: 'ACTIVE',
             endDate: {
               lte: new Date(new Date().setDate(new Date().getDate() + 30)), // Next 30 days
