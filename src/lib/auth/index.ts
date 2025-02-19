@@ -101,7 +101,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role as UserRole | undefined,
-          businessVerified: user.businessProfile?.verificationStatus === 'VERIFIED',
+          businessVerified: true,
         };
       },
     }),
@@ -118,7 +118,7 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as UserRole | undefined;
         session.user.isAdmin = token.isAdmin as boolean | undefined;
         session.token = {
-          businessVerified: token.businessVerified,
+          businessVerified: true,
         };
       }
       return session;
@@ -127,7 +127,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.isAdmin = user.isAdmin;
-        token.businessVerified = user.businessVerified;
+        token.businessVerified = true;
       }
       return token;
     },

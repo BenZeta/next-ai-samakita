@@ -45,7 +45,7 @@ export default function NewTenantPage() {
   if (propertiesLoading && step === 1) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
       </div>
     );
   }
@@ -70,17 +70,21 @@ export default function NewTenantPage() {
         <div className="flex items-center justify-center">
           <div className="flex items-center">
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                step === 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}
             >
               1
             </div>
-            <div className="relative mx-4 h-[2px] w-32 bg-gray-200">
+            <div className="relative mx-4 h-[2px] w-32 bg-muted">
               <div
-                className={`absolute inset-0 h-full ${step === 2 ? 'bg-primary' : 'bg-gray-200'}`}
+                className={`absolute inset-0 h-full ${step === 2 ? 'bg-primary' : 'bg-muted'}`}
               />
             </div>
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full ${step === 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                step === 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+              }`}
             >
               2
             </div>
@@ -88,10 +92,18 @@ export default function NewTenantPage() {
         </div>
         <div className="mt-4 flex items-center justify-center">
           <div className="flex w-full max-w-[300px] justify-between px-2">
-            <div className={`text-sm font-medium ${step === 1 ? 'text-primary' : 'text-gray-500'}`}>
+            <div
+              className={`text-sm font-medium ${
+                step === 1 ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
               Select Property
             </div>
-            <div className={`text-sm font-medium ${step === 2 ? 'text-primary' : 'text-gray-500'}`}>
+            <div
+              className={`text-sm font-medium ${
+                step === 2 ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
               Select Room
             </div>
           </div>
@@ -103,13 +115,13 @@ export default function NewTenantPage() {
           {/* Property selection */}
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search properties..."
                 value={search}
                 onChange={handlePropertySearch}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
@@ -122,7 +134,11 @@ export default function NewTenantPage() {
                   setSelectedPropertyId(property.id);
                   setStep(2);
                 }}
-                className={`cursor-pointer rounded-lg border p-4 transition-all hover:border-primary hover:shadow-lg ${selectedPropertyId === property.id ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-lg border p-4 transition-all hover:border-primary hover:shadow-lg ${
+                  selectedPropertyId === property.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-input bg-card'
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -130,11 +146,11 @@ export default function NewTenantPage() {
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{property.name}</h3>
-                      <p className="text-sm text-gray-500">{property.address}</p>
+                      <h3 className="font-medium text-foreground">{property.name}</h3>
+                      <p className="text-sm text-muted-foreground">{property.address}</p>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             ))}
@@ -145,20 +161,20 @@ export default function NewTenantPage() {
           {/* Room selection */}
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search rooms by number..."
                 value={roomSearch}
                 onChange={handleRoomSearch}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
             </div>
           </div>
 
           {roomsLoading ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <div className="h-8 w-8 animate-spin rounded-full border-3 border-muted border-t-primary"></div>
             </div>
           ) : rooms && rooms.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -166,30 +182,32 @@ export default function NewTenantPage() {
                 <div
                   key={room.id}
                   onClick={() => router.push(`/rooms/${room.id}/tenants/new`)}
-                  className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-all hover:border-primary hover:shadow-lg"
+                  className="cursor-pointer rounded-lg border border-input bg-card p-4 transition-all hover:border-primary hover:shadow-lg"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium text-gray-900">Room {room.number}</h3>
-                      <p className="text-sm text-gray-500">{room.type}</p>
+                      <h3 className="font-medium text-foreground">Room {room.number}</h3>
+                      <p className="text-sm text-muted-foreground">{room.type}</p>
                       <p className="mt-2 text-lg font-semibold text-primary">
                         Rp {room.price.toLocaleString()}
                       </p>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-gray-200 p-8 text-center">
-              <p className="text-gray-500">No available rooms found.</p>
+            <div className="rounded-lg border border-input bg-card p-8 text-center">
+              <p className="text-foreground">No available rooms found.</p>
               {roomSearch ? (
-                <p className="mt-2 text-sm text-gray-400">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Try different search terms or clear the search
                 </p>
               ) : (
-                <p className="mt-2 text-sm text-gray-400">This property has no available rooms</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  This property has no available rooms
+                </p>
               )}
               <button
                 onClick={() => {

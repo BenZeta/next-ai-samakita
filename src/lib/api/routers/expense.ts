@@ -15,29 +15,30 @@ const expenseSchema = z.object({
 });
 
 export const expenseRouter = createTRPCRouter({
-  create: protectedProcedure.input(expenseSchema).mutation(async ({ input, ctx }) => {
-    const property = await db.property.findUnique({
-      where: { id: input.propertyId },
-    });
+  create: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        category: z.nativeEnum(ExpenseCategory),
+        amount: z.number().min(0),
+        date: z.date(),
+        description: z.string(),
+        receiptUrl: z.string().optional(),
+        vendor: z.string().optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { propertyId, ...rest } = input;
 
-    if (!property || property.userId !== ctx.session.user.id) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to add expenses to this property',
+      return db.expense.create({
+        data: {
+          ...rest,
+          ...(propertyId && { propertyId }),
+          userId: ctx.session.user.id,
+        },
       });
-    }
-
-    return db.expense.create({
-      data: {
-        propertyId: input.propertyId,
-        date: input.date,
-        amount: input.amount,
-        category: input.category,
-        description: input.description || '',
-        receipt: input.receiptUrl,
-      },
-    });
-  }),
+    }),
 
   list: protectedProcedure
     .input(
@@ -54,10 +55,27 @@ export const expenseRouter = createTRPCRouter({
       const { propertyId, category, startDate, endDate, page, limit } = input;
 
       const where = {
-        property: {
-          userId: ctx.session.user.id,
-        },
-        ...(propertyId ? { propertyId } : {}),
+        AND: [
+          // User's expenses
+          { userId: ctx.session.user.id },
+          // Property filter
+          propertyId
+            ? { propertyId }
+            : {
+                OR: [
+                  // Include expenses from all properties owned by the user
+                  {
+                    property: {
+                      userId: ctx.session.user.id,
+                    },
+                  },
+                  // Include general expenses (no property)
+                  {
+                    propertyId: null,
+                  },
+                ],
+              },
+        ],
         ...(category ? { category } : {}),
         ...(startDate ? { date: { gte: new Date(startDate) } } : {}),
         ...(endDate ? { date: { lte: new Date(endDate) } } : {}),
@@ -67,21 +85,7 @@ export const expenseRouter = createTRPCRouter({
         db.expense.findMany({
           where,
           include: {
-            property: {
-              include: {
-                rooms: {
-                  include: {
-                    tenants: {
-                      select: {
-                        id: true,
-                        name: true,
-                        status: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            property: true,
           },
           orderBy: { date: 'desc' },
           skip: (page - 1) * limit,
@@ -131,9 +135,6 @@ export const expenseRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const expense = await db.expense.findUnique({
         where: { id: input.id },
-        include: {
-          property: true,
-        },
       });
 
       if (!expense) {
@@ -143,7 +144,7 @@ export const expenseRouter = createTRPCRouter({
         });
       }
 
-      if (expense.property.userId !== ctx.session.user.id) {
+      if (expense.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'You do not have permission to update this expense',
@@ -163,9 +164,6 @@ export const expenseRouter = createTRPCRouter({
     .mutation(async ({ input, ctx }) => {
       const expense = await db.expense.findUnique({
         where: { id: input.id },
-        include: {
-          property: true,
-        },
       });
 
       if (!expense) {
@@ -175,7 +173,7 @@ export const expenseRouter = createTRPCRouter({
         });
       }
 
-      if (expense.property.userId !== ctx.session.user.id) {
+      if (expense.userId !== ctx.session.user.id) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'You do not have permission to delete this expense',

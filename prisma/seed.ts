@@ -187,6 +187,18 @@ async function main() {
       description: 'Electricity bill',
       date: new Date(),
       propertyId: property.id,
+      userId: user.id,
+    },
+  });
+
+  // Create a general expense not tied to a property
+  await prisma.expense.create({
+    data: {
+      amount: 250000,
+      category: ExpenseCategory.OTHER,
+      description: 'Office supplies',
+      date: new Date(),
+      userId: user.id,
     },
   });
 

@@ -1,10 +1,12 @@
 'use client';
 
+import { countryCodes } from '@/lib/constants/countryCodes';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronsUpDown } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function SignUp() {
@@ -20,6 +22,11 @@ export default function SignUp() {
 
   // Step 2 form data
   const [phone, setPhone] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(
+    countryCodes.find(c => c.code === 'ID') || countryCodes[0]
+  );
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState('');
   const [ktpFile, setKtpFile] = useState<File | null>(null);
   const [ktpPreview, setKtpPreview] = useState<string>('');
@@ -54,20 +61,72 @@ export default function SignUp() {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        countryDropdownRef.current &&
+        !countryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (!ktpFile) {
-        toast.error('Please upload your KTP');
-        return;
+      let ktpUrl = '';
+
+      // Only upload KTP if file is provided
+      if (ktpFile) {
+        const formData = new FormData();
+        formData.append('file', ktpFile);
+
+        const response = await fetch('/api/upload/ktp', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload KTP');
+        }
+
+        const data = await response.json();
+        ktpUrl = data.url;
       }
-      // API call untuk signup akan ditambahkan nanti
+
+      // Register user via tRPC
+      const result = await fetch('/api/trpc/auth.register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          json: {
+            email,
+            password,
+            name: fullName,
+            phone: `${selectedCountry.dial_code}${phone}`,
+            address,
+            ktpFile: ktpUrl || '', // Send empty string if no KTP URL
+          },
+        }),
+      });
+
+      if (!result.ok) {
+        const error = await result.json();
+        throw new Error(error.error?.message || 'Failed to create account');
+      }
+
       toast.success('Account created successfully!');
       router.push('/auth/signin');
     } catch (error) {
-      toast.error('An error occurred during sign up');
+      toast.error(error instanceof Error ? error.message : 'An error occurred during sign up');
     } finally {
       setIsLoading(false);
     }
@@ -109,12 +168,25 @@ export default function SignUp() {
       </div>
 
       {/* Logo & Brand Section */}
-      <div className="relative mb-6 text-center">
+      <div className="mb-8 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="group relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-600 dark:bg-gray-700 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-primary/20">
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/40 via-foreground/40 to-foreground/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            <div className="relative h-14 w-14 overflow-hidden">
+              <Image
+                src="https://ik.imagekit.io/matguchi18/sk.png"
+                alt="SamaKita Logo"
+                fill
+                className="object-contain transition-all duration-300 group-hover:scale-110"
+              />
+            </div>
+          </div>
+        </div>
         <h1 className="relative bg-gradient-to-r from-primary via-foreground to-foreground bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
           Create Account
         </h1>
         <p className="mt-2 text-base text-muted-foreground">
-          Join Superkos and manage your properties
+          Join SamaKita and manage your properties
         </p>
       </div>
 
@@ -264,55 +336,82 @@ export default function SignUp() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="mb-1.5 block text-sm font-medium text-foreground"
-                    >
-                      Phone
-                    </label>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-foreground">
+                    Phone Number
+                  </label>
+                  <div className="relative flex w-full items-center gap-2">
+                    <div className="relative" ref={countryDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                        className="flex h-[42px] items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <span className="text-base">{selectedCountry.flag}</span>
+                        <span className="text-sm font-medium">{selectedCountry.dial_code}</span>
+                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                      </button>
+
+                      {isCountryDropdownOpen && (
+                        <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-[250px] overflow-auto rounded-lg border border-input bg-card p-1 shadow-md">
+                          {countryCodes.map(country => (
+                            <button
+                              key={country.code}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCountry(country);
+                                setIsCountryDropdownOpen(false);
+                              }}
+                              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
+                            >
+                              <span className="text-base">{country.flag}</span>
+                              <span className="font-medium">{country.name}</span>
+                              <span className="ml-auto text-sm text-muted-foreground">
+                                {country.dial_code}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <input
                       id="phone"
                       type="tel"
-                      required
                       value={phone}
-                      onChange={e => setPhone(e.target.value)}
-                      className="block w-full rounded-lg border border-input bg-background/80 px-4 py-2.5 text-foreground backdrop-blur-sm transition-all placeholder:text-muted-foreground/60 hover:border-primary/50 focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      placeholder="+62812xxx"
+                      onChange={e => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setPhone(value);
+                      }}
+                      className="h-[42px] flex-1 rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="Enter phone number"
+                      required
                     />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="ktpFile"
-                      className="mb-1.5 block text-sm font-medium text-foreground"
-                    >
-                      KTP File
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="ktpFile"
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        onChange={handleKtpChange}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="ktpFile"
-                        className="flex h-[42px] w-full cursor-pointer items-center justify-center rounded-lg border border-input bg-background/80 px-4 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
-                      >
-                        {ktpFile ? <span className="truncate">{ktpFile.name}</span> : 'Upload KTP'}
-                      </label>
-                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="address"
-                    className="mb-1.5 block text-sm font-medium text-foreground"
-                  >
+                  <label htmlFor="ktpFile" className="block text-sm font-medium text-foreground">
+                    KTP File (Optional)
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="ktpFile"
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handleKtpChange}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="ktpFile"
+                      className="flex h-10 w-full cursor-pointer items-center justify-center rounded-lg border border-input bg-background px-4 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+                    >
+                      {ktpFile ? <span className="truncate">{ktpFile.name}</span> : 'Upload KTP'}
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-foreground">
                     Address
                   </label>
                   <textarea
@@ -321,7 +420,7 @@ export default function SignUp() {
                     value={address}
                     onChange={e => setAddress(e.target.value)}
                     rows={2}
-                    className="block w-full rounded-lg border border-input bg-background/80 px-4 py-2.5 text-foreground backdrop-blur-sm transition-all placeholder:text-muted-foreground/60 hover:border-primary/50 focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     placeholder="Enter your full address"
                   />
                 </div>
@@ -358,12 +457,12 @@ export default function SignUp() {
           )}
         </AnimatePresence>
 
-        <div className="mt-5 text-center">
+        <div className="relative z-10 mt-5 text-center">
           <p className="text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link
               href="/auth/signin"
-              className="font-medium text-primary transition-colors hover:text-primary/90"
+              className="inline-block font-medium text-primary transition-colors hover:text-primary/90 hover:underline"
             >
               Sign in
             </Link>

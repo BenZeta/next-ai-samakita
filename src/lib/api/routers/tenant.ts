@@ -155,51 +155,53 @@ export const tenantRouter = createTRPCRouter({
   list: protectedProcedure
     .input(
       z.object({
-        roomId: z.string().optional(),
-        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         search: z.string().optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
         propertyId: z.string().optional(),
+        roomId: z.string().optional(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      const { roomId, status, search, propertyId } = input;
-
+    .query(async ({ ctx, input }) => {
       const where: Prisma.TenantWhereInput = {
+        ...(input.status && { status: input.status }),
         room: {
           property: {
             userId: ctx.session.user.id,
-            ...(propertyId && { id: propertyId }),
           },
-          ...(roomId ? { id: roomId } : {}),
+          ...(input.propertyId && {
+            propertyId: input.propertyId,
+          }),
+          ...(input.roomId && {
+            id: input.roomId,
+          }),
         },
-        ...(status ? { status } : {}),
-        ...(search
-          ? {
-              OR: [
-                {
-                  name: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
+        ...(input.search && {
+          OR: [
+            {
+              name: {
+                contains: input.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              email: {
+                contains: input.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              room: {
+                number: {
+                  contains: input.search,
+                  mode: 'insensitive',
                 },
-                {
-                  email: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                },
-                {
-                  phone: {
-                    contains: search,
-                    mode: 'insensitive',
-                  },
-                },
-              ],
-            }
-          : {}),
+              },
+            },
+          ],
+        }),
       };
 
-      const tenants = await db.tenant.findMany({
+      return ctx.db.tenant.findMany({
         where,
         include: {
           room: {
@@ -212,26 +214,17 @@ export const tenantRouter = createTRPCRouter({
           createdAt: 'desc',
         },
       });
-
-      return tenants;
     }),
 
-  get: protectedProcedure
+  detail: protectedProcedure
     .input(
       z.object({
         id: z.string(),
       })
     )
-    .query(async ({ input, ctx }) => {
-      const tenant = await db.tenant.findFirst({
-        where: {
-          id: input.id,
-          room: {
-            property: {
-              userId: ctx.session.user.id,
-            },
-          },
-        },
+    .query(async ({ ctx, input }) => {
+      const tenant = await ctx.db.tenant.findUnique({
+        where: { id: input.id },
         include: {
           room: {
             include: {
@@ -243,10 +236,7 @@ export const tenantRouter = createTRPCRouter({
       });
 
       if (!tenant) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Tenant not found',
-        });
+        throw new Error('Tenant not found');
       }
 
       return tenant;
@@ -256,18 +246,15 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        data: tenantSchema.partial(),
+        status: z.enum(['ACTIVE', 'INACTIVE']),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      const tenant = await db.tenant.findUnique({
+    .mutation(async ({ ctx, input }) => {
+      // Get tenant with room details
+      const tenant = await ctx.db.tenant.findUnique({
         where: { id: input.id },
         include: {
-          room: {
-            include: {
-              property: true,
-            },
-          },
+          room: true,
         },
       });
 
@@ -278,17 +265,30 @@ export const tenantRouter = createTRPCRouter({
         });
       }
 
-      if (tenant.room.property.userId !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'You do not have permission to update this tenant',
+      // Update tenant and room status in a transaction
+      const result = await ctx.db.$transaction(async tx => {
+        // Update tenant status
+        const updatedTenant = await tx.tenant.update({
+          where: { id: input.id },
+          data: {
+            status: input.status,
+          },
         });
-      }
 
-      return db.tenant.update({
-        where: { id: input.id },
-        data: input.data,
+        // If tenant is being deactivated, update room status to AVAILABLE
+        if (input.status === 'INACTIVE') {
+          await tx.room.update({
+            where: { id: tenant.roomId },
+            data: {
+              status: 'AVAILABLE',
+            },
+          });
+        }
+
+        return updatedTenant;
       });
+
+      return result;
     }),
 
   addCheckInItem: protectedProcedure.input(checkInItemSchema).mutation(async ({ input, ctx }) => {
@@ -995,4 +995,82 @@ export const tenantRouter = createTRPCRouter({
 
     return tenants;
   }),
+
+  getStats: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { propertyId } = input;
+
+      // Get tenants with filtering
+      const baseWhere = {
+        room: {
+          property: {
+            userId: ctx.session.user.id,
+          },
+          ...(propertyId ? { propertyId } : {}),
+        },
+      };
+
+      // Get tenants with filtering
+      const tenants = await db.tenant.findMany({
+        where: baseWhere,
+        orderBy: [
+          {
+            status: 'desc',
+          },
+          {
+            startDate: 'desc',
+          },
+        ],
+        include: {
+          room: true,
+        },
+        take: 5, // Only get the 5 most recent tenants
+      });
+
+      // Get tenant statistics
+      const stats = {
+        total: await db.tenant.count({
+          where: baseWhere,
+        }),
+        active: await db.tenant.count({
+          where: {
+            ...baseWhere,
+            status: 'ACTIVE',
+          },
+        }),
+        inactive: await db.tenant.count({
+          where: {
+            ...baseWhere,
+            status: 'INACTIVE',
+          },
+        }),
+        upcomingMoveOuts: await db.tenant.count({
+          where: {
+            ...baseWhere,
+            status: 'ACTIVE',
+            endDate: {
+              lte: new Date(new Date().setDate(new Date().getDate() + 30)), // Next 30 days
+            },
+          },
+        }),
+      };
+
+      return {
+        tenants: tenants.map(tenant => ({
+          id: tenant.id,
+          name: tenant.name,
+          room: tenant.room.number,
+          status: tenant.status,
+          leaseStart: tenant.startDate,
+          leaseEnd: tenant.endDate,
+          rent: tenant.rentAmount,
+        })),
+        stats,
+      };
+    }),
 });

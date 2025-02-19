@@ -27,6 +27,7 @@ model User {
   properties     Property[]
   sessions       Session[]
   transactions   Transaction[]
+  expenses       Expense[]
   businessProfile BusinessProfile?
 }
 
@@ -203,7 +204,8 @@ model Payment {
 
 model Expense {
   id          String          @id @default(cuid())
-  propertyId  String
+  userId      String
+  propertyId  String?
   category    ExpenseCategory
   amount      Float
   date        DateTime
@@ -211,7 +213,8 @@ model Expense {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   receipt     String?
-  property    Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property    Property?       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MaintenanceRequest {

@@ -2,8 +2,8 @@
 
 import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
-import { Calendar, UserCheck, Users, UserX } from 'lucide-react';
-import { useState } from 'react';
+import { AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
+import Link from 'next/link';
 
 interface TenantOverviewProps {
   propertyId?: string;
@@ -26,13 +26,9 @@ interface TenantSummary {
   rent: number;
 }
 
-export function TenantOverview({ propertyId }: TenantOverviewProps) {
-  const [view, setView] = useState<'all' | 'active' | 'inactive'>('all');
-
-  const { data: tenantData, isLoading } = api.tenant.getOverview.useQuery({
+export default function TenantOverview({ propertyId }: TenantOverviewProps) {
+  const { data: tenantData, isLoading } = api.tenant.getStats.useQuery({
     propertyId,
-    status:
-      view === 'all' ? undefined : view === 'active' ? TenantStatus.ACTIVE : TenantStatus.INACTIVE,
   });
 
   if (isLoading) {
@@ -45,22 +41,24 @@ export function TenantOverview({ propertyId }: TenantOverviewProps) {
     );
   }
 
-  const stats: TenantStats = tenantData?.stats ?? {
+  const stats = tenantData?.stats ?? {
     total: 0,
     active: 0,
     inactive: 0,
     upcomingMoveOuts: 0,
   };
 
-  const tenants: TenantSummary[] = (tenantData?.tenants ?? []).map(tenant => ({
-    id: tenant.id,
-    name: tenant.name,
-    room: tenant.room.number,
-    status: tenant.status,
-    leaseStart: (tenant.startDate ?? new Date()).toISOString(),
-    leaseEnd: (tenant.endDate ?? new Date()).toISOString(),
-    rent: tenant.rentAmount ?? 0,
-  }));
+  const tenants = tenantData?.tenants ?? [];
+
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'Not set';
+    return new Date(date).toLocaleDateString();
+  };
+
+  const formatRent = (rent: number | null | undefined) => {
+    if (!rent) return 'Not set';
+    return `Rp ${rent.toLocaleString()}`;
+  };
 
   return (
     <div className="rounded-lg bg-card p-6 shadow-sm">
@@ -71,85 +69,85 @@ export function TenantOverview({ propertyId }: TenantOverviewProps) {
           </div>
           <h2 className="text-lg font-semibold text-card-foreground">Tenant Overview</h2>
         </div>
-        <select
-          value={view}
-          onChange={e => setView(e.target.value as typeof view)}
-          className="w-full appearance-none rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
+        <Link
+          href="/tenants"
+          className="text-sm text-primary hover:text-primary/90 hover:underline"
         >
-          <option value="all">All Tenants</option>
-          <option value="active">Active Only</option>
-          <option value="inactive">Inactive Only</option>
-        </select>
+          View All Tenants
+        </Link>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg bg-accent/50 p-4">
+        <div className="rounded-lg bg-background/80 p-4 dark:bg-secondary/50">
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-medium text-muted-foreground">Total Tenants</p>
+            <AlertTriangle className="h-4 w-4 text-primary" />
+            <p className="text-sm font-medium text-foreground">Total Tenants</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-card-foreground">{stats.total}</p>
+          <p className="mt-2 text-2xl font-bold text-foreground">{stats.total}</p>
         </div>
-
-        <div className="rounded-lg bg-green-100/50 p-4">
+        <div className="rounded-lg bg-green-50 p-4 dark:bg-green-400/10">
           <div className="flex items-center gap-2">
-            <UserCheck className="h-4 w-4 text-green-600" />
-            <p className="text-sm font-medium text-green-800">Active Tenants</p>
+            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">Active Tenants</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-green-900">{stats.active}</p>
+          <p className="mt-2 text-2xl font-bold text-green-900 dark:text-green-300">
+            {stats.active}
+          </p>
         </div>
-
-        <div className="rounded-lg bg-destructive/10 p-4">
+        <div className="rounded-lg bg-red-50 p-4 dark:bg-red-400/10">
           <div className="flex items-center gap-2">
-            <UserX className="h-4 w-4 text-destructive" />
-            <p className="text-sm font-medium text-destructive">Inactive Tenants</p>
+            <Users className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">Inactive Tenants</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-destructive">{stats.inactive}</p>
+          <p className="mt-2 text-2xl font-bold text-red-900 dark:text-red-300">{stats.inactive}</p>
         </div>
-
-        <div className="rounded-lg bg-yellow-100/50 p-4">
+        <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-400/10">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-yellow-600" />
-            <p className="text-sm font-medium text-yellow-800">Upcoming Move-outs</p>
+            <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Upcoming Move-outs
+            </p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-yellow-900">{stats.upcomingMoveOuts}</p>
+          <p className="mt-2 text-2xl font-bold text-yellow-900 dark:text-yellow-300">
+            {stats.upcomingMoveOuts}
+          </p>
         </div>
       </div>
 
       <div className="mt-8">
-        <div className="flow-root">
-          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+        <div className="rounded-lg border border-border">
+          <div className="overflow-x-auto">
+            {tenants.length > 0 ? (
               <table className="min-w-full divide-y divide-border">
                 <thead>
                   <tr>
                     <th
                       scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-medium text-muted-foreground sm:pl-0"
+                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-muted-foreground"
                     >
                       Name
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
                       Room
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
                       Status
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
                       Lease Period
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-medium text-muted-foreground"
+                      className="px-3 py-3.5 text-right text-sm font-semibold text-muted-foreground"
                     >
                       Rent
                     </th>
@@ -157,36 +155,51 @@ export function TenantOverview({ propertyId }: TenantOverviewProps) {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {tenants.map(tenant => (
-                    <tr key={tenant.id} className="group">
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-card-foreground sm:pl-0">
-                        {tenant.name}
+                    <tr key={tenant.id} className="hover:bg-muted/50">
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
+                        <div className="flex items-center">
+                          <div className="font-medium text-foreground">{tenant.name}</div>
+                        </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-foreground">
                         {tenant.room}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
                             tenant.status === TenantStatus.ACTIVE
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-destructive/10 text-destructive'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-400/20 dark:text-green-200'
+                              : 'bg-red-100 text-red-800 dark:bg-red-400/20 dark:text-red-200'
                           }`}
                         >
                           {tenant.status}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                        {new Date(tenant.leaseStart).toLocaleDateString()} -{' '}
-                        {new Date(tenant.leaseEnd).toLocaleDateString()}
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-foreground">
+                        {formatDate(tenant.leaseStart)} - {formatDate(tenant.leaseEnd)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
-                        Rp {tenant.rent.toLocaleString()}
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-foreground">
+                        {formatRent(tenant.rent)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Users className="h-12 w-12 text-muted-foreground/50" />
+                <h3 className="mt-4 text-lg font-medium text-foreground">No tenants yet</h3>
+                <p className="mt-2 text-center text-sm text-muted-foreground">
+                  Get started by adding your first tenant.
+                </p>
+                <Link
+                  href="/tenants/new"
+                  className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Add Tenant
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

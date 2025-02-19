@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -67,21 +68,29 @@ const Sidebar = () => {
           width: isOpen ? 256 : 80,
           transition: { duration: 0.3, type: 'spring', stiffness: 200, damping: 25 },
         }}
-        className="fixed left-0 top-0 z-50 h-screen overflow-hidden border-r border-gray-800 bg-gray-900 shadow-xl"
+        className="fixed left-0 top-0 z-50 h-screen overflow-hidden border-r border-input bg-card shadow-xl"
       >
         <motion.div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex h-16 items-center justify-between border-b border-gray-800 px-4">
+          <div className="flex h-16 items-center justify-between border-b border-input px-4">
             <AnimatePresence mode="wait">
               {isOpen && (
-                <motion.h1
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="text-xl font-bold text-white"
+                  className="flex items-center gap-2"
                 >
-                  SamaKita
-                </motion.h1>
+                  <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-muted">
+                    <Image
+                      src="https://ik.imagekit.io/matguchi18/sk.png"
+                      alt="Sama Kita Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <h1 className="text-xl font-bold text-black dark:text-white">SamaKita</h1>
+                </motion.div>
               )}
             </AnimatePresence>
 
@@ -89,7 +98,7 @@ const Sidebar = () => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setIsOpen(!isOpen)}
-              className={`rounded-lg p-2 text-gray-400 hover:bg-gray-800 hover:text-white ${!isOpen && 'w-full'}`}
+              className={`rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground ${!isOpen && 'w-full'}`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -122,8 +131,8 @@ const Sidebar = () => {
                     <motion.div
                       className={`group relative flex items-center rounded-xl p-2 text-sm font-medium ${
                         isActive
-                          ? 'bg-gray-800/90 text-white'
-                          : 'text-gray-300 hover:bg-gray-800/50 hover:text-white'
+                          ? 'bg-accent text-white dark:text-foreground'
+                          : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                       }`}
                       whileHover={{ x: 4 }}
                     >
@@ -134,7 +143,9 @@ const Sidebar = () => {
                       >
                         <Icon
                           className={`h-5 w-5 ${
-                            isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+                            isActive
+                              ? 'text-white dark:text-foreground'
+                              : 'text-muted-foreground group-hover:text-foreground'
                           }`}
                         />
                       </motion.div>
@@ -167,19 +178,19 @@ const Sidebar = () => {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-input p-4">
             <motion.button
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => signOut({ callbackUrl: '/auth/signin' })}
-              className="group flex w-full items-center rounded-xl p-2 text-sm font-medium text-gray-300 hover:bg-red-500/10 hover:text-red-400"
+              className="group flex w-full items-center rounded-xl p-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             >
               <motion.div
                 whileHover={{ rotate: 180 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className={!isOpen ? 'mx-auto' : ''}
               >
-                <LogOut className="h-5 w-5 text-gray-400 group-hover:text-red-400" />
+                <LogOut className="h-5 w-5 text-muted-foreground group-hover:text-destructive" />
               </motion.div>
               <AnimatePresence mode="wait">
                 {isOpen && (
@@ -199,11 +210,11 @@ const Sidebar = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 rounded-xl bg-gray-800/50 p-3"
+                className="mt-4 rounded-xl bg-accent/50 p-3"
               >
                 <Link
                   href="/business-verification"
-                  className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <motion.div
                     animate={{

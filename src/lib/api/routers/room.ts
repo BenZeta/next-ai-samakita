@@ -192,6 +192,7 @@ export const roomRouter = createTRPCRouter({
           },
           property: {
             select: {
+              id: true,
               name: true,
               address: true,
             },
@@ -465,9 +466,14 @@ export const roomRouter = createTRPCRouter({
         for (let i = 4; i >= 0; i--) {
           const date = new Date(now);
           date.setDate(date.getDate() - i * 7);
+          const weekStart = new Date(date);
+          weekStart.setDate(date.getDate() - date.getDay()); // Start of week (Sunday)
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+
           historyPoints.push({
             date,
-            label: `Week ${i + 1}`,
+            label: `${weekStart.getDate()}/${weekStart.getMonth() + 1} - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}`,
           });
         }
       } else {
@@ -551,33 +557,20 @@ export const roomRouter = createTRPCRouter({
       const previousRate =
         previousTotalRooms > 0 ? (previousOccupiedRooms / previousTotalRooms) * 100 : 0;
 
-      // Calculate room type breakdown
+      // Calculate room status breakdown
       const roomStatuses = Object.values(RoomStatus) as RoomStatus[];
       const roomStatusBreakdown = await Promise.all(
         roomStatuses.map(async (status: RoomStatus) => {
-          const totalRoomsOfStatus = await db.room.count({
+          const roomsWithStatus = await db.room.count({
             where: {
               ...baseWhere,
               status: status,
-            },
-          });
-
-          const occupiedRoomsOfStatus = await db.room.count({
-            where: {
-              ...baseWhere,
-              status: status,
-              tenants: {
-                some: {
-                  status: TenantStatus.ACTIVE,
-                },
-              },
             },
           });
 
           return {
             status,
-            occupancyRate:
-              totalRoomsOfStatus > 0 ? (occupiedRoomsOfStatus / totalRoomsOfStatus) * 100 : 0,
+            occupancyRate: totalRooms > 0 ? (roomsWithStatus / totalRooms) * 100 : 0,
           };
         })
       );
@@ -590,5 +583,73 @@ export const roomRouter = createTRPCRouter({
         totalRooms,
         occupiedRooms,
       };
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        status: z.nativeEnum(RoomStatus),
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { roomId, status, description } = input;
+
+      // Check if room exists and user has access
+      const room = await db.room.findUnique({
+        where: { id: roomId },
+        include: {
+          property: true,
+        },
+      });
+
+      if (!room) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Room not found',
+        });
+      }
+
+      if (room.property.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update this room',
+        });
+      }
+
+      // Create maintenance request if status is being set to MAINTENANCE
+      if (status === RoomStatus.MAINTENANCE) {
+        await db.maintenanceRequest.create({
+          data: {
+            title: `Room ${room.number} Maintenance`,
+            description: description || `Maintenance started for Room ${room.number}`,
+            status: 'PENDING',
+            priority: 'MEDIUM',
+            roomId: room.id,
+            propertyId: room.propertyId,
+          },
+        });
+      }
+
+      // Update maintenance request status to COMPLETED when room status changes from MAINTENANCE to AVAILABLE
+      if (room.status === RoomStatus.MAINTENANCE && status === RoomStatus.AVAILABLE) {
+        await db.maintenanceRequest.updateMany({
+          where: {
+            roomId: room.id,
+            status: 'PENDING',
+          },
+          data: {
+            status: 'COMPLETED',
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      // Update room status
+      return db.room.update({
+        where: { id: roomId },
+        data: { status },
+      });
     }),
 });
