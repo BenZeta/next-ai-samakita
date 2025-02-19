@@ -2,12 +2,14 @@
 
 import { api } from '@/lib/trpc/react';
 import { Building2, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function NewBillingPage() {
   const router = useRouter();
+  const t = useTranslations();
   const [search, setSearch] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export default function NewBillingPage() {
 
   const createBillingMutation = api.billing.create.useMutation({
     onSuccess: () => {
-      toast.success('Billing created successfully!');
+      toast.success(t('billing.new.success'));
       router.push('/billing');
     },
     onError: error => {
@@ -72,17 +74,17 @@ export default function NewBillingPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold text-foreground">Create New Billing</h1>
+      <h1 className="mb-8 text-3xl font-bold text-foreground">{t('billing.new.title')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <h2 className="mb-4 text-lg font-medium text-foreground">Select Property (Optional)</h2>
+          <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.new.property.title')}</h2>
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search properties..."
+                placeholder={t('billing.new.property.searchPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -105,8 +107,8 @@ export default function NewBillingPage() {
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground">All Properties</h3>
-                  <p className="text-sm text-muted-foreground">Send billing to all tenants</p>
+                  <h3 className="font-medium text-foreground">{t('billing.new.property.allProperties')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('billing.new.property.allPropertiesHint')}</p>
                 </div>
               </div>
             </div>
@@ -138,7 +140,7 @@ export default function NewBillingPage() {
 
         {selectedPropertyId && tenants && tenants.length > 0 && (
           <div>
-            <h2 className="mb-4 text-lg font-medium text-foreground">Select Tenant (Optional)</h2>
+            <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.new.tenant.title')}</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenants.map(tenant => (
                 <div
@@ -150,7 +152,7 @@ export default function NewBillingPage() {
                 >
                   <div>
                     <h3 className="font-medium text-foreground">{tenant.name}</h3>
-                    <p className="text-sm text-muted-foreground">Room {tenant.room.number}</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.new.tenant.room')} {tenant.room.number}</p>
                   </div>
                 </div>
               ))}
@@ -161,7 +163,7 @@ export default function NewBillingPage() {
         <div className="space-y-4">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-foreground">
-              Title
+              {t('billing.new.form.title')}
             </label>
             <input
               type="text"
@@ -175,7 +177,7 @@ export default function NewBillingPage() {
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-foreground">
-              Description (Optional)
+              {t('billing.new.form.description')}
             </label>
             <textarea
               id="description"
@@ -188,7 +190,7 @@ export default function NewBillingPage() {
 
           <div>
             <label htmlFor="amount" className="block text-sm font-medium text-foreground">
-              Amount
+              {t('billing.new.form.amount')}
             </label>
             <input
               type="number"
@@ -204,7 +206,7 @@ export default function NewBillingPage() {
 
           <div>
             <label htmlFor="dueDate" className="block text-sm font-medium text-foreground">
-              Due Date
+              {t('billing.new.form.dueDate')}
             </label>
             <input
               type="date"
@@ -223,7 +225,7 @@ export default function NewBillingPage() {
             disabled={isLoading}
             className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? 'Creating...' : 'Create Billing'}
+            {isLoading ? t('billing.new.form.submitting') : t('billing.new.form.submit')}
           </button>
         </div>
       </form>

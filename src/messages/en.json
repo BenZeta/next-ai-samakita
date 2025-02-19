@@ -88,7 +88,59 @@
     "details": {
       "room": "Room",
       "amount": "Amount",
-      "dueDate": "Due Date"
+      "dueDate": "Due Date",
+      "title": "Billing Details",
+      "property": "Property",
+      "tenant": "Tenant",
+      "status": "Status",
+      "description": "Description",
+      "notFound": "Billing not found",
+      "sendButton": "Send Billing",
+      "notification": {
+        "title": "Send Billing",
+        "subtitle": "Choose how you want to send the billing notification to the tenant",
+        "email": "Send via Email",
+        "whatsapp": "Send via WhatsApp"
+      },
+      "upload": {
+        "button": "Upload Proof",
+        "success": "Payment proof uploaded successfully!",
+        "error": "Failed to upload payment proof"
+      },
+      "messages": {
+        "billingSent": "Billing sent successfully!",
+        "notificationSent": "Billing notification sent successfully!",
+        "reminderSent": "Payment reminder sent successfully!"
+      },
+      "payments": {
+        "title": "Payments",
+        "noPayments": "No payments yet",
+        "sendReminder": "Send Reminder",
+        "sendWhatsapp": "Send WhatsApp",
+        "uploadProof": "Upload Proof"
+      }
+    },
+    "new": {
+      "title": "Create New Billing",
+      "property": {
+        "title": "Select Property (Optional)",
+        "searchPlaceholder": "Search properties...",
+        "allProperties": "All Properties",
+        "allPropertiesHint": "Send billing to all tenants"
+      },
+      "tenant": {
+        "title": "Select Tenant (Optional)",
+        "room": "Room"
+      },
+      "form": {
+        "title": "Title",
+        "description": "Description (Optional)",
+        "amount": "Amount",
+        "dueDate": "Due Date",
+        "submit": "Create Billing",
+        "submitting": "Creating..."
+      },
+      "success": "Billing created successfully!"
     }
   },
   "settings": {

@@ -88,7 +88,59 @@
     "details": {
       "room": "Kamar",
       "amount": "Jumlah",
-      "dueDate": "Jatuh Tempo"
+      "dueDate": "Jatuh Tempo",
+      "title": "Detail Tagihan",
+      "property": "Properti",
+      "tenant": "Penyewa",
+      "status": "Status",
+      "description": "Deskripsi",
+      "notFound": "Tagihan tidak ditemukan",
+      "sendButton": "Kirim Tagihan",
+      "notification": {
+        "title": "Kirim Tagihan",
+        "subtitle": "Pilih cara mengirim notifikasi tagihan ke penyewa",
+        "email": "Kirim via Email",
+        "whatsapp": "Kirim via WhatsApp"
+      },
+      "upload": {
+        "button": "Unggah Bukti",
+        "success": "Bukti pembayaran berhasil diunggah!",
+        "error": "Gagal mengunggah bukti pembayaran"
+      },
+      "messages": {
+        "billingSent": "Tagihan berhasil dikirim!",
+        "notificationSent": "Notifikasi tagihan berhasil dikirim!",
+        "reminderSent": "Pengingat pembayaran berhasil dikirim!"
+      },
+      "payments": {
+        "title": "Pembayaran",
+        "noPayments": "Belum ada pembayaran",
+        "sendReminder": "Kirim Pengingat",
+        "sendWhatsapp": "Kirim WhatsApp",
+        "uploadProof": "Unggah Bukti"
+      }
+    },
+    "new": {
+      "title": "Buat Tagihan Baru",
+      "property": {
+        "title": "Pilih Properti (Opsional)",
+        "searchPlaceholder": "Cari properti...",
+        "allProperties": "Semua Properti",
+        "allPropertiesHint": "Kirim tagihan ke semua penyewa"
+      },
+      "tenant": {
+        "title": "Pilih Penyewa (Opsional)",
+        "room": "Kamar"
+      },
+      "form": {
+        "title": "Judul",
+        "description": "Deskripsi (Opsional)",
+        "amount": "Jumlah",
+        "dueDate": "Jatuh Tempo",
+        "submit": "Buat Tagihan",
+        "submitting": "Membuat..."
+      },
+      "success": "Tagihan berhasil dibuat!"
     }
   },
   "settings": {

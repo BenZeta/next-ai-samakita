@@ -11,12 +11,14 @@ import {
   Upload,
   X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 export default function BillingDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const t = useTranslations();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const { data: billing, isLoading } = api.billing.get.useQuery({ id: params.id });
@@ -24,7 +26,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
   const sendBillingMutation = api.billing.send.useMutation({
     onSuccess: () => {
-      toast.success('Billing sent successfully!');
+      toast.success(t('billing.details.messages.billingSent'));
       utils.billing.get.invalidate({ id: params.id });
       router.refresh();
     },
@@ -35,7 +37,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
   const sendBillingNotificationMutation = api.billing.sendBillingNotification.useMutation({
     onSuccess: () => {
-      toast.success('Billing notification sent successfully!');
+      toast.success(t('billing.details.messages.notificationSent'));
       setShowNotificationModal(false);
       router.refresh();
     },
@@ -46,7 +48,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
   const sendPaymentNotificationMutation = api.billing.sendPaymentNotification.useMutation({
     onSuccess: () => {
-      toast.success('Payment reminder sent successfully!');
+      toast.success(t('billing.details.messages.reminderSent'));
     },
     onError: error => {
       toast.error(error.message);
@@ -55,7 +57,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
   const uploadPaymentProofMutation = api.billing.uploadPaymentProof.useMutation({
     onSuccess: () => {
-      toast.success('Payment proof uploaded successfully!');
+      toast.success(t('billing.details.upload.success'));
       utils.billing.get.invalidate({ id: params.id });
     },
     onError: error => {
@@ -124,7 +126,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
           });
         } catch (error) {
           console.error('Error uploading proof:', error);
-          toast.error('Failed to upload payment proof');
+          toast.error(t('billing.details.upload.error'));
         }
       };
 
@@ -132,7 +134,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
       input.click();
     } catch (error) {
       console.error('Error handling upload:', error);
-      toast.error('Failed to handle upload');
+      toast.error(t('billing.details.upload.error'));
     }
   };
 
@@ -147,7 +149,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
   if (!billing) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-lg text-muted-foreground">Billing not found</p>
+        <p className="text-lg text-muted-foreground">{t('billing.details.notFound')}</p>
       </div>
     );
   }
@@ -158,7 +160,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium">Send Billing</h3>
+              <h3 className="text-lg font-medium">{t('billing.details.notification.title')}</h3>
               <button
                 onClick={() => setShowNotificationModal(false)}
                 className="rounded-full p-1 hover:bg-accent"
@@ -167,7 +169,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
               </button>
             </div>
             <p className="mb-6 text-sm text-muted-foreground">
-              Choose how you want to send the billing notification to the tenant
+              {t('billing.details.notification.subtitle')}
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -175,14 +177,14 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <Mail className="h-4 w-4" />
-                Send via Email
+                {t('billing.details.notification.email')}
               </button>
               <button
                 onClick={() => handleSendBilling('whatsapp')}
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 <MessageSquare className="h-4 w-4" />
-                Send via WhatsApp
+                {t('billing.details.notification.whatsapp')}
               </button>
             </div>
           </div>
@@ -199,7 +201,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <Send className="h-4 w-4" />
-                Send Billing
+                {t('billing.details.sendButton')}
               </button>
             )}
           </div>
@@ -208,14 +210,14 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-6">
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">Billing Details</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.title')}</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-primary/10 p-2">
                     <DollarSign className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.details.amount')}</p>
                     <p className="font-medium text-foreground">
                       Rp{' '}
                       {billing.amount.toLocaleString('id-ID', {
@@ -231,7 +233,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Due Date</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.details.dueDate')}</p>
                     <p className="font-medium text-foreground">
                       {new Date(billing.dueDate).toLocaleDateString('id-ID', {
                         weekday: 'long',
@@ -248,9 +250,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                     <Building2 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Tenant</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.details.tenant')}</p>
                     <p className="font-medium text-foreground">
-                      {billing.tenant?.name} - Room {billing.tenant?.room.number}
+                      {billing.tenant?.name} - {t('billing.details.room')} {billing.tenant?.room.number}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {billing.tenant?.room.property.name}
@@ -260,7 +262,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
                 {billing.description && (
                   <div className="mt-4">
-                    <p className="text-sm text-muted-foreground">Description</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.details.description')}</p>
                     <p className="mt-1 whitespace-pre-wrap text-foreground">
                       {billing.description}
                     </p>
@@ -270,7 +272,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
             </div>
 
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">Status</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.status')}</h2>
               <div
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                   billing.status === 'DRAFT'
@@ -278,14 +280,14 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                     : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500'
                 }`}
               >
-                {billing.status}
+                {t(`billing.status.${billing.status.toLowerCase()}`)}
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">Payments</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.payments.title')}</h2>
               {billing.payments.length > 0 ? (
                 <div className="space-y-4">
                   {billing.payments.map(payment => (
@@ -293,7 +295,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                       <div className="mb-4 flex items-center justify-between">
                         <div>
                           <p className="font-medium text-foreground">
-                            {payment.tenant.name} - Room {payment.tenant.room.number}
+                            {payment.tenant.name} - {t('billing.details.room')} {payment.tenant.room.number}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {payment.tenant.room.property.name}
@@ -308,7 +310,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500'
                           }`}
                         >
-                          {payment.status}
+                          {t(`billing.status.${payment.status.toLowerCase()}`)}
                         </div>
                       </div>
                       {billing.status === 'SENT' && payment.status !== 'PAID' && (
@@ -318,21 +320,21 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-500 px-3 py-2 text-xs font-medium text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           >
                             <Mail className="h-3 w-3" />
-                            Send Reminder
+                            {t('billing.details.payments.sendReminder')}
                           </button>
                           <button
                             onClick={() => handleSendPaymentReminder('whatsapp', payment.tenant.id)}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 px-3 py-2 text-xs font-medium text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                           >
                             <MessageSquare className="h-3 w-3" />
-                            Send WhatsApp
+                            {t('billing.details.payments.sendWhatsapp')}
                           </button>
                           <button
                             onClick={() => handleUploadProof(payment.id)}
                             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-500 px-3 py-2 text-xs font-medium text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
                           >
                             <Upload className="h-3 w-3" />
-                            Upload Proof
+                            {t('billing.details.payments.uploadProof')}
                           </button>
                         </div>
                       )}
@@ -340,7 +342,7 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">No payments yet</p>
+                <p className="text-center text-muted-foreground">{t('billing.details.payments.noPayments')}</p>
               )}
             </div>
           </div>
