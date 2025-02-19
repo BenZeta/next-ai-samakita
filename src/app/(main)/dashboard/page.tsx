@@ -4,8 +4,9 @@ import { api } from '@/lib/trpc/react';
 import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 
 // Constants for fixed dimensions to prevent layout shifts
 const DIMENSIONS = {
@@ -76,19 +77,17 @@ const DashboardHeader = memo(function DashboardHeader({
   onPropertyChange: (id: string) => void;
   isError: boolean;
 }) {
+  const t = useTranslations();
+
   return (
     <div className="mb-6 space-y-4">
       {!isVerified && (
         <div className="flex items-center gap-2 rounded-lg bg-warning/15 p-4 text-warning">
           <AlertTriangle className="h-5 w-5 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Your business is not verified yet</p>
+            <p className="text-sm font-medium">{t('dashboard.businessNotVerified')}</p>
             <p className="text-xs">
-              Please{' '}
-              <Link href="/settings/business" className="font-medium underline">
-                complete your business verification
-              </Link>{' '}
-              to access all features.
+              {t('dashboard.completeVerification')}
             </p>
           </div>
         </div>
@@ -98,8 +97,8 @@ const DashboardHeader = memo(function DashboardHeader({
         <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-4 text-destructive">
           <AlertTriangle className="h-5 w-5 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Failed to load property data</p>
-            <p className="text-xs">Please try refreshing the page</p>
+            <p className="text-sm font-medium">{t('dashboard.loadDataError')}</p>
+            <p className="text-xs">{t('dashboard.refreshPage')}</p>
           </div>
         </div>
       )}
@@ -107,10 +106,10 @@ const DashboardHeader = memo(function DashboardHeader({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Dashboard
+            {t('dashboard.title')}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Monitor your properties performance and occupancy in real-time
+            {t('dashboard.subtitle')}
           </p>
         </div>
         {properties.length > 0 && (
@@ -120,7 +119,7 @@ const DashboardHeader = memo(function DashboardHeader({
               onChange={e => onPropertyChange(e.target.value)}
               className="w-full appearance-none rounded-lg border border-input bg-card px-4 py-2 pr-10 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
             >
-              <option value="">All Properties</option>
+              <option value="">{t('dashboard.allProperties')}</option>
               {properties.map(property => (
                 <option key={property.id} value={property.id}>
                   {property.name}
@@ -187,6 +186,7 @@ export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>();
   const { data: session } = useSession();
   const isVerified = session?.token?.businessVerified === true;
+  const t = useTranslations();
 
   // Memoize property query options with aggressive caching
   const propertyQueryOptions = useMemo(

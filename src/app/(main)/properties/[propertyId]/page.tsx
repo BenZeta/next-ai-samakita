@@ -5,6 +5,7 @@ import { api } from '@/lib/trpc/react';
 import { RoomStatus } from '@prisma/client';
 import { Calendar, Plus } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'use-intl';
 
 interface Property {
   id: string;
@@ -34,6 +35,7 @@ interface Property {
 export default function PropertyDetailsPage() {
   const params = useParams();
   const propertyId = params.propertyId as string;
+  const t = useTranslations();
 
   const { data: property, isLoading } = api.property.get.useQuery({ id: propertyId });
 
@@ -46,7 +48,7 @@ export default function PropertyDetailsPage() {
   }
 
   if (!property) {
-    return <div>Property not found</div>;
+    return <div>{t('properties.detail.notFound')}</div>;
   }
 
   return (
@@ -59,14 +61,14 @@ export default function PropertyDetailsPage() {
             className="flex items-center rounded-md bg-card px-4 py-2 text-sm font-medium text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <Calendar className="mr-2 h-5 w-5" />
-            Calendar
+            {t('properties.detail.calendar')}
           </a>
           <a
             href={`/properties/${property.id}/rooms/new`}
             className="flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <Plus className="mr-2 h-5 w-5" />
-            Add Room
+            {t('properties.detail.addRoom')}
           </a>
         </div>
       </div>
@@ -77,19 +79,19 @@ export default function PropertyDetailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Property Details</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">{t('properties.detail.propertyDetails')}</h2>
           <div className="rounded-lg bg-card p-6 shadow">
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Address</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('properties.detail.address')}</h3>
                 <p className="mt-1 text-foreground">{property.address}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Description</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('properties.detail.description')}</h3>
                 <p className="mt-1 text-foreground">{property.description}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Facilities</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('properties.detail.facilities')}</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {property.facilities.map((facility: string) => (
                     <span
@@ -106,15 +108,15 @@ export default function PropertyDetailsPage() {
         </div>
 
         <div>
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Rooms</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">{t('properties.detail.rooms')}</h2>
           <div className="space-y-4">
             {property.rooms.map(room => (
               <div key={room.id} className="rounded-lg bg-card p-6 shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium text-foreground">Room {room.number}</h3>
+                    <h3 className="text-lg font-medium text-foreground">{t('properties.detail.roomNumber', { number: room.number })}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {room.size} sqm • {room.type}
+                      {t('properties.detail.roomDetails', { size: room.size, type: room.type })}
                     </p>
                   </div>
                   <div>
@@ -127,19 +129,19 @@ export default function PropertyDetailsPage() {
                             : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
                       }`}
                     >
-                      {room.status}
+                      {t(`properties.detail.status.${room.status.toLowerCase()}`)}
                     </span>
                   </div>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-lg font-semibold text-foreground">
-                    Rp {room.price.toLocaleString()}
+                    {t('properties.detail.price', { price: room.price.toLocaleString() })}
                   </p>
                   <a
                     href={`/properties/${property.id}/rooms/${room.id}`}
                     className="text-sm font-medium text-primary hover:text-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                   >
-                    View Details
+                    {t('properties.detail.viewDetails')}
                   </a>
                 </div>
               </div>

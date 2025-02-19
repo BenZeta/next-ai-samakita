@@ -9,20 +9,21 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
+import { useTranslations } from 'use-intl';
 
 const tenantFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'properties.tenant.form.validation.nameRequired'),
+  email: z.string().email('properties.tenant.form.validation.emailInvalid'),
   phone: z
     .string()
     .regex(
       /^\+[1-9]\d{1,14}$/,
-      'Invalid phone number format. Must start with + followed by country code and number'
+      'properties.tenant.form.validation.phoneInvalid'
     ),
   ktpNumber: z.string().optional(),
-  depositAmount: z.number().min(1, 'Deposit amount is required'),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
+  depositAmount: z.number().min(1, 'properties.tenant.form.validation.depositRequired'),
+  startDate: z.string().min(1, 'properties.tenant.form.validation.startDateRequired'),
+  endDate: z.string().min(1, 'properties.tenant.form.validation.endDateRequired'),
   references: z.array(z.string()).optional(),
 });
 
@@ -45,6 +46,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const createMutation = api.tenant.create.useMutation();
+  const t = useTranslations();
 
   // Fetch room details to get the price
   const { data: room } = api.room.get.useQuery({ id: roomId });
@@ -85,7 +87,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       setIsSubmitting(true);
 
       if (!room) {
-        toast.error('Room details not found');
+        toast.error(t('properties.tenant.form.toast.roomNotFound'));
         return;
       }
 
@@ -96,7 +98,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         rentAmount: room.price,
       });
 
-      toast.success('Tenant created successfully!');
+      toast.success(t('properties.tenant.form.toast.success'));
       if (onSuccess) {
         onSuccess();
       } else {
@@ -104,7 +106,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       }
     } catch (error) {
       console.error('Failed to save tenant:', error);
-      toast.error('Failed to create tenant. Please try again.');
+      toast.error(t('properties.tenant.form.toast.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +117,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground">
-            Name
+            {t('properties.tenant.form.name')}
           </label>
           <input
             type="text"
@@ -123,12 +125,12 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('name')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+          {errors.name && <p className="mt-1 text-sm text-destructive">{t(errors.name.message!)}</p>}
         </div>
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground">
-            Email
+            {t('properties.tenant.form.email')}
           </label>
           <input
             type="email"
@@ -136,12 +138,12 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('email')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.email && <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>}
+          {errors.email && <p className="mt-1 text-sm text-destructive">{t(errors.email.message!)}</p>}
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-foreground">
-            Phone
+            {t('properties.tenant.form.phone')}
           </label>
           <div className="relative mt-1 flex w-full items-center gap-2">
             <div className="relative" ref={countryDropdownRef}>
@@ -185,15 +187,15 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
                 setPhoneNumber(value);
               }}
               className="h-[42px] flex-1 rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Enter phone number"
+              placeholder={t('properties.tenant.form.phonePlaceholder')}
             />
           </div>
-          {errors.phone && <p className="mt-1 text-sm text-destructive">{errors.phone.message}</p>}
+          {errors.phone && <p className="mt-1 text-sm text-destructive">{t(errors.phone.message!)}</p>}
         </div>
 
         <div>
           <label htmlFor="ktpNumber" className="block text-sm font-medium text-foreground">
-            KTP Number (Optional)
+            {t('properties.tenant.form.ktpNumber')}
           </label>
           <input
             type="text"
@@ -202,24 +204,24 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.ktpNumber && (
-            <p className="mt-1 text-sm text-destructive">{errors.ktpNumber.message}</p>
+            <p className="mt-1 text-sm text-destructive">{t(errors.ktpNumber.message!)}</p>
           )}
         </div>
 
         {room && (
           <div>
             <label className="block text-sm font-medium text-foreground">
-              Rent Amount (from room price)
+              {t('properties.tenant.form.rentAmount')}
             </label>
             <p className="mt-2 text-lg font-medium text-primary">
-              Rp {room.price.toLocaleString()}
+              {t('properties.tenant.form.price', { price: room.price.toLocaleString() })}
             </p>
           </div>
         )}
 
         <div>
           <label htmlFor="depositAmount" className="block text-sm font-medium text-foreground">
-            Deposit Amount
+            {t('properties.tenant.form.depositAmount')}
           </label>
           <input
             type="number"
@@ -228,13 +230,13 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.depositAmount && (
-            <p className="mt-1 text-sm text-destructive">{errors.depositAmount.message}</p>
+            <p className="mt-1 text-sm text-destructive">{t(errors.depositAmount.message!)}</p>
           )}
         </div>
 
         <div>
           <label htmlFor="startDate" className="block text-sm font-medium text-foreground">
-            Start Date
+            {t('properties.tenant.form.startDate')}
           </label>
           <input
             type="date"
@@ -243,13 +245,13 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.startDate && (
-            <p className="mt-1 text-sm text-destructive">{errors.startDate.message}</p>
+            <p className="mt-1 text-sm text-destructive">{t(errors.startDate.message!)}</p>
           )}
         </div>
 
         <div>
           <label htmlFor="endDate" className="block text-sm font-medium text-foreground">
-            End Date
+            {t('properties.tenant.form.endDate')}
           </label>
           <input
             type="date"
@@ -258,20 +260,18 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.endDate && (
-            <p className="mt-1 text-sm text-destructive">{errors.endDate.message}</p>
+            <p className="mt-1 text-sm text-destructive">{t(errors.endDate.message!)}</p>
           )}
         </div>
       </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={isSubmitting || !room}
-          className="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Creating...' : 'Create Tenant'}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isSubmitting ? t('properties.tenant.form.submitting') : t('properties.tenant.form.submit')}
+      </button>
     </form>
   );
 }

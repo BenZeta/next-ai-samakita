@@ -1,15 +1,7 @@
-import { getServerAuthSession } from '@/lib/auth';
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    // Check authentication using NextAuth
-    const session = await getServerAuthSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -17,43 +9,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    // Create Supabase client with service role key for admin access
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          persistSession: false,
-        },
-      }
-    );
-
-    // Create a unique file name using user ID and timestamp
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${session.user.id}/${Date.now()}.${fileExt}`;
-
-    // Convert File to Buffer for upload
+    // Convert File to Base64
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString('base64');
 
-    // Upload file to Supabase Storage
-    const { data, error } = await supabase.storage.from('ktp').upload(fileName, buffer, {
-      contentType: file.type,
-      cacheControl: '3600',
-      upsert: false,
+    // Create FormData for ImageKit
+    const ikFormData = new FormData();
+    ikFormData.append('file', base64);
+    ikFormData.append('fileName', `${Date.now()}-${file.name}`);
+    ikFormData.append('folder', '/ktp');
+
+    // Upload to ImageKit using fetch
+    const response = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(process.env.IMAGEKIT_PRIVATE_KEY || '').toString('base64')}`,
+      },
+      body: ikFormData,
     });
 
-    if (error) {
-      console.error('Supabase storage error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!response.ok) {
+      throw new Error('Failed to upload to ImageKit');
     }
 
-    // Get the public URL for the uploaded file
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('ktp').getPublicUrl(fileName);
-
-    return NextResponse.json({ url: publicUrl });
+    const result = await response.json();
+    return NextResponse.json({ url: result.url });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
