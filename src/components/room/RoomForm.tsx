@@ -12,7 +12,9 @@ import { useTranslations } from 'next-intl';
 
 const roomSchema = z.object({
   number: z.string().min(1, 'form.validation.numberRequired'),
-  type: z.nativeEnum(RoomType),
+  type: z.enum(['SUITE', 'STUDIO', 'STANDARD', 'DELUXE'], {
+    errorMap: () => ({ message: 'form.validation.typeRequired' })
+  }),
   size: z.coerce.number().min(1, 'form.validation.sizeRequired'),
   amenities: z.array(z.string()).min(1, 'form.validation.amenitiesRequired'),
   price: z.coerce.number().min(0, 'form.validation.priceRequired'),
@@ -145,11 +147,10 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
           className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
         >
           <option value="">{t('form.selectType')}</option>
-          {Object.values(RoomType).map(type => (
-            <option key={type} value={type}>
-              {t(`form.types.${type.toLowerCase()}`)}
-            </option>
-          ))}
+          <option value="STANDARD">{t('form.types.standard')}</option>
+          <option value="DELUXE">{t('form.types.deluxe')}</option>
+          <option value="SUITE">{t('form.types.suite')}</option>
+          <option value="STUDIO">{t('form.types.studio')}</option>
         </select>
         {errors.type && <p className="mt-1 text-sm text-red-600">{t('form.validation.typeRequired')}</p>}
       </div>

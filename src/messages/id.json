@@ -287,8 +287,8 @@
           "type": "Tipe Kamar",
           "selectType": "Pilih tipe",
           "types": {
-            "single": "Single",
-            "double": "Double",
+            "standard": "Standar",
+            "deluxe": "Deluxe",
             "suite": "Suite",
             "studio": "Studio"
           },
@@ -416,6 +416,20 @@
       "title": "Kalender Ketersediaan Kamar",
       "loading": "Memuat...",
       "scheduleMaintenance": "Jadwalkan Pemeliharaan",
+      "messages": {
+        "today": "Hari Ini",
+        "previous": "Sebelumnya",
+        "next": "Selanjutnya",
+        "month": "Bulan",
+        "week": "Minggu",
+        "day": "Hari",
+        "agenda": "Agenda",
+        "date": "Tanggal",
+        "time": "Waktu",
+        "event": "Acara",
+        "noEventsInRange": "Tidak ada acara dalam rentang ini",
+        "showMore": "Lihat {total} lainnya"
+      },
       "toast": {
         "scheduled": "Pemeliharaan berhasil dijadwalkan"
       },
@@ -482,6 +496,12 @@
           "created": "Kamar berhasil dibuat!",
           "updated": "Kamar berhasil diperbarui!",
           "error": "Gagal menyimpan kamar. Mohon periksa form dan coba lagi."
+        },
+        "types": {
+          "standard": "Standar",
+          "deluxe": "Deluxe",
+          "suite": "Suite",
+          "studio": "Studio"
         }
       }
     }
