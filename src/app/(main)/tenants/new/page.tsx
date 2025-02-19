@@ -4,8 +4,10 @@ import { api } from '@/lib/trpc/react';
 import { Building2, ChevronRight, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function NewTenantPage() {
+  const t = useTranslations();
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [roomSearch, setRoomSearch] = useState('');
@@ -61,8 +63,8 @@ export default function NewTenantPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Add New Tenant</h1>
-        <p className="mt-2 text-muted-foreground">Follow the steps below to add a new tenant</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('tenants.new.title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('tenants.new.subtitle')}</p>
       </div>
 
       {/* Steps indicator */}
@@ -97,14 +99,14 @@ export default function NewTenantPage() {
                 step === 1 ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              Select Property
+              {t('tenants.new.steps.property')}
             </div>
             <div
               className={`text-sm font-medium ${
                 step === 2 ? 'text-primary' : 'text-muted-foreground'
               }`}
             >
-              Select Room
+              {t('tenants.new.steps.room')}
             </div>
           </div>
         </div>
@@ -118,7 +120,7 @@ export default function NewTenantPage() {
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search properties..."
+                placeholder={t('tenants.new.search.property')}
                 value={search}
                 onChange={handlePropertySearch}
                 className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -164,7 +166,7 @@ export default function NewTenantPage() {
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search rooms by number..."
+                placeholder={t('tenants.new.search.room')}
                 value={roomSearch}
                 onChange={handleRoomSearch}
                 className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -199,14 +201,14 @@ export default function NewTenantPage() {
             </div>
           ) : (
             <div className="rounded-lg border border-input bg-card p-8 text-center">
-              <p className="text-foreground">No available rooms found.</p>
+              <p className="text-foreground">{t('tenants.new.noRooms.title')}</p>
               {roomSearch ? (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Try different search terms or clear the search
+                  {t('tenants.new.noRooms.withSearch')}
                 </p>
               ) : (
                 <p className="mt-2 text-sm text-muted-foreground">
-                  This property has no available rooms
+                  {t('tenants.new.noRooms.noSearch')}
                 </p>
               )}
               <button
@@ -220,7 +222,7 @@ export default function NewTenantPage() {
                 }}
                 className="mt-4 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                {roomSearch ? 'Clear search' : 'Select another property'}
+                {roomSearch ? t('tenants.new.buttons.clearSearch') : t('tenants.new.buttons.selectAnother')}
               </button>
             </div>
           )}
@@ -233,7 +235,7 @@ export default function NewTenantPage() {
               }}
               className="inline-flex items-center rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
-              ← Back to property selection
+              {t('tenants.new.buttons.back')}
             </button>
           </div>
         </>

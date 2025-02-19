@@ -4,6 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { PaymentMethod, PaymentStatus, PaymentType } from '@prisma/client';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, Check, Clock } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -13,6 +14,7 @@ interface PaymentListProps {
 }
 
 export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
+  const t = useTranslations();
   const [uploadingPaymentId, setUploadingPaymentId] = useState<string | null>(null);
   const utils = api.useUtils();
 
@@ -23,7 +25,7 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
 
   const updatePaymentMutation = api.billing.updatePayment.useMutation({
     onSuccess: () => {
-      toast.success('Payment status updated successfully!');
+      toast.success(t('tenants.details.payments.status1.success'));
       utils.billing.getPayments.invalidate();
     },
     onError: error => {
@@ -81,7 +83,7 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
         animate={{ opacity: 1, y: 0 }}
         className="rounded-xl border border-input bg-card p-4 text-center text-muted-foreground"
       >
-        No payments found
+        {t('tenants.details.payments.noPayments')}
       </motion.div>
     );
   }
@@ -124,15 +126,15 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
                     }`}
                   >
                     {getStatusIcon(payment.status)}
-                    {payment.status}
+                    {t(`tenants.details.payments.status1.${payment.status.toLowerCase()}`)}
                   </span>
                   <span className="text-sm font-medium text-foreground">
                     Rp {payment.amount.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span className="text-sm text-muted-foreground">
-                    Due {new Date(payment.dueDate).toLocaleDateString()}
+                    {t('billing.details.dueDate')} {new Date(payment.dueDate).toLocaleDateString()}
                   </span>
                   {payment.status !== PaymentStatus.PAID && (
                     <motion.button
@@ -141,15 +143,15 @@ export function PaymentList({ tenantId, paymentType }: PaymentListProps) {
                       onClick={() => handleStatusChange(payment.id, PaymentStatus.PAID)}
                       className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
                     >
-                      Mark as Paid
+                      {t('billing.status.paid')}
                     </motion.button>
                   )}
                 </div>
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="rounded-md bg-muted px-2 py-1">{payment.method}</span>
+                <span className="rounded-md bg-muted px-2 py-1">{t(`billing.method.${payment.method}`)}</span>
                 <span>•</span>
-                <span>{payment.type}</span>
+                <span>{t(`billing.type.${payment.type}`)}</span>
               </div>
             </div>
           </motion.div>

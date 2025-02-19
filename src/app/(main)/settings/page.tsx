@@ -257,6 +257,12 @@ export default function SettingsPage() {
                   className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
                 />
               </div>
+              <button
+                type="submit"
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Update Password
+              </button>
             </form>
           </div>
         </div>

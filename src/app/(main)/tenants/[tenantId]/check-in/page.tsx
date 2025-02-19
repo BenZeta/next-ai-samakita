@@ -3,8 +3,10 @@
 import { CheckInForm } from '@/components/tenant/CheckInForm';
 import { api } from '@/lib/trpc/react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function TenantCheckInPage() {
+  const t = useTranslations();
   const params = useParams();
   const tenantId = params.tenantId as string;
 
@@ -19,12 +21,12 @@ export default function TenantCheckInPage() {
   }
 
   if (!tenant) {
-    return <div className="text-center text-muted-foreground">Tenant not found</div>;
+    return <div className="text-center text-muted-foreground">{t('tenants.details.notFound')}</div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold text-foreground">Check-in Items</h1>
+      <h1 className="mb-8 text-2xl font-bold text-foreground">{t('tenants.details.checkInItems')}</h1>
       <div className="mx-auto max-w-3xl">
         <CheckInForm tenantId={tenant.id} />
       </div>
