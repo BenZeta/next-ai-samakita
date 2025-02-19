@@ -4,6 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { ArrowDown, ArrowUp, Building } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 // Dynamically import heavy chart components
 const Chart = dynamic(() => import('./charts/OccupancyChart').then(mod => mod.default), {
@@ -49,10 +50,12 @@ const StatsDisplay = memo(function StatsDisplay({
   rateDifference: string;
   timeRange: string;
 }) {
+  const t = useTranslations();
+  
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">Current Rate</p>
+        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.currentRate')}</p>
         <p className="mt-1 text-2xl font-semibold">{occupancyData.currentRate.toFixed(2)}%</p>
         <div className="mt-1 flex items-center gap-1 text-sm">
           {Number(rateDifference) > 0 ? (
@@ -63,7 +66,9 @@ const StatsDisplay = memo(function StatsDisplay({
           <span className={Number(rateDifference) > 0 ? 'text-green-600' : 'text-red-600'}>
             {Math.abs(Number(rateDifference))}%
           </span>
-          <span className="text-muted-foreground">vs previous {timeRange}</span>
+          <span className="text-muted-foreground">
+            {t('dashboard.timeRange.vsPrevious')} {timeRange}
+          </span>
         </div>
       </div>
 
@@ -78,6 +83,7 @@ const StatsDisplay = memo(function StatsDisplay({
 });
 
 function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
+  const t = useTranslations();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
   const { data: occupancyData, isLoading } = api.room.getOccupancyStats.useQuery(
@@ -119,7 +125,9 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
       <div className="flex min-h-[400px] items-center justify-center rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
         <div className="flex items-center gap-2">
           <Building className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">No occupancy data</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            {t('dashboard.noOccupancyData')}
+          </p>
         </div>
       </div>
     );
@@ -132,16 +140,16 @@ function OccupancyWidget({ propertyId }: OccupancyWidgetProps) {
           <div className="rounded-lg bg-primary/10 p-2">
             <Building className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold">Occupancy Rate</h2>
+          <h2 className="text-lg font-semibold">{t('dashboard.occupancyRate')}</h2>
         </div>
         <select
           value={timeRange}
           onChange={e => setTimeRange(e.target.value as 'week' | 'month' | 'year')}
           className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="week">This Week</option>
-          <option value="month">This Month</option>
-          <option value="year">This Year</option>
+          <option value="week">{t('dashboard.timeRange.thisWeek')}</option>
+          <option value="month">{t('dashboard.timeRange.thisMonth')}</option>
+          <option value="year">{t('dashboard.timeRange.thisYear')}</option>
         </select>
       </div>
 

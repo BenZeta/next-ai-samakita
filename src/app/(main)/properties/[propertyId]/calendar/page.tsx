@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "react-toastify";
 import { MaintenanceStatus, MaintenancePriority } from "@prisma/client";
+import { useTranslations } from 'use-intl';
 
 const locales = {
   "en-US": require("date-fns/locale/en-US"),
@@ -52,10 +53,10 @@ interface MaintenanceSchedule {
 }
 
 const maintenanceSchema = z.object({
-  roomId: z.string().min(1, "Room is required"),
+  roomId: z.string().min(1, "properties.calendar.form.validation.roomRequired"),
   startDate: z.date(),
   endDate: z.date(),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().min(1, "properties.calendar.form.validation.descriptionRequired"),
   type: z.enum(["cleaning", "repair", "inspection", "other"]),
 });
 
@@ -67,6 +68,7 @@ export default function RoomCalendarPage() {
   const [date, setDate] = useState(new Date());
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
+  const t = useTranslations();
 
   const { data: rooms, isLoading: isLoadingRooms } = api.room.list.useQuery({ propertyId });
   const { data: maintenanceSchedules } = api.maintenance.getRequests.useQuery(
@@ -80,7 +82,7 @@ export default function RoomCalendarPage() {
 
   const maintenanceMutation = api.room.scheduleMaintenance.useMutation({
     onSuccess: () => {
-      toast.success("Maintenance scheduled successfully");
+      toast.success(t('properties.calendar.toast.scheduled'));
       setShowMaintenanceForm(false);
       setSelectedSlot(null);
     },
@@ -103,14 +105,14 @@ export default function RoomCalendarPage() {
   });
 
   if (isLoadingRooms) {
-    return <div>Loading...</div>;
+    return <div>{t('properties.calendar.loading')}</div>;
   }
 
   const occupancyEvents: CalendarEvent[] =
     rooms?.flatMap((room) =>
       room.tenants.map((tenant) => ({
         id: tenant.id,
-        title: `${room.number} - ${tenant.name}`,
+        title: t('properties.calendar.events.occupancy', { room: room.number, tenant: tenant.name }),
         start: new Date(tenant.startDate!),
         end: new Date(tenant.endDate!),
         resourceId: room.id,
@@ -121,7 +123,7 @@ export default function RoomCalendarPage() {
   const maintenanceEvents: CalendarEvent[] =
     maintenanceSchedules?.requests.map((maintenance) => ({
       id: maintenance.id,
-      title: `Room ${maintenance.roomNumber} - ${maintenance.title}`,
+      title: t('properties.calendar.events.maintenance', { room: maintenance.roomNumber, title: maintenance.title }),
       start: maintenance.createdAt,
       end: maintenance.updatedAt,
       resourceId: maintenance.id,
@@ -132,7 +134,7 @@ export default function RoomCalendarPage() {
 
   const resources = rooms?.map((room) => ({
     id: room.id,
-    title: `Room ${room.number}`,
+    title: t('properties.calendar.resources.room', { number: room.number }),
   }));
 
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
@@ -147,7 +149,7 @@ export default function RoomCalendarPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">Room Availability Calendar</h1>
+      <h1 className="mb-8 text-3xl font-bold">{t('properties.calendar.title')}</h1>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="h-[800px] rounded-lg bg-white p-6 shadow">
@@ -173,7 +175,7 @@ export default function RoomCalendarPage() {
 
         {showMaintenanceForm && (
           <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold">Schedule Maintenance</h2>
+            <h2 className="mb-4 text-xl font-semibold">{t('properties.calendar.scheduleMaintenance')}</h2>
             <form
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-4">
@@ -181,48 +183,48 @@ export default function RoomCalendarPage() {
                 <label
                   htmlFor="roomId"
                   className="block text-sm font-medium text-gray-700">
-                  Room
+                  {t('properties.calendar.form.room')}
                 </label>
                 <select
                   id="roomId"
                   {...register("roomId")}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                  <option value="">Select a room</option>
+                  <option value="">{t('properties.calendar.form.selectRoom')}</option>
                   {rooms?.map((room) => (
                     <option
                       key={room.id}
                       value={room.id}>
-                      Room {room.number}
+                      {t('properties.calendar.resources.room', { number: room.number })}
                     </option>
                   ))}
                 </select>
-                {errors.roomId && <p className="mt-1 text-sm text-red-600">{errors.roomId.message}</p>}
+                {errors.roomId && <p className="mt-1 text-sm text-red-600">{t(errors.roomId.message!)}</p>}
               </div>
 
               <div>
                 <label
                   htmlFor="type"
                   className="block text-sm font-medium text-gray-700">
-                  Maintenance Type
+                  {t('properties.calendar.form.maintenanceType')}
                 </label>
                 <select
                   id="type"
                   {...register("type")}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                  <option value="">Select type</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="repair">Repair</option>
-                  <option value="inspection">Inspection</option>
-                  <option value="other">Other</option>
+                  <option value="">{t('properties.calendar.form.selectType')}</option>
+                  <option value="cleaning">{t('properties.calendar.form.types.cleaning')}</option>
+                  <option value="repair">{t('properties.calendar.form.types.repair')}</option>
+                  <option value="inspection">{t('properties.calendar.form.types.inspection')}</option>
+                  <option value="other">{t('properties.calendar.form.types.other')}</option>
                 </select>
-                {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
+                {errors.type && <p className="mt-1 text-sm text-red-600">{t(errors.type.message!)}</p>}
               </div>
 
               <div>
                 <label
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700">
-                  Description
+                  {t('properties.calendar.form.description')}
                 </label>
                 <textarea
                   id="description"
@@ -230,7 +232,7 @@ export default function RoomCalendarPage() {
                   rows={3}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 />
-                {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
+                {errors.description && <p className="mt-1 text-sm text-red-600">{t(errors.description.message!)}</p>}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -238,7 +240,7 @@ export default function RoomCalendarPage() {
                   <label
                     htmlFor="startDate"
                     className="block text-sm font-medium text-gray-700">
-                    Start Date
+                    {t('properties.calendar.form.startDate')}
                   </label>
                   <input
                     type="datetime-local"
@@ -247,14 +249,14 @@ export default function RoomCalendarPage() {
                     defaultValue={selectedSlot?.start.toISOString().slice(0, 16)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
-                  {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate.message}</p>}
+                  {errors.startDate && <p className="mt-1 text-sm text-red-600">{t(errors.startDate.message!)}</p>}
                 </div>
 
                 <div>
                   <label
                     htmlFor="endDate"
                     className="block text-sm font-medium text-gray-700">
-                    End Date
+                    {t('properties.calendar.form.endDate')}
                   </label>
                   <input
                     type="datetime-local"
@@ -263,7 +265,7 @@ export default function RoomCalendarPage() {
                     defaultValue={selectedSlot?.end.toISOString().slice(0, 16)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   />
-                  {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate.message}</p>}
+                  {errors.endDate && <p className="mt-1 text-sm text-red-600">{t(errors.endDate.message!)}</p>}
                 </div>
               </div>
 
@@ -276,12 +278,12 @@ export default function RoomCalendarPage() {
                     reset();
                   }}
                   className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                  Schedule
+                  {t('common.save')}
                 </button>
               </div>
             </form>

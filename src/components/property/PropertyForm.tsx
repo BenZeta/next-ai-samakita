@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import { useLoadScript } from '@react-google-maps/api';
 import Image from 'next/image';
+import { useTranslations } from 'use-intl';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -52,8 +53,13 @@ const FACILITIES = [
   'Water Heater',
 ];
 
-export function PropertyForm() {
+interface PropertyFormProps {
+  initialData?: PropertyFormData;
+}
+
+export function PropertyForm({ initialData }: PropertyFormProps) {
   const router = useRouter();
+  const t = useTranslations('properties');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
     null
@@ -234,13 +240,11 @@ export function PropertyForm() {
         return (
           <div className="space-y-6">
             <div>
-              <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
-                Property Name
-              </label>
+              <label className="text-sm font-medium">{t('form.name')}</label>
               <input
                 type="text"
                 id="name"
-                placeholder="Enter property name"
+                placeholder={t('form.name')}
                 {...register('name')}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
@@ -250,16 +254,11 @@ export function PropertyForm() {
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="mb-2 block text-sm font-medium text-foreground"
-              >
-                Description
-              </label>
+              <label className="text-sm font-medium">{t('form.description')}</label>
               <textarea
                 id="description"
                 rows={4}
-                placeholder="Enter property description"
+                placeholder={t('form.description')}
                 {...register('description')}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
@@ -271,13 +270,11 @@ export function PropertyForm() {
             </div>
 
             <div>
-              <label htmlFor="address" className="mb-2 block text-sm font-medium text-foreground">
-                Address
-              </label>
+              <label className="text-sm font-medium">{t('form.address')}</label>
               <input
                 type="text"
                 id="address"
-                placeholder="Enter property address"
+                placeholder={t('form.address')}
                 {...register('address')}
                 className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
               />
@@ -294,13 +291,11 @@ export function PropertyForm() {
           <div className="space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label htmlFor="city" className="mb-2 block text-sm font-medium text-foreground">
-                  City
-                </label>
+                <label className="text-sm font-medium">{t('form.city')}</label>
                 <input
                   type="text"
                   id="city"
-                  placeholder="Enter city"
+                  placeholder={t('form.city')}
                   {...register('city')}
                   className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
@@ -312,16 +307,11 @@ export function PropertyForm() {
               </div>
 
               <div>
-                <label
-                  htmlFor="province"
-                  className="mb-2 block text-sm font-medium text-foreground"
-                >
-                  Province
-                </label>
+                <label className="text-sm font-medium">{t('form.province')}</label>
                 <input
                   type="text"
                   id="province"
-                  placeholder="Enter province"
+                  placeholder={t('form.province')}
                   {...register('province')}
                   className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
@@ -335,16 +325,11 @@ export function PropertyForm() {
 
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label
-                  htmlFor="postalCode"
-                  className="mb-2 block text-sm font-medium text-foreground"
-                >
-                  Postal Code
-                </label>
+                <label className="text-sm font-medium">{t('form.postalCode')}</label>
                 <input
                   type="text"
                   id="postalCode"
-                  placeholder="Enter postal code"
+                  placeholder={t('form.postalCode')}
                   {...register('postalCode')}
                   className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
@@ -356,15 +341,13 @@ export function PropertyForm() {
               </div>
 
               <div>
-                <label htmlFor="dueDate" className="mb-2 block text-sm font-medium text-foreground">
-                  Due Date
-                </label>
+                <label className="text-sm font-medium">{t('form.dueDate')}</label>
                 <input
                   type="number"
                   id="dueDate"
                   min="1"
                   max="31"
-                  placeholder="Enter due date (1-31)"
+                  placeholder={t('form.dueDate')}
                   {...register('dueDate', { valueAsNumber: true })}
                   className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
                 />
@@ -381,9 +364,7 @@ export function PropertyForm() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Select Location
-              </label>
+              <label className="text-sm font-medium">{t('form.selectLocation')}</label>
               <div className="h-[400px] overflow-hidden rounded-lg border border-input">
                 <Map onLocationSelect={handleLocationSelect} selectedLocation={selectedLocation} />
               </div>
@@ -394,9 +375,7 @@ export function PropertyForm() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Select Facilities
-              </label>
+              <label className="text-sm font-medium">{t('form.selectFacilities')}</label>
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {FACILITIES.map(facility => (
                   <button
@@ -420,9 +399,7 @@ export function PropertyForm() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
-                Upload Property Images
-              </label>
+              <label className="text-sm font-medium">{t('form.uploadPropertyImages')}</label>
               <div className="grid gap-4">
                 <div className="flex items-center justify-center">
                   <label
@@ -431,10 +408,10 @@ export function PropertyForm() {
                   >
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <p className="mb-2 text-sm text-foreground">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+                        <span className="font-semibold">{t('form.clickToUpload')}</span> {t('form.orDragAndDrop')}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        PNG, JPG or WEBP (MAX. 5MB per image)
+                        {t('form.acceptedFormats')}
                       </p>
                     </div>
                     <input
@@ -476,11 +453,11 @@ export function PropertyForm() {
   };
 
   const stepTitles = [
-    'Basic Information',
-    'Location Details',
-    'Map Location',
-    'Facilities',
-    'Images',
+    t('form.basicInformation'),
+    t('form.locationDetails'),
+    t('form.mapLocation'),
+    t('form.facilities'),
+    t('form.images'),
   ];
 
   return (
@@ -488,9 +465,9 @@ export function PropertyForm() {
       <div className="relative mb-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
-            Step {currentStep} of 5: {stepTitles[currentStep - 1]}
+            {t('form.step')} {currentStep} {t('form.of')} 5: {stepTitles[currentStep - 1]}
           </h2>
-          <span className="text-sm text-muted-foreground">{calculateProgress()}% Complete</span>
+          <span className="text-sm text-muted-foreground">{calculateProgress()}% {t('form.complete')}</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div
@@ -509,7 +486,7 @@ export function PropertyForm() {
             onClick={handleBack}
             className="rounded-lg border border-input bg-background px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            Back
+            {t('common.back')}
           </button>
         )}
         {currentStep < 5 ? (
@@ -518,7 +495,7 @@ export function PropertyForm() {
             onClick={handleNext}
             className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            Next
+            {t('common.next')}
           </button>
         ) : (
           <button
@@ -526,7 +503,7 @@ export function PropertyForm() {
             disabled={isLoading}
             className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? 'Creating...' : 'Create Property'}
+            {isLoading ? t('common.creating') : t('form.createProperty')}
           </button>
         )}
       </div>

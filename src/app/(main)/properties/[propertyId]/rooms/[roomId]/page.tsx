@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'use-intl';
 
 interface Tenant {
   id: string;
@@ -29,13 +30,14 @@ export default function RoomDetailPage() {
     description: '',
     date: new Date().toISOString().split('T')[0],
   });
+  const t = useTranslations('properties.room');
 
   const { data: room, isLoading } = api.room.get.useQuery({ id: roomId });
   const utils = api.useContext();
 
   const updateRoomStatus = api.room.updateStatus.useMutation({
     onSuccess: () => {
-      toast.success('Room status updated successfully');
+      toast.success(t('toast.statusUpdated'));
       utils.room.get.invalidate({ id: roomId });
       utils.maintenance.getStats.invalidate();
       if (room?.status !== RoomStatus.MAINTENANCE) {
@@ -52,7 +54,7 @@ export default function RoomDetailPage() {
 
   const createExpense = api.expense.create.useMutation({
     onSuccess: () => {
-      toast.success('Maintenance expense added successfully');
+      toast.success(t('toast.expenseAdded'));
       setShowExpenseForm(false);
       setIsUpdating(false);
       utils.expense.list.invalidate();
@@ -90,7 +92,7 @@ export default function RoomDetailPage() {
   const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!maintenanceExpense.amount || !maintenanceExpense.description) {
-      toast.error('Please fill in all required fields');
+      toast.error(t('toast.fillRequired'));
       return;
     }
 
@@ -122,7 +124,7 @@ export default function RoomDetailPage() {
   if (!room) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
-        <p className="text-muted-foreground">Room not found</p>
+        <p className="text-muted-foreground">{t('notFound')}</p>
       </div>
     );
   }
@@ -137,7 +139,7 @@ export default function RoomDetailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Room {room.number}</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('title', { number: room.number })}</h1>
           <p className="mt-2 text-muted-foreground">{room.property.name}</p>
         </div>
         <div className="flex gap-4">
@@ -145,7 +147,7 @@ export default function RoomDetailPage() {
             href={`/properties/${propertyId}/rooms/${roomId}/edit`}
             className="inline-flex items-center gap-2 rounded-lg bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
           >
-            Edit Room
+            {t('editRoom')}
           </Link>
           <button
             onClick={handleMaintenanceToggle}
@@ -157,20 +159,20 @@ export default function RoomDetailPage() {
             }`}
           >
             <Wrench className="h-4 w-4" />
-            {room.status === RoomStatus.MAINTENANCE ? 'End Maintenance' : 'Set to Maintenance'}
+            {room.status === RoomStatus.MAINTENANCE ? t('endMaintenance') : t('setMaintenance')}
           </button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-3">
         <div className="rounded-lg bg-card p-6 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-primary/10 p-3">
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Status</p>
-              <p className="mt-1 font-medium text-foreground">{room.status}</p>
+              <p className="text-sm text-muted-foreground">{t('status')}</p>
+              <p className="mt-1 font-medium text-foreground">{t(`statusTypes.${room.status.toLowerCase()}`)}</p>
             </div>
           </div>
         </div>
@@ -181,9 +183,9 @@ export default function RoomDetailPage() {
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Price</p>
+              <p className="text-sm text-muted-foreground">{t('price')}</p>
               <p className="mt-1 font-medium text-foreground">
-                Rp {room.price.toLocaleString()} /month
+                {t('priceValue', { price: room.price.toLocaleString() })}
               </p>
             </div>
           </div>
@@ -195,22 +197,10 @@ export default function RoomDetailPage() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Current Tenant</p>
+              <p className="text-sm text-muted-foreground">{t('currentTenant')}</p>
               <p className="mt-1 font-medium text-foreground">
-                {activeTenant ? activeTenant.name : 'No tenant'}
+                {activeTenant ? activeTenant.name : t('noTenant')}
               </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Room Type</p>
-              <p className="mt-1 font-medium text-foreground">{room.type}</p>
             </div>
           </div>
         </div>
@@ -218,30 +208,7 @@ export default function RoomDetailPage() {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Room Details</h2>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Size</p>
-              <p className="mt-1 text-foreground">{room.size} m²</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Amenities</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {room.amenities.map((amenity, index) => (
-                  <span
-                    key={index}
-                    className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
-                  >
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Tenant History</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t('tenantHistory')}</h2>
           <div className="space-y-4">
             {room.tenants && room.tenants.length > 0 ? (
               (room.tenants as Tenant[]).map(tenant => (
@@ -253,19 +220,19 @@ export default function RoomDetailPage() {
                     <p className="font-medium text-foreground">{tenant.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(tenant.startDate!).toLocaleDateString()} -{' '}
-                      {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : 'Present'}
+                      {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : t('present')}
                     </p>
                   </div>
                   <Link
                     href={`/tenants/${tenant.id}`}
                     className="text-sm text-primary hover:underline"
                   >
-                    View Details
+                    {t('viewDetails')}
                   </Link>
                 </div>
               ))
             ) : (
-              <p className="text-center text-muted-foreground">No tenant history</p>
+              <p className="text-center text-muted-foreground">{t('noTenantHistory')}</p>
             )}
           </div>
         </div>
@@ -273,39 +240,30 @@ export default function RoomDetailPage() {
 
       {showMaintenanceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-black/50"
-            onClick={() => setShowMaintenanceModal(false)}
-          />
+          <div className="fixed inset-0 bg-black/50" onClick={() => setShowMaintenanceModal(false)} />
           <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center">
-              <div className="mr-4 rounded-full bg-primary/10 p-3">
-                <Wrench className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-lg font-medium text-card-foreground">
-                {room?.status === RoomStatus.MAINTENANCE
-                  ? 'End Maintenance'
-                  : 'Set Room to Maintenance'}
-              </h3>
-            </div>
-            <p className="mb-6 text-muted-foreground">
-              {room?.status === RoomStatus.MAINTENANCE
-                ? 'Are you sure you want to mark this room as available? This will end the maintenance period.'
-                : 'Are you sure you want to set this room to maintenance? This will mark the room as unavailable.'}
+            <h3 className="mb-4 text-lg font-medium">
+              {room.status === RoomStatus.MAINTENANCE
+                ? t('maintenance.endTitle')
+                : t('maintenance.startTitle')}
+            </h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              {room.status === RoomStatus.MAINTENANCE
+                ? t('maintenance.endMessage')
+                : t('maintenance.startMessage')}
             </p>
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowMaintenanceModal(false)}
-                className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+                className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
               >
-                Cancel
+                {t('maintenance.cancel')}
               </button>
               <button
                 onClick={confirmMaintenanceToggle}
-                disabled={isUpdating}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                Confirm
+                {t('maintenance.confirm')}
               </button>
             </div>
           </div>
@@ -317,7 +275,7 @@ export default function RoomDetailPage() {
           <div className="fixed inset-0 bg-black/50" onClick={() => setShowExpenseForm(false)} />
           <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-card-foreground">Add Maintenance Expense</h3>
+              <h3 className="text-lg font-medium text-card-foreground">{t('expense.title')}</h3>
               <button
                 onClick={() => setShowExpenseForm(false)}
                 className="rounded-full p-1 text-muted-foreground hover:bg-accent"
@@ -338,36 +296,34 @@ export default function RoomDetailPage() {
             </div>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">Amount</label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expense.amount')}</label>
                 <input
                   type="number"
                   value={maintenanceExpense.amount}
                   onChange={e =>
                     setMaintenanceExpense({ ...maintenanceExpense, amount: e.target.value })
                   }
-                  placeholder="Enter amount"
+                  placeholder={t('expense.amountPlaceholder')}
                   className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  Description
-                </label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expense.description')}</label>
                 <textarea
                   value={maintenanceExpense.description}
                   onChange={e =>
                     setMaintenanceExpense({ ...maintenanceExpense, description: e.target.value })
                   }
-                  placeholder="Enter maintenance details"
+                  placeholder={t('expense.descriptionPlaceholder')}
                   className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">Date</label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expense.date')}</label>
                 <input
                   type="date"
                   value={maintenanceExpense.date}
@@ -388,14 +344,14 @@ export default function RoomDetailPage() {
                   }}
                   className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
                 >
-                  Skip
+                  {t('expense.skip')}
                 </button>
                 <button
                   type="submit"
                   disabled={createExpense.isLoading}
                   className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {createExpense.isLoading ? 'Adding...' : 'Add Expense'}
+                  {createExpense.isLoading ? t('expense.adding') : t('expense.add')}
                 </button>
               </div>
             </form>

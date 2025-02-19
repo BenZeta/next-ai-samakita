@@ -1,6 +1,7 @@
 import { Building2, Home, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'use-intl';
 
 interface PropertyCardProps {
   property: {
@@ -17,6 +18,7 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property }: PropertyCardProps) {
+  const t = useTranslations();
   const totalRooms = property.rooms.length;
   const occupiedRooms = property.rooms.filter(room => room.tenants.length > 0).length;
   const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
@@ -38,6 +40,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         ) : (
           <div className="flex h-full items-center justify-center bg-muted">
             <Building2 className="h-12 w-12 text-muted-foreground" />
+            <p>{t('properties.card.noImage')}</p>
           </div>
         )}
       </div>
@@ -53,14 +56,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Home className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-foreground">{totalRooms}</p>
-              <p className="text-xs text-muted-foreground">Rooms</p>
+              <p className="text-xs text-muted-foreground">{t('properties.card.rooms')}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <Users className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium text-foreground">{occupancyRate}%</p>
-              <p className="text-xs text-muted-foreground">Occupied</p>
+              <p className="text-xs text-muted-foreground">{t('properties.card.occupancy')}</p>
             </div>
           </div>
         </div>
@@ -76,7 +79,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
           ))}
           {property.facilities.length > 3 && (
             <span className="rounded-full bg-accent px-2 py-1 text-xs text-accent-foreground">
-              +{property.facilities.length - 3} more
+              +{property.facilities.length - 3} {t('properties.card.more')}
             </span>
           )}
         </div>

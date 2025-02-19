@@ -10,7 +10,8 @@
     "add": "Tambah",
     "search": "Cari",
     "filter": "Filter",
-    "actions": "Aksi"
+    "actions": "Aksi",
+    "creating": "Membuat..."
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -26,7 +27,84 @@
     "occupancyRate": "Tingkat Okupansi",
     "monthlyTrend": "Tren Bulanan",
     "maintenanceTracker": "Pelacak Pemeliharaan",
-    "tenantOverview": "Ikhtisar Penyewa"
+    "tenantOverview": "Ikhtisar Penyewa",
+    "businessNotVerified": "Bisnis kamu belum terverifikasi",
+    "completeVerification": "Silakan lengkapi verifikasi bisnis untuk mengakses semua fitur",
+    "loadDataError": "Gagal memuat data properti",
+    "refreshPage": "Silakan refresh halaman",
+    "noOccupancyData": "Tidak ada data okupansi",
+    "currentRate": "Tingkat Saat Ini",
+    "timeRange": {
+      "thisWeek": "Minggu Ini",
+      "thisMonth": "Bulan Ini",
+      "thisYear": "Tahun Ini",
+      "vsPrevious": "vs sebelumnya"
+    },
+    "allProperties": "Semua Properti",
+    "widgets": {
+      "common": {
+        "viewAll": "Lihat Semua",
+        "room": "Kamar",
+        "status": "Status",
+        "total": "Total",
+        "description": "Deskripsi",
+        "reported": "Dilaporkan",
+        "name": "Nama",
+        "leasePeriod": "Periode Sewa",
+        "rent": "Sewa"
+      },
+      "monthlyTrend": {
+        "title": "Tren Bulanan",
+        "noData": "Data tren tidak tersedia",
+        "revenue": "Pendapatan",
+        "expenses": "Pengeluaran",
+        "profit": "Keuntungan",
+        "timeRange": {
+          "thisMonth": "Bulan Ini",
+          "thisQuarter": "Kuartal Ini",
+          "thisYear": "Tahun Ini"
+        },
+        "stats": {
+          "revenue": "Pendapatan",
+          "expenses": "Pengeluaran",
+          "netProfit": "Laba Bersih",
+          "profitMargin": "Margin Laba"
+        }
+      },
+      "maintenanceTracker": {
+        "title": "Pelacak Pemeliharaan",
+        "noData": "Data pemeliharaan tidak ada",
+        "status": {
+          "pending": "Menunggu",
+          "inProgress": "Sedang Dikerjakan",
+          "completed": "Selesai"
+        },
+        "priority": {
+          "high": "Prioritas Tinggi",
+          "medium": "Prioritas Sedang",
+          "low": "Prioritas Rendah"
+        },
+        "viewAllRequests": "Lihat Semua Permintaan"
+      },
+      "tenantOverview": {
+        "title": "Ikhtisar Penyewa",
+        "noData": "Data penyewa tidak ada",
+        "totalTenants": "Total Penyewa",
+        "activeLeases": "Sewa Aktif",
+        "upcomingRenewals": "Perpanjangan Mendatang",
+        "vacantUnits": "Unit Kosong",
+        "viewAllTenants": "Lihat Semua Penyewa",
+        "stats": {
+          "totalTenants": "Total Penyewa",
+          "activeTenants": "Penyewa Aktif",
+          "inactiveTenants": "Penyewa Tidak Aktif",
+          "upcomingMoveouts": "Akan Keluar"
+        },
+        "noTenantsYet": "Belum ada penyewa",
+        "getStarted": "Mulai dengan menambahkan penyewa pertama Anda",
+        "addTenant": "Tambah Penyewa"
+      }
+    }
   },
   "properties": {
     "title": "Properti",
@@ -35,7 +113,378 @@
     "searchProperties": "Cari properti...",
     "noProperties": "Tidak ada properti ditemukan",
     "propertyDetails": "Detail Properti",
-    "rooms": "Kamar"
+    "rooms": "Kamar",
+    "form": {
+      "name": "Nama Properti",
+      "description": "Deskripsi",
+      "address": "Alamat",
+      "city": "Kota",
+      "province": "Provinsi",
+      "postalCode": "Kode Pos",
+      "dueDate": "Tanggal Jatuh Tempo",
+      "selectLocation": "Pilih Lokasi",
+      "selectFacilities": "Pilih Fasilitas",
+      "uploadPropertyImages": "Unggah Foto Properti",
+      "clickToUpload": "Klik untuk unggah",
+      "orDragAndDrop": "atau seret dan lepas",
+      "acceptedFormats": "PNG, JPG atau JPEG (maks. 10MB)",
+      "basicInformation": "Informasi Dasar",
+      "locationDetails": "Detail Lokasi",
+      "mapLocation": "Lokasi di Peta",
+      "facilities": "Fasilitas",
+      "images": "Foto",
+      "step": "Langkah",
+      "of": "dari",
+      "complete": "selesai",
+      "createProperty": "Buat Properti"
+    },
+    "filters": {
+      "all": "Semua Properti",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif", 
+      "searchPlaceholder": "Cari properti..."
+    },
+    "card": {
+      "rooms": "Kamar",
+      "tenants": "Penyewa",
+      "occupancy": "Okupansi",
+      "revenue": "Pendapatan Bulanan",
+      "viewDetails": "Lihat Detail",
+      "editProperty": "Edit Properti",
+      "noImage": "Tidak ada gambar"
+    },
+    "empty": {
+      "title": "Tidak ada properti",
+      "description": "Mulai dengan menambahkan properti pertama Anda",
+      "addProperty": "Tambah Properti"
+    },
+    "pages": {
+      "list": {
+        "loading": "Memuat properti...",
+        "searching": "Mencari...",
+        "pagination": {
+          "page": "Halaman",
+          "of": "dari",
+          "previous": "Sebelumnya",
+          "next": "Selanjutnya"
+        }
+      },
+      "new": {
+        "title": "Tambah Properti Baru"
+      },
+      "details": {
+        "loading": "Memuat detail properti...",
+        "notFound": "Properti tidak ditemukan",
+        "calendar": "Kalender",
+        "addRoom": "Tambah Kamar",
+        "propertyDetails": "Detail Properti",
+        "address": "Alamat",
+        "description": "Deskripsi",
+        "facilities": "Fasilitas",
+        "rooms": "Kamar",
+        "viewDetails": "Lihat Detail",
+        "roomInfo": {
+          "sqm": "m²",
+          "status": {
+            "available": "Tersedia",
+            "occupied": "Terisi",
+            "maintenance": "Pemeliharaan"
+          }
+        }
+      },
+      "room": {
+        "new": {
+          "title": "Tambah Kamar Baru"
+        },
+        "edit": {
+          "title": "Edit Kamar",
+          "loading": "Memuat detail kamar...",
+          "notFound": "Kamar tidak ditemukan"
+        },
+        "details": {
+          "loading": "Memuat detail kamar...",
+          "notFound": "Kamar tidak ditemukan",
+          "editRoom": "Edit Kamar",
+          "maintenanceMode": {
+            "start": "Atur ke Pemeliharaan",
+            "end": "Akhiri Pemeliharaan",
+            "confirm": {
+              "title": "Atur Kamar ke Pemeliharaan",
+              "endTitle": "Akhiri Pemeliharaan",
+              "message": "Apakah kamu yakin ingin mengatur kamar ini ke pemeliharaan? Ini akan menandai kamar sebagai tidak tersedia.",
+              "endMessage": "Apakah kamu yakin ingin menandai kamar ini sebagai tersedia? Ini akan mengakhiri periode pemeliharaan.",
+              "cancel": "Batal",
+              "confirm": "Konfirmasi"
+            }
+          },
+          "stats": {
+            "status": "Status",
+            "price": "Harga",
+            "pricePerMonth": "/bulan",
+            "currentTenant": "Penyewa Saat Ini",
+            "noTenant": "Tidak ada penyewa",
+            "roomType": "Tipe Kamar",
+            "size": "Ukuran",
+            "amenities": "Fasilitas"
+          },
+          "maintenance": {
+            "form": {
+              "title": "Tambah Biaya Pemeliharaan",
+              "amount": "Jumlah",
+              "description": "Deskripsi",
+              "date": "Tanggal",
+              "skip": "Lewati",
+              "submit": "Tambah Biaya",
+              "submitting": "Menambahkan..."
+            }
+          }
+        },
+        "notFound": "Kamar tidak ditemukan",
+        "title": "Kamar {number}",
+        "editRoom": "Edit Kamar",
+        "setMaintenance": "Atur ke Pemeliharaan",
+        "endMaintenance": "Akhiri Pemeliharaan",
+        "status": "Status",
+        "statusTypes": {
+          "available": "Tersedia",
+          "occupied": "Terisi",
+          "maintenance": "Pemeliharaan"
+        },
+        "price": "Harga",
+        "priceValue": "Rp {price} /bulan",
+        "currentTenant": "Penyewa Saat Ini",
+        "noTenant": "Tidak ada penyewa",
+        "tenantHistory": "Riwayat Penyewa",
+        "present": "Sekarang",
+        "viewDetails": "Lihat Detail",
+        "noTenantHistory": "Tidak ada riwayat penyewa",
+        "maintenance": {
+          "startTitle": "Atur Kamar ke Pemeliharaan",
+          "endTitle": "Akhiri Pemeliharaan",
+          "startMessage": "Apakah kamu yakin ingin mengatur kamar ini ke pemeliharaan? Ini akan menandai kamar sebagai tidak tersedia.",
+          "endMessage": "Apakah kamu yakin ingin menandai kamar ini sebagai tersedia? Ini akan mengakhiri periode pemeliharaan.",
+          "cancel": "Batal",
+          "confirm": "Konfirmasi"
+        },
+        "expense": {
+          "title": "Tambah Biaya Pemeliharaan",
+          "amount": "Jumlah",
+          "amountPlaceholder": "Masukkan jumlah",
+          "description": "Deskripsi",
+          "descriptionPlaceholder": "Masukkan detail pemeliharaan",
+          "date": "Tanggal",
+          "skip": "Lewati",
+          "add": "Tambah Biaya",
+          "adding": "Menambahkan..."
+        },
+        "toast": {
+          "statusUpdated": "Status kamar berhasil diperbarui",
+          "expenseAdded": "Biaya pemeliharaan berhasil ditambahkan",
+          "fillRequired": "Mohon isi semua field yang diperlukan"
+        },
+        "form": {
+          "number": "Nomor Kamar",
+          "type": "Tipe Kamar",
+          "selectType": "Pilih tipe",
+          "types": {
+            "single": "Single",
+            "double": "Double",
+            "suite": "Suite",
+            "studio": "Studio"
+          },
+          "size": "Ukuran (m²)",
+          "price": "Harga per Bulan",
+          "amenities": "Fasilitas",
+          "amenities": {
+            "bathroom": "Kamar Mandi Dalam",
+            "ac": "AC",
+            "balcony": "Balkon",
+            "tv": "TV",
+            "fridge": "Kulkas Mini",
+            "desk": "Meja",
+            "wardrobe": "Lemari",
+            "waterHeater": "Pemanas Air",
+            "window": "Jendela"
+          },
+          "create": "Buat Kamar",
+          "update": "Perbarui Kamar",
+          "creating": "Membuat...",
+          "updating": "Memperbarui...",
+          "validation": {
+            "numberRequired": "Nomor kamar harus diisi",
+            "sizeRequired": "Ukuran harus lebih besar dari 0",
+            "amenitiesRequired": "Minimal satu fasilitas harus dipilih",
+            "priceRequired": "Harga harus lebih besar atau sama dengan 0"
+          },
+          "toast": {
+            "created": "Kamar berhasil dibuat!",
+            "updated": "Kamar berhasil diperbarui!",
+            "error": "Gagal menyimpan kamar. Mohon periksa form dan coba lagi."
+          }
+        }
+      },
+      "expenses": {
+        "title": "Pengeluaran Properti",
+        "noPropertyId": "ID properti tidak ditemukan"
+      },
+      "tenants": {
+        "new": {
+          "loading": "Memuat...",
+          "noRooms": "Tidak ada kamar tersedia di properti ini",
+          "title": "Tambah Penyewa Baru"
+        },
+        "checkIn": {
+          "title": "Check-in",
+          "loading": "Memuat detail penyewa...",
+          "notFound": "Penyewa tidak ditemukan",
+          "room": "Kamar"
+        },
+        "payments": {
+          "title": "Pembayaran",
+          "loading": "Memuat detail penyewa...",
+          "notFound": "Penyewa tidak ditemukan",
+          "room": "Kamar"
+        }
+      }
+    },
+    "detail": {
+      "notFound": "Properti tidak ditemukan",
+      "calendar": "Kalender",
+      "addRoom": "Tambah Kamar",
+      "propertyDetails": "Detail Properti",
+      "address": "Alamat",
+      "description": "Deskripsi",
+      "facilities": "Fasilitas",
+      "rooms": "Kamar",
+      "roomNumber": "Kamar {number}",
+      "roomDetails": "{size} m² • {type}",
+      "status": {
+        "available": "Tersedia",
+        "occupied": "Terisi",
+        "maintenance": "Pemeliharaan"
+      },
+      "price": "Rp {price}",
+      "viewDetails": "Lihat Detail"
+    },
+    "tenant": {
+      "new": {
+        "loading": "Memuat...",
+        "noRooms": "Tidak ada kamar tersedia di properti ini",
+        "title": "Tambah Penyewa Baru"
+      },
+      "checkIn": {
+        "loading": "Memuat detail penyewa...",
+        "notFound": "Penyewa tidak ditemukan",
+        "title": "Check-in",
+        "room": "Kamar"
+      },
+      "payments": {
+        "loading": "Memuat detail penyewa...",
+        "notFound": "Penyewa tidak ditemukan",
+        "title": "Pembayaran",
+        "room": "Kamar"
+      },
+      "form": {
+        "validation": {
+          "nameRequired": "Nama harus diisi",
+          "emailInvalid": "Format email tidak valid",
+          "phoneInvalid": "Format nomor telepon tidak valid. Harus diawali dengan + diikuti kode negara dan nomor",
+          "depositRequired": "Deposit harus diisi",
+          "startDateRequired": "Tanggal mulai harus diisi", 
+          "endDateRequired": "Tanggal selesai harus diisi"
+        },
+        "name": "Nama",
+        "email": "Email",
+        "phone": "Nomor Telepon",
+        "phonePlaceholder": "Masukkan nomor telepon",
+        "ktpNumber": "Nomor KTP (Opsional)",
+        "rentAmount": "Jumlah Sewa",
+        "price": "Rp {price}",
+        "depositAmount": "Jumlah Deposit",
+        "startDate": "Tanggal Mulai",
+        "endDate": "Tanggal Selesai",
+        "submitting": "Menyimpan...",
+        "submit": "Simpan",
+        "toast": {
+          "roomNotFound": "Detail kamar tidak ditemukan",
+          "success": "Penyewa berhasil ditambahkan!",
+          "error": "Gagal menambahkan penyewa. Silakan coba lagi."
+        }
+      }
+    },
+    "calendar": {
+      "title": "Kalender Ketersediaan Kamar",
+      "loading": "Memuat...",
+      "scheduleMaintenance": "Jadwalkan Pemeliharaan",
+      "toast": {
+        "scheduled": "Pemeliharaan berhasil dijadwalkan"
+      },
+      "form": {
+        "room": "Kamar",
+        "selectRoom": "Pilih kamar",
+        "maintenanceType": "Jenis Pemeliharaan",
+        "selectType": "Pilih jenis",
+        "types": {
+          "cleaning": "Pembersihan",
+          "repair": "Perbaikan",
+          "inspection": "Inspeksi",
+          "other": "Lainnya"
+        },
+        "description": "Deskripsi",
+        "startDate": "Tanggal Mulai",
+        "endDate": "Tanggal Selesai",
+        "validation": {
+          "roomRequired": "Kamar harus dipilih",
+          "descriptionRequired": "Deskripsi harus diisi"
+        }
+      },
+      "events": {
+        "occupancy": "Kamar {room} - {tenant}",
+        "maintenance": "Kamar {room} - {title}"
+      },
+      "resources": {
+        "room": "Kamar {number}"
+      }
+    },
+    "room": {
+      "new": {
+        "title": "Tambah Kamar Baru"
+      },
+      "form": {
+        "number": "Nomor Kamar",
+        "type": "Tipe Kamar",
+        "selectType": "Pilih tipe",
+        "size": "Ukuran (m²)",
+        "price": "Harga per Bulan",
+        "amenities": {
+          "title": "Fasilitas",
+          "bathroom": "Kamar Mandi Dalam",
+          "ac": "AC",
+          "balcony": "Balkon",
+          "tv": "TV",
+          "fridge": "Kulkas Mini",
+          "desk": "Meja",
+          "wardrobe": "Lemari",
+          "waterHeater": "Pemanas Air",
+          "window": "Jendela"
+        },
+        "create": "Buat Kamar",
+        "update": "Perbarui Kamar",
+        "creating": "Membuat...",
+        "updating": "Memperbarui...",
+        "validation": {
+          "numberRequired": "Nomor kamar harus diisi",
+          "sizeRequired": "Ukuran harus lebih besar dari 0",
+          "amenitiesRequired": "Minimal satu fasilitas harus dipilih",
+          "priceRequired": "Harga harus lebih besar atau sama dengan 0"
+        },
+        "toast": {
+          "created": "Kamar berhasil dibuat!",
+          "updated": "Kamar berhasil diperbarui!",
+          "error": "Gagal menyimpan kamar. Mohon periksa form dan coba lagi."
+        }
+      }
+    }
   },
   "tenants": {
     "title": "Penyewa",
