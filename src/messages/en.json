@@ -409,11 +409,174 @@
     "title": "Tenants",
     "subtitle": "Manage your tenants",
     "addTenant": "Add Tenant",
-    "searchTenants": "Search tenants...",
+    "searchTenants": "Search tenants by name, email, or room...",
     "noTenants": "No tenants found",
+    "tenant": "Tenant",
     "status": {
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "all": "All Status"
+    },
+    "noResults": {
+      "withFilters": "Try adjusting your search or filter to find what you're looking for.",
+      "noFilters": "Get started by adding your first tenant."
+    },
+    "details": {
+      "room": "Room",
+      "email": "Email",
+      "phone": "Phone",
+      "price": "Rp {price} /month",
+      "tenant": "Tenant",
+      "viewDetails": "View Details",
+      "notFound": "Tenant not found",
+      "personalInfo": "Personal Information",
+      "ktpNumber": "KTP: {number}",
+      "checkInItems": "Check-in Items",
+      "noCheckInItems": "No check-in items recorded yet.",
+      "payments": {
+        "title": "Payments",
+        "noPayments": "No payments yet",
+        "addPayment": "Add Payment",
+        "form": {
+          "amount": "Amount",
+          "date": "Date",
+          "notes": "Notes",
+          "submit": "Save",
+          "submitting": "Saving..."
+        },
+        "list": {
+          "amount": "Amount",
+          "date": "Date",
+          "notes": "Notes",
+          "status": "Status",
+          "receipt": "Receipt",
+          "actions": "Actions"
+        },
+        "status1": {
+          "paid": "Paid",
+          "pending": "Pending",
+          "overdue": "Overdue"
+        },
+        "upload": {
+          "button": "Upload Receipt",
+          "success": "Payment receipt uploaded successfully!",
+          "error": "Failed to upload payment receipt"
+        },
+        "delete": {
+          "confirmTitle": "Delete Payment",
+          "confirmMessage": "Are you sure you want to delete this payment?",
+          "success": "Payment deleted successfully",
+          "error": "Failed to delete payment"
+        },
+        "method": "Payment Method",
+        "success": "Payment created successfully!",
+        "status": {
+          "success": "Payment status updated successfully!"
+        }
+      },
+      "extendLease": "Extend Lease",
+      "deactivateTenant": "Deactivate Tenant",
+      "roomAt": "Room {number} at {property}",
+      "leasePeriod": "Lease Period:",
+      "rentAmount": "Rent Amount:",
+      "viewKtp": "View KTP",
+      "contract": {
+        "title": "Contract Status",
+        "generate": "Generate Contract",
+        "generating": "Generating Contract...",
+        "upload": "Upload Contract",
+        "uploading": "Uploading...",
+        "view": "View Contract",
+        "success": "Contract generated successfully!",
+        "uploadSuccess": "Contract uploaded successfully",
+        "error": "Failed to generate contract",
+        "uploadError": "Failed to upload contract",
+        "fileError": "Please upload a PDF file",
+        "sizeError": "File size should be less than 5MB",
+        "status": {
+          "generated": "Contract Generated",
+          "none": "No Contract"
+        }
+      },
+      "lease": {
+        "confirmTitle": "Confirm Lease Extension",
+        "confirmMessage": "Are you sure you want to extend {name}'s lease by one month? This action cannot be undone.",
+        "confirmButton": "Confirm Extension",
+        "extended": "Lease extended successfully",
+        "error": "Failed to extend lease. Please try again."
+      },
+      "deactivate": {
+        "confirmTitle": "Deactivate Tenant",
+        "confirmMessage": "Are you sure you want to deactive this tenant? This will also mark their room as available. This action cannot be undone.",
+        "confirmButton": "Deactivate",
+        "success": "Tenant deactivated successfully",
+        "error": "Failed to deactivate tenant"
+      }
+    },
+    "new": {
+      "title": "Add New Tenant",
+      "subtitle": "Follow the steps below to add a new tenant",
+      "steps": {
+        "property": "Select Property",
+        "room": "Select Room"
+      },
+      "search": {
+        "property": "Search properties...",
+        "room": "Search rooms by number..."
+      },
+      "noRooms": {
+        "title": "No available rooms found.",
+        "withSearch": "Try different search terms or clear the search",
+        "noSearch": "This property has no available rooms"
+      },
+      "buttons": {
+        "clearSearch": "Clear search",
+        "selectAnother": "Select another property",
+        "back": "← Back to property selection"
+      }
+    },
+    "checkIn": {
+      "form": {
+        "itemName": "Item Name",
+        "itemNamePlaceholder": "Enter item name or select from above",
+        "condition": "Condition",
+        "conditionPlaceholder": "Select condition",
+        "notes": "Notes",
+        "notesPlaceholder": "Optional notes about the item's condition",
+        "addButton": "Add Item",
+        "adding": "Adding...",
+        "success": "Check-in item added successfully!",
+        "validation": {
+          "itemName": "Item name is required",
+          "condition": "Condition is required"
+        },
+        "items": {
+          "title": "Check-in Items",
+          "condition": "Condition:",
+          "noItems": "No check-in items added yet."
+        },
+        "commonItems": {
+          "keys": "Keys",
+          "doorLock": "Door Lock",
+          "windows": "Windows",
+          "lights": "Lights",
+          "airConditioner": "Air Conditioner",
+          "fan": "Fan",
+          "bed": "Bed",
+          "mattress": "Mattress",
+          "wardrobe": "Wardrobe",
+          "desk": "Desk",
+          "chair": "Chair",
+          "bathroomFixtures": "Bathroom Fixtures"
+        },
+        "conditions": {
+          "excellent": "Excellent",
+          "good": "Good",
+          "fair": "Fair",
+          "poor": "Poor",
+          "needsRepair": "Needs Repair"
+        }
+      }
     }
   },
   "expenses": {
@@ -426,18 +589,144 @@
     "amount": "Amount",
     "date": "Date",
     "description": "Description",
-    "property": "Property"
+    "property": "Property",
+    "filters": {
+      "all": "All Expenses",
+      "property": "Select Property",
+      "category": "All Categories",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "list": {
+      "title": "Expense List",
+      "totalExpenses": "Total Expenses",
+      "table": {
+        "date": "Date",
+        "category": "Category",
+        "description": "Description",
+        "amount": "Amount",
+        "property": "Property",
+        "actions": "Actions"
+      }
+    },
+    "actions": {
+      "delete": "Delete",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "confirmDelete": "Are you sure you want to delete this expense?"
+    },
+    "form": {
+      "title": "Add New Expense",
+      "property": "Property",
+      "selectProperty": "Select Property",
+      "category": "Category",
+      "selectCategory": "Select Category",
+      "amount": "Amount",
+      "date": "Date",
+      "description": "Description",
+      "adding": "Adding...",
+      "add": "Add Expense"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {totalPages}"
+    },
+    "subtitle2": "Track and manage your property and general expenses"
   },
   "billing": {
     "title": "Billing",
     "subtitle": "Manage your tenant billing and payments",
     "addBilling": "Add Billing",
-    "searchBilling": "Search billing...",
-    "noBilling": "No billing found",
+    "searchBilling": "Search billings...",
+    "noBilling": "No billings found",
     "status": {
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "all": "All Status",
+      "sent": "Sent",
+      "draft": "Draft"
+    },
+    "method": {
+      "MANUAL": "Manual",
+      "STRIPE": "Stripe",
+      "BANK_TRANSFER": "Bank Transfer"
+    },
+    "type": {
+      "RENT": "Rent",
+      "DEPOSIT": "Deposit",
+      "UTILITY": "Utility",
+      "OTHER": "Other"
+    },
+    "filters": {
+      "property": {
+        "all": "All Properties",
+        "select": "Select Property"
+      }
+    },
+    "noResults": {
+      "withFilters": "Try adjusting your search or filters to find what you're looking for.",
+      "noFilters": "Get started by creating your first billing."
+    },
+    "createNew": "Create New Billing",
+    "details": {
+      "room": "Room",
+      "amount": "Amount",
+      "dueDate": "Due Date",
+      "title": "Billing Details",
+      "property": "Property",
+      "tenant": "Tenant",
+      "status": "Status",
+      "description": "Description",
+      "notFound": "Billing not found",
+      "sendButton": "Send Billing",
+      "notification": {
+        "title": "Send Billing",
+        "subtitle": "Choose how you want to send the billing notification to the tenant",
+        "email": "Send via Email",
+        "whatsapp": "Send via WhatsApp"
+      },
+      "upload": {
+        "button": "Upload Proof",
+        "success": "Payment proof uploaded successfully!",
+        "error": "Failed to upload payment proof"
+      },
+      "messages": {
+        "billingSent": "Billing sent successfully!",
+        "notificationSent": "Billing notification sent successfully!",
+        "reminderSent": "Payment reminder sent successfully!"
+      },
+      "payments": {
+        "title": "Payments",
+        "noPayments": "No payments yet",
+        "sendReminder": "Send Reminder",
+        "sendWhatsapp": "Send WhatsApp",
+        "uploadProof": "Upload Proof"
+      }
+    },
+    "new": {
+      "title": "Create New Billing",
+      "property": {
+        "title": "Select Property (Optional)",
+        "searchPlaceholder": "Search properties...",
+        "allProperties": "All Properties",
+        "allPropertiesHint": "Send billing to all tenants"
+      },
+      "tenant": {
+        "title": "Select Tenant (Optional)",
+        "room": "Room"
+      },
+      "form": {
+        "title": "Title",
+        "description": "Description (Optional)",
+        "amount": "Amount",
+        "dueDate": "Due Date",
+        "submit": "Create Billing",
+        "submitting": "Creating..."
+      },
+      "success": "Billing created successfully!"
     }
   },
   "settings": {
@@ -453,6 +742,61 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "editButton": "Edit Profile",
+      "cancelButton": "Cancel",
+      "name": "Name",
+      "email": "Email",
+      "emailHint": "Email cannot be changed",
+      "phone": "Phone",
+      "saveButton": "Save Changes",
+      "saving": "Saving..."
+    },
+    "application": {
+      "title": "Application Settings",
+      "darkMode": "Dark Mode",
+      "darkModeHint": "Toggle between light and dark themes"
+    },
+    "password": {
+      "title": "Change Password",
+      "current": "Current Password", 
+      "new": "New Password",
+      "confirm": "Confirm Password"
+    }
+  },
+  "rooms": {
+    "tenants": {
+      "new": {
+        "title": "Add New Tenant",
+        "form": {
+          "name": "Name",
+          "email": "Email",
+          "phone": "Phone",
+          "phoneNumber": "Enter phone number",
+          "ktpNumber": "KTP Number (Optional)",
+          "rentAmount": "Rent Amount (from room price)",
+          "depositAmount": "Deposit Amount",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "roomError": "Room details not found",
+          "success": "Tenant created successfully!",
+          "error": "Failed to create tenant. Please try again.",
+          "validation": {
+            "name": "Name is required",
+            "email": "Invalid email address",
+            "phone": "Invalid phone number format. Must start with + followed by country code and number",
+            "depositAmount": "Deposit amount is required",
+            "startDate": "Start date is required",
+            "endDate": "End date is required"
+          },
+          "submit": {
+            "loading": "Creating...",
+            "create": "Create Tenant"
+          }
+        }
+      }
     }
   }
 }

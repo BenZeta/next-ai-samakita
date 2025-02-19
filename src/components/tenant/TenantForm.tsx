@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { useTranslations } from 'use-intl';
+import { useTranslations } from 'next-intl';
 
 const tenantFormSchema = z.object({
   name: z.string().min(1, 'properties.tenant.form.validation.nameRequired'),
@@ -35,6 +35,7 @@ interface TenantFormProps {
 }
 
 export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
+  const t = useTranslations();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ktpFile, setKtpFile] = useState<File | null>(null);
@@ -87,7 +88,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       setIsSubmitting(true);
 
       if (!room) {
-        toast.error(t('properties.tenant.form.toast.roomNotFound'));
+        toast.error(t('rooms.tenants.new.form.roomError'));
         return;
       }
 
@@ -98,7 +99,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         rentAmount: room.price,
       });
 
-      toast.success(t('properties.tenant.form.toast.success'));
+      toast.success(t('rooms.tenants.new.form.success'));
       if (onSuccess) {
         onSuccess();
       } else {
@@ -106,7 +107,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       }
     } catch (error) {
       console.error('Failed to save tenant:', error);
-      toast.error(t('properties.tenant.form.toast.error'));
+      toast.error(t('rooms.tenants.new.form.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +118,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.name')}
+            {t('rooms.tenants.new.form.name')}
           </label>
           <input
             type="text"
@@ -125,12 +126,12 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('name')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.name && <p className="mt-1 text-sm text-destructive">{t(errors.name.message!)}</p>}
+          {errors.name && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.name')}</p>}
         </div>
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.email')}
+            {t('rooms.tenants.new.form.email')}
           </label>
           <input
             type="email"
@@ -138,12 +139,12 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('email')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.email && <p className="mt-1 text-sm text-destructive">{t(errors.email.message!)}</p>}
+          {errors.email && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.email')}</p>}
         </div>
 
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.phone')}
+            {t('rooms.tenants.new.form.phone')}
           </label>
           <div className="relative mt-1 flex w-full items-center gap-2">
             <div className="relative" ref={countryDropdownRef}>
@@ -187,15 +188,15 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
                 setPhoneNumber(value);
               }}
               className="h-[42px] flex-1 rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder={t('properties.tenant.form.phonePlaceholder')}
+              placeholder={t('rooms.tenants.new.form.phoneNumber')}
             />
           </div>
-          {errors.phone && <p className="mt-1 text-sm text-destructive">{t(errors.phone.message!)}</p>}
+          {errors.phone && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.phone')}</p>}
         </div>
 
         <div>
           <label htmlFor="ktpNumber" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.ktpNumber')}
+            {t('rooms.tenants.new.form.ktpNumber')}
           </label>
           <input
             type="text"
@@ -211,7 +212,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         {room && (
           <div>
             <label className="block text-sm font-medium text-foreground">
-              {t('properties.tenant.form.rentAmount')}
+              {t('rooms.tenants.new.form.rentAmount')}
             </label>
             <p className="mt-2 text-lg font-medium text-primary">
               {t('properties.tenant.form.price', { price: room.price.toLocaleString() })}
@@ -221,7 +222,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
 
         <div>
           <label htmlFor="depositAmount" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.depositAmount')}
+            {t('rooms.tenants.new.form.depositAmount')}
           </label>
           <input
             type="number"
@@ -230,13 +231,13 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.depositAmount && (
-            <p className="mt-1 text-sm text-destructive">{t(errors.depositAmount.message!)}</p>
+            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.depositAmount')}</p>
           )}
         </div>
 
         <div>
           <label htmlFor="startDate" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.startDate')}
+            {t('rooms.tenants.new.form.startDate')}
           </label>
           <input
             type="date"
@@ -245,13 +246,13 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.startDate && (
-            <p className="mt-1 text-sm text-destructive">{t(errors.startDate.message!)}</p>
+            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.startDate')}</p>
           )}
         </div>
 
         <div>
           <label htmlFor="endDate" className="block text-sm font-medium text-foreground">
-            {t('properties.tenant.form.endDate')}
+            {t('rooms.tenants.new.form.endDate')}
           </label>
           <input
             type="date"
@@ -260,18 +261,20 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.endDate && (
-            <p className="mt-1 text-sm text-destructive">{t(errors.endDate.message!)}</p>
+            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.endDate')}</p>
           )}
         </div>
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isSubmitting ? t('properties.tenant.form.submitting') : t('properties.tenant.form.submit')}
-      </button>
+      <div>
+        <button
+          type="submit"
+          disabled={isSubmitting || !room}
+          className="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+        >
+          {isSubmitting ? t('rooms.tenants.new.form.submit.loading') : t('rooms.tenants.new.form.submit.create')}
+        </button>
+      </div>
     </form>
   );
 }

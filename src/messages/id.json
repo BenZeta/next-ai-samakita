@@ -510,11 +510,175 @@
     "title": "Penyewa",
     "subtitle": "Kelola penyewa Anda",
     "addTenant": "Tambah Penyewa",
-    "searchTenants": "Cari penyewa...",
+    "searchTenants": "Cari penyewa berdasarkan nama, email, atau kamar...",
     "noTenants": "Tidak ada penyewa ditemukan",
+    "tenant": "Penyewa",
     "status": {
       "active": "Aktif",
-      "inactive": "Tidak Aktif"
+      "inactive": "Tidak Aktif",
+      "all": "Semua Status"
+    },
+    "noResults": {
+      "withFilters": "Coba sesuaikan pencarian atau filter untuk menemukan yang Anda cari.",
+      "noFilters": "Mulai dengan menambahkan penyewa pertama Anda."
+    },
+    "details": {
+      "room": "Kamar",
+      "email": "Email",
+      "phone": "Telepon",
+      "price": "Rp {price} /bulan",
+      "tenant": "Penyewa",
+      "viewDetails": "Lihat Detail",
+      "notFound": "Penyewa tidak ditemukan",
+      "personalInfo": "Informasi Pribadi",
+      "ktpNumber": "KTP: {number}",
+      "checkInItems": "Barang Check-in",
+      "noCheckInItems": "Belum ada barang check-in yang dicatat.",
+      "payments": {
+        "title": "Pembayaran",
+        "noPayments": "Belum ada pembayaran",
+        "addPayment": "Tambah Pembayaran",
+        "form": {
+          "amount": "Jumlah",
+          "date": "Tanggal",
+          "notes": "Catatan",
+          "submit": "Simpan",
+          "submitting": "Menyimpan..."
+        },
+        "list": {
+          "amount": "Jumlah",
+          "date": "Tanggal",
+          "notes": "Catatan",
+          "status": "Status",
+          "receipt": "Bukti",
+          "actions": "Aksi"
+        },
+        "status1": {
+          "paid": "Terbayar",
+          "pending": "Tertunda",
+          "overdue": "Terlambat",
+          "success": "Status pembayaran berhasil diperbarui!"
+        },
+        "upload": {
+          "button": "Unggah Bukti",
+          "success": "Bukti pembayaran berhasil diunggah!",
+          "error": "Gagal mengunggah bukti pembayaran"
+        },
+        "delete": {
+          "confirmTitle": "Hapus Pembayaran",
+          "confirmMessage": "Apakah Anda yakin ingin menghapus pembayaran ini?",
+          "success": "Pembayaran berhasil dihapus",
+          "error": "Gagal menghapus pembayaran"
+        },
+        "method": "Metode Pembayaran",
+        "success": "Pembayaran berhasil dibuat!",
+        "status": {
+          "success": "Status pembayaran berhasil diperbarui!"
+        }
+      },
+      "extendLease": "Perpanjang Sewa",
+      "deactivateTenant": "Nonaktifkan Penyewa",
+      "roomAt": "Kamar {number} di {property}",
+      "leasePeriod": "Periode Sewa:",
+      "rentAmount": "Jumlah Sewa:",
+      "viewKtp": "Lihat KTP",
+      "contract": {
+        "title": "Status Kontrak",
+        "generate": "Buat Kontrak",
+        "generating": "Membuat Kontrak...",
+        "upload": "Unggah Kontrak",
+        "uploading": "Mengunggah...",
+        "view": "Lihat Kontrak",
+        "success": "Kontrak berhasil dibuat!",
+        "uploadSuccess": "Kontrak berhasil diunggah",
+        "error": "Gagal membuat kontrak",
+        "uploadError": "Gagal mengunggah kontrak",
+        "fileError": "Mohon unggah file PDF",
+        "sizeError": "Ukuran file harus kurang dari 5MB",
+        "status": {
+          "generated": "Kontrak Dibuat",
+          "none": "Belum Ada Kontrak"
+        }
+      },
+      "lease": {
+        "confirmTitle": "Konfirmasi Perpanjangan Sewa",
+        "confirmMessage": "Apakah Anda yakin ingin memperpanjang sewa {name} selama satu bulan? Tindakan ini tidak dapat dibatalkan.",
+        "confirmButton": "Konfirmasi Perpanjangan",
+        "extended": "Sewa berhasil diperpanjang",
+        "error": "Gagal memperpanjang sewa. Silakan coba lagi."
+      },
+      "deactivate": {
+        "confirmTitle": "Nonaktifkan Penyewa",
+        "confirmMessage": "Apakah kamu yakin ingin menonaktifkan penyewa ini? Ini juga akan menandai kamar mereka sebagai tersedia. Tindakan ini tidak dapat dibatalkan.",
+        "confirmButton": "Nonaktifkan",
+        "success": "Penyewa berhasil dinonaktifkan",
+        "error": "Gagal menonaktifkan penyewa"
+      }
+    },
+    "new": {
+      "title": "Tambah Penyewa Baru",
+      "subtitle": "Ikuti langkah-langkah berikut untuk menambahkan penyewa baru",
+      "steps": {
+        "property": "Pilih Properti",
+        "room": "Pilih Kamar"
+      },
+      "search": {
+        "property": "Cari properti...",
+        "room": "Cari kamar berdasarkan nomor..."
+      },
+      "noRooms": {
+        "title": "Tidak ada kamar yang tersedia.",
+        "withSearch": "Coba kata kunci lain atau hapus pencarian",
+        "noSearch": "Properti ini tidak memiliki kamar yang tersedia"
+      },
+      "buttons": {
+        "clearSearch": "Hapus pencarian",
+        "selectAnother": "Pilih properti lain",
+        "back": "← Kembali ke pemilihan properti"
+      }
+    },
+    "checkIn": {
+      "form": {
+        "itemName": "Nama Barang",
+        "itemNamePlaceholder": "Masukkan nama barang atau pilih dari atas",
+        "condition": "Kondisi",
+        "conditionPlaceholder": "Pilih kondisi",
+        "notes": "Catatan",
+        "notesPlaceholder": "Catatan opsional tentang kondisi barang",
+        "addButton": "Tambah Barang",
+        "adding": "Menambahkan...",
+        "success": "Barang check-in berhasil ditambahkan!",
+        "validation": {
+          "itemName": "Nama barang wajib diisi",
+          "condition": "Kondisi wajib diisi"
+        },
+        "items": {
+          "title": "Barang Check-in",
+          "condition": "Kondisi:",
+          "noItems": "Belum ada barang check-in yang ditambahkan."
+        },
+        "commonItems": {
+          "keys": "Kunci",
+          "doorLock": "Kunci Pintu",
+          "windows": "Jendela",
+          "lights": "Lampu",
+          "airConditioner": "AC",
+          "fan": "Kipas Angin",
+          "bed": "Tempat Tidur",
+          "mattress": "Kasur",
+          "wardrobe": "Lemari",
+          "desk": "Meja",
+          "chair": "Kursi",
+          "bathroomFixtures": "Perlengkapan Kamar Mandi"
+        },
+        "conditions": {
+          "excellent": "Sangat Baik",
+          "good": "Baik",
+          "fair": "Cukup",
+          "poor": "Buruk",
+          "needsRepair": "Perlu Perbaikan"
+        }
+      }
     }
   },
   "expenses": {
@@ -527,7 +691,51 @@
     "amount": "Jumlah",
     "date": "Tanggal",
     "description": "Deskripsi",
-    "property": "Properti"
+    "property": "Properti",
+    "filters": {
+      "all": "Semua Pengeluaran",
+      "property": "Pilih Properti",
+      "category": "Semua Kategori",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai"
+    },
+    "list": {
+      "title": "Daftar Pengeluaran",
+      "totalExpenses": "Total Pengeluaran",
+      "table": {
+        "date": "Tanggal",
+        "category": "Kategori",
+        "description": "Deskripsi",
+        "amount": "Jumlah",
+        "property": "Properti",
+        "actions": "Aksi"
+      }
+    },
+    "actions": {
+      "delete": "Hapus",
+      "edit": "Ubah",
+      "cancel": "Batal",
+      "confirm": "Konfirmasi",
+      "confirmDelete": "Apakah Anda yakin ingin menghapus pengeluaran ini?"
+    },
+    "form": {
+      "title": "Tambah Pengeluaran Baru",
+      "property": "Properti",
+      "selectProperty": "Pilih Properti",
+      "category": "Kategori",
+      "selectCategory": "Pilih Kategori",
+      "amount": "Jumlah",
+      "date": "Tanggal",
+      "description": "Deskripsi",
+      "adding": "Menambahkan...",
+      "add": "Tambah Pengeluaran"
+    },
+    "pagination": {
+      "previous": "Sebelumnya",
+      "next": "Selanjutnya",
+      "page": "Halaman {page} dari {totalPages}"
+    },
+    "subtitle2": "Lacak dan kelola pengeluaran properti dan umum Anda"
   },
   "billing": {
     "title": "Tagihan",
@@ -538,7 +746,89 @@
     "status": {
       "paid": "Lunas",
       "pending": "Menunggu",
-      "overdue": "Terlambat"
+      "overdue": "Terlambat",
+      "all": "Semua Status",
+      "sent": "Terkirim",
+      "draft": "Draft"
+    },
+    "method": {
+      "MANUAL": "Manual",
+      "STRIPE": "Stripe",
+      "BANK_TRANSFER": "Transfer Bank"
+    },
+    "type": {
+      "RENT": "Sewa",
+      "DEPOSIT": "Deposit",
+      "UTILITY": "Utilitas",
+      "OTHER": "Lainnya"
+    },
+    "filters": {
+      "property": {
+        "all": "Semua Properti",
+        "select": "Pilih Properti"
+      }
+    },
+    "noResults": {
+      "withFilters": "Coba sesuaikan pencarian atau filter untuk menemukan yang Anda cari.",
+      "noFilters": "Mulai dengan membuat tagihan pertama Anda."
+    },
+    "createNew": "Buat Tagihan Baru",
+    "details": {
+      "room": "Kamar",
+      "amount": "Jumlah",
+      "dueDate": "Jatuh Tempo",
+      "title": "Detail Tagihan",
+      "property": "Properti",
+      "tenant": "Penyewa",
+      "status": "Status",
+      "description": "Deskripsi",
+      "notFound": "Tagihan tidak ditemukan",
+      "sendButton": "Kirim Tagihan",
+      "notification": {
+        "title": "Kirim Tagihan",
+        "subtitle": "Pilih cara mengirim notifikasi tagihan ke penyewa",
+        "email": "Kirim via Email",
+        "whatsapp": "Kirim via WhatsApp"
+      },
+      "upload": {
+        "button": "Unggah Bukti",
+        "success": "Bukti pembayaran berhasil diunggah!",
+        "error": "Gagal mengunggah bukti pembayaran"
+      },
+      "messages": {
+        "billingSent": "Tagihan berhasil dikirim!",
+        "notificationSent": "Notifikasi tagihan berhasil dikirim!",
+        "reminderSent": "Pengingat pembayaran berhasil dikirim!"
+      },
+      "payments": {
+        "title": "Pembayaran",
+        "noPayments": "Belum ada pembayaran",
+        "sendReminder": "Kirim Pengingat",
+        "sendWhatsapp": "Kirim WhatsApp",
+        "uploadProof": "Unggah Bukti"
+      }
+    },
+    "new": {
+      "title": "Buat Tagihan Baru",
+      "property": {
+        "title": "Pilih Properti (Opsional)",
+        "searchPlaceholder": "Cari properti...",
+        "allProperties": "Semua Properti",
+        "allPropertiesHint": "Kirim tagihan ke semua penyewa"
+      },
+      "tenant": {
+        "title": "Pilih Penyewa (Opsional)",
+        "room": "Kamar"
+      },
+      "form": {
+        "title": "Judul",
+        "description": "Deskripsi (Opsional)",
+        "amount": "Jumlah",
+        "dueDate": "Jatuh Tempo",
+        "submit": "Buat Tagihan",
+        "submitting": "Membuat..."
+      },
+      "success": "Tagihan berhasil dibuat!"
     }
   },
   "settings": {
@@ -554,6 +844,61 @@
       "light": "Terang",
       "dark": "Gelap",
       "system": "Sistem"
+    },
+    "profile": {
+      "title": "Informasi Profil",
+      "editButton": "Ubah Profil",
+      "cancelButton": "Batal",
+      "name": "Nama",
+      "email": "Email",
+      "emailHint": "Email tidak dapat diubah",
+      "phone": "Telepon",
+      "saveButton": "Simpan Perubahan",
+      "saving": "Menyimpan..."
+    },
+    "application": {
+      "title": "Pengaturan Aplikasi",
+      "darkMode": "Mode Gelap",
+      "darkModeHint": "Beralih antara tema terang dan gelap"
+    },
+    "password": {
+      "title": "Ubah Kata Sandi",
+      "current": "Kata Sandi Saat Ini",
+      "new": "Kata Sandi Baru",
+      "confirm": "Konfirmasi Kata Sandi"
+    }
+  },
+  "rooms": {
+    "tenants": {
+      "new": {
+        "title": "Tambah Penyewa Baru",
+        "form": {
+          "name": "Nama",
+          "email": "Email",
+          "phone": "Telepon",
+          "phoneNumber": "Masukkan nomor telepon",
+          "ktpNumber": "Nomor KTP (Opsional)",
+          "rentAmount": "Biaya Sewa (dari harga kamar)",
+          "depositAmount": "Uang Jaminan",
+          "startDate": "Tanggal Mulai",
+          "endDate": "Tanggal Selesai",
+          "roomError": "Detail kamar tidak ditemukan",
+          "success": "Penyewa berhasil ditambahkan!",
+          "error": "Gagal menambahkan penyewa. Silakan coba lagi.",
+          "validation": {
+            "name": "Nama wajib diisi",
+            "email": "Format email tidak valid",
+            "phone": "Format nomor telepon tidak valid. Harus diawali dengan + diikuti kode negara dan nomor",
+            "depositAmount": "Uang jaminan wajib diisi",
+            "startDate": "Tanggal mulai wajib diisi",
+            "endDate": "Tanggal selesai wajib diisi"
+          },
+          "submit": {
+            "loading": "Membuat...",
+            "create": "Buat Penyewa"
+          }
+        }
+      }
     }
   }
 }

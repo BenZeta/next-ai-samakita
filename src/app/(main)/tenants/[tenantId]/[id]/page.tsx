@@ -6,6 +6,7 @@ import { Building2, CreditCard, Mail, Phone, UserX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'next-intl';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface ConfirmationModalProps {
 }
 
 function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProps) {
+  const t = useTranslations();
   if (!isOpen) return null;
 
   return (
@@ -24,24 +26,23 @@ function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProp
           <div className="mr-4 rounded-full bg-destructive/10 p-3">
             <UserX className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="text-lg font-medium text-card-foreground">Deactivate Tenant</h3>
+          <h3 className="text-lg font-medium text-card-foreground">{t('tenants.details.deactivate.confirmTitle')}</h3>
         </div>
         <p className="mb-6 text-muted-foreground">
-          Are you sure you want to deactivate this tenant? This action will mark the tenant as
-          inactive and may affect related records.
+          {t('tenants.details.deactivate.confirmMessage')}
         </p>
         <div className="flex justify-end space-x-4">
           <button
             onClick={onClose}
             className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
           >
-            Deactivate
+            {t('tenants.details.deactivate.confirmButton')}
           </button>
         </div>
       </div>
@@ -52,16 +53,17 @@ function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProp
 export default function TenantDetailPage({ params }: { params: { tenantId: string } }) {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const t = useTranslations();
 
   const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: params.tenantId });
   const updateMutation = api.tenant.update.useMutation({
     onSuccess: () => {
-      toast.success('Tenant status updated successfully');
+      toast.success(t('tenants.details.deactivate.success'));
       router.refresh();
       setIsModalOpen(false);
     },
     onError: error => {
-      toast.error(error.message);
+      toast.error(t('tenants.details.deactivate.error'));
     },
   });
 
@@ -76,7 +78,7 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
   if (!tenant) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-lg text-muted-foreground">Tenant not found</p>
+        <p className="text-lg text-muted-foreground">{t('tenants.details.notFound')}</p>
       </div>
     );
   }
@@ -91,14 +93,14 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Tenant Details</h1>
+        <h1 className="text-3xl font-bold text-foreground">{t('tenants.details.title')}</h1>
         {tenant.status === TenantStatus.ACTIVE && (
           <button
             onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
           >
             <UserX className="h-4 w-4" />
-            Deactivate Tenant
+            {t('tenants.details.deactivateTenant')}
           </button>
         )}
       </div>
@@ -111,7 +113,7 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-medium text-card-foreground">{tenant.name}</h3>
-              <p className="text-sm text-muted-foreground">Room {tenant.room.number}</p>
+              <p className="text-sm text-muted-foreground">{t('tenants.details.room')} {tenant.room.number}</p>
             </div>
           </div>
 
@@ -126,7 +128,7 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
             </div>
             <div className="flex items-center text-muted-foreground">
               <CreditCard className="mr-2 h-4 w-4" />
-              Rp {tenant.room.price.toLocaleString()} /month
+              {t('tenants.details.price', { price: tenant.room.price.toLocaleString() })}
             </div>
           </div>
 
@@ -144,14 +146,14 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
         </div>
 
         <div className="rounded-lg bg-card p-6 shadow">
-          <h3 className="mb-4 text-lg font-medium text-card-foreground">Property Details</h3>
+          <h3 className="mb-4 text-lg font-medium text-card-foreground">{t('tenants.details.propertyDetails')}</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground">Property Name</p>
+              <p className="text-sm text-muted-foreground">{t('properties.title')}</p>
               <p className="text-foreground">{tenant.room.property.name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Address</p>
+              <p className="text-sm text-muted-foreground">{t('properties.address')}</p>
               <p className="text-foreground">{tenant.room.property.address}</p>
             </div>
           </div>
@@ -165,4 +167,4 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
       />
     </div>
   );
-}
+} 

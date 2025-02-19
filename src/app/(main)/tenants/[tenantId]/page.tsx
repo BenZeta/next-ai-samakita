@@ -16,11 +16,55 @@ import {
   UserX,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'next-intl';
+
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}
+
+function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProps) {
+  const t = useTranslations();
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
+        <div className="mb-4 flex items-center">
+          <div className="mr-4 rounded-full bg-destructive/10 p-3">
+            <UserX className="h-6 w-6 text-destructive" />
+          </div>
+          <h3 className="text-lg font-medium text-card-foreground">{t('tenants.details.deactivate.confirmTitle')}</h3>
+        </div>
+        <p className="mb-6 text-muted-foreground">
+          {t('tenants.details.deactivate.confirmMessage')}
+        </p>
+        <div className="flex justify-end space-x-4">
+          <button
+            onClick={onClose}
+            className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+          >
+            {t('tenants.details.deactivate.confirmButton')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function TenantDetailsPage() {
+  const t = useTranslations();
   const params = useParams();
   const tenantId = params.tenantId as string;
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -29,13 +73,15 @@ export default function TenantDetailsPage() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
 
   const { data: tenant, isLoading } = api.tenant.detail.useQuery({ id: tenantId });
   const utils = api.useContext();
 
   const generateContractMutation = api.tenant.generateContract.useMutation({
     onSuccess: () => {
-      toast.success('Contract generated successfully!');
+      toast.success(t('tenants.details.contract.success'));
       utils.tenant.detail.invalidate({ id: tenantId });
     },
     onError: error => {
@@ -45,31 +91,32 @@ export default function TenantDetailsPage() {
 
   const extendLease = api.tenant.extendLease.useMutation({
     onSuccess: () => {
-      toast.success('Lease extended successfully');
+      toast.success(t('tenants.details.lease.extended'));
       utils.tenant.detail.invalidate({ id: tenantId });
       setShowConfirmation(false);
     },
     onError: error => {
-      toast.error(error.message);
+      toast.error(t('tenants.details.lease.error'));
       setShowConfirmation(false);
     },
   });
 
   const deactivateTenantMutation = api.tenant.update.useMutation({
     onSuccess: () => {
-      toast.success('Tenant deactivated successfully');
-      utils.tenant.detail.invalidate({ id: tenantId });
+      toast.success(t('tenants.details.deactivate.success'));
+      utils.tenant.list.invalidate();
+      router.push('/tenants');
       setShowDeactivateModal(false);
     },
     onError: error => {
-      toast.error(error.message);
+      toast.error(t('tenants.details.deactivate.error'));
       setShowDeactivateModal(false);
     },
   });
 
   const uploadContractMutation = api.tenant.uploadContract.useMutation({
     onSuccess: () => {
-      toast.success('Contract uploaded successfully');
+      toast.success(t('tenants.details.contract.uploadSuccess'));
       utils.tenant.detail.invalidate({ id: tenantId });
       setShowUploadModal(false);
       setUploadFile(null);
@@ -83,11 +130,11 @@ export default function TenantDetailsPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        toast.error('Please upload a PDF file');
+        toast.error(t('tenants.details.contract.fileError'));
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size should be less than 5MB');
+        toast.error(t('tenants.details.contract.sizeError'));
         return;
       }
       setUploadFile(file);
@@ -110,18 +157,18 @@ export default function TenantDetailsPage() {
       reader.readAsDataURL(uploadFile);
     } catch (error) {
       console.error('Failed to upload contract:', error);
-      toast.error('Failed to upload contract');
+      toast.error(t('tenants.details.contract.uploadError'));
     } finally {
       setIsUploading(false);
     }
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>{t('common.loading')}</div>;
   }
 
   if (!tenant) {
-    return <div>Tenant not found</div>;
+    return <div>{t('tenants.details.notFound')}</div>;
   }
 
   const handleGenerateContract = async () => {
@@ -130,7 +177,7 @@ export default function TenantDetailsPage() {
       await generateContractMutation.mutateAsync({ tenantId });
     } catch (error) {
       console.error('Failed to generate contract:', error);
-      toast.error('Failed to generate contract');
+      toast.error(t('tenants.details.contract.error'));
     } finally {
       setIsGenerating(false);
     }
@@ -141,7 +188,7 @@ export default function TenantDetailsPage() {
       await extendLease.mutateAsync({ tenantId });
     } catch (error) {
       console.error('Failed to extend lease:', error);
-      toast.error('Failed to extend lease. Please try again.');
+      toast.error(t('tenants.details.lease.error'));
     }
   };
 
@@ -162,7 +209,7 @@ export default function TenantDetailsPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">{tenant.name}</h1>
           <p className="mt-2 text-muted-foreground">
-            {tenant.ktpNumber && `KTP: ${tenant.ktpNumber}`}
+            {tenant.ktpNumber && t('tenants.details.ktpNumber', { number: tenant.ktpNumber })}
           </p>
         </div>
         <div className="flex space-x-4">
@@ -171,14 +218,14 @@ export default function TenantDetailsPage() {
             className="flex items-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <ClipboardList className="mr-2 h-5 w-5" />
-            Check-in Items
+            {t('tenants.details.checkInItems')}
           </Link>
           <Link
             href={`/tenants/${tenant.id}/payments`}
             className="flex items-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <CreditCard className="mr-2 h-5 w-5" />
-            Payments
+            {t('tenants.details.payments.title')}
           </Link>
         </div>
         <div className="flex items-center gap-4">
@@ -187,15 +234,15 @@ export default function TenantDetailsPage() {
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Calendar className="h-4 w-4" />
-            Extend Lease
+            {t('tenants.details.extendLease')}
           </button>
           {tenant?.status === 'ACTIVE' && (
             <button
-              onClick={() => setShowDeactivateModal(true)}
+              onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow-sm hover:bg-destructive/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <UserX className="h-4 w-4" />
-              Deactivate Tenant
+              {t('tenants.details.deactivateTenant')}
             </button>
           )}
         </div>
@@ -204,7 +251,7 @@ export default function TenantDetailsPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-lg bg-card p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold text-foreground">Personal Information</h2>
+            <h2 className="mb-4 text-xl font-semibold text-foreground">{t('tenants.details.personalInfo')}</h2>
             <div className="space-y-4">
               <div className="flex items-center">
                 <Mail className="mr-3 h-5 w-5 text-muted-foreground" />
@@ -217,12 +264,12 @@ export default function TenantDetailsPage() {
               <div className="flex items-center">
                 <Home className="mr-3 h-5 w-5 text-muted-foreground" />
                 <span className="text-foreground">
-                  Room {tenant.room.number} at {tenant.room.property.name}
+                  {t('tenants.details.roomAt', { number: tenant.room.number, property: tenant.room.property.name })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Lease Period:</span>
+                <span className="font-medium text-foreground">{t('tenants.details.leasePeriod')}</span>
                 <span className="text-foreground">
                   {tenant.startDate ? format(new Date(tenant.startDate), 'MMM d, yyyy') : 'Not set'}{' '}
                   - {tenant.endDate ? format(new Date(tenant.endDate), 'MMM d, yyyy') : 'Not set'}
@@ -230,7 +277,7 @@ export default function TenantDetailsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">Rent Amount:</span>
+                <span className="font-medium text-foreground">{t('tenants.details.rentAmount')}</span>
                 <span className="text-foreground">
                   Rp {tenant.rentAmount?.toLocaleString() ?? 'Not set'}
                 </span>
@@ -245,7 +292,7 @@ export default function TenantDetailsPage() {
                       rel="noopener noreferrer"
                       className="text-primary hover:text-primary/90 transition-colors"
                     >
-                      View KTP
+                      {t('tenants.details.viewKtp')}
                     </a>
                   )}
                   {tenant.kkFile && (
@@ -266,13 +313,13 @@ export default function TenantDetailsPage() {
           <div className="rounded-lg bg-card p-6 shadow">
             <div className="flex flex-col space-y-4">
               <div className="flex flex-col space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">Contract Status</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('tenants.details.contract.title')}</h2>
                 <div className="rounded-lg border p-4">
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Status</span>
+                      <span className="text-sm font-medium text-foreground">{t('billing.details.status')}</span>
                       <span className="text-sm text-foreground">
-                        {tenant.contractFile ? 'Contract Generated' : 'No Contract'}
+                        {tenant.contractFile ? t('tenants.details.contract.status.generated') : t('tenants.details.contract.status.none')}
                       </span>
                     </div>
                     {tenant.contractFile ? (
@@ -285,7 +332,7 @@ export default function TenantDetailsPage() {
                           }
                         >
                           <FileText className="mr-2 h-4 w-4" />
-                          View Contract
+                          {t('tenants.details.contract.view')}
                         </Button>
                         {tenant.status === 'ACTIVE' && (
                           <Button
@@ -294,7 +341,7 @@ export default function TenantDetailsPage() {
                             onClick={() => setShowUploadModal(true)}
                           >
                             <Upload className="mr-2 h-4 w-4" />
-                            Upload Signed Contract
+                            {t('tenants.details.contract.upload')}
                           </Button>
                         )}
                       </div>
@@ -311,7 +358,7 @@ export default function TenantDetailsPage() {
                           ) : (
                             <FileText className="mr-2 h-4 w-4" />
                           )}
-                          Generate Contract
+                          {isGenerating ? t('tenants.details.contract.generating') : t('tenants.details.contract.generate')}
                         </Button>
                       </div>
                     )}
@@ -323,7 +370,7 @@ export default function TenantDetailsPage() {
         </div>
 
         <div className="rounded-lg bg-card p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">Check-in Items</h2>
+          <h2 className="mb-4 text-xl font-semibold text-foreground">{t('tenants.details.checkInItems')}</h2>
           {tenant.checkInItems.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenant.checkInItems.map(item => (
@@ -337,7 +384,7 @@ export default function TenantDetailsPage() {
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground">No check-in items recorded yet.</p>
+            <p className="text-muted-foreground">{t('tenants.details.noCheckInItems')}</p>
           )}
         </div>
       </div>
@@ -345,66 +392,34 @@ export default function TenantDetailsPage() {
       {showConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl border border-border">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">Confirm Lease Extension</h3>
+            <h3 className="mb-4 text-lg font-semibold text-foreground">{t('tenants.details.lease.confirmTitle')}</h3>
             <p className="mb-6 text-muted-foreground">
-              Are you sure you want to extend {tenant.name}'s lease by one month? This action cannot
-              be undone.
+              {t('tenants.details.lease.confirmMessage', { name: tenant.name })}
             </p>
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => setShowConfirmation(false)}
                 className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleExtendLease}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                Confirm Extension
+                {t('tenants.details.lease.confirmButton')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Deactivation Confirmation Modal */}
-      {showDeactivateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setShowDeactivateModal(false)}
-          />
-          <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg border border-border">
-            <div className="mb-4 flex items-center">
-              <div className="mr-4 rounded-full bg-destructive/10 p-3">
-                <UserX className="h-6 w-6 text-destructive" />
-              </div>
-              <h3 className="text-lg font-medium text-foreground">Deactivate Tenant</h3>
-            </div>
-            <p className="mb-6 text-muted-foreground">
-              Are you sure you want to deactivate this tenant? This will also mark their room as
-              available. This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setShowDeactivateModal(false)}
-                className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeactivate}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                Deactivate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleDeactivate}
+      />
 
-      {/* Upload Contract Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -412,10 +427,10 @@ export default function TenantDetailsPage() {
             onClick={() => setShowUploadModal(false)}
           />
           <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg border border-border">
-            <h3 className="mb-4 text-lg font-medium text-foreground">Upload Signed Contract</h3>
+            <h3 className="mb-4 text-lg font-medium text-foreground">{t('tenants.details.contract.upload')}</h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-muted-foreground">
-                Select PDF File (max 5MB)
+                {t('tenants.details.contract.fileError')}
               </label>
               <input
                 type="file"
@@ -429,14 +444,14 @@ export default function TenantDetailsPage() {
                 onClick={() => setShowUploadModal(false)}
                 className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleUpload}
                 disabled={!uploadFile || isUploading}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               >
-                {isUploading ? 'Uploading...' : 'Upload'}
+                {isUploading ? t('tenants.details.contract.uploading') : t('tenants.details.contract.upload')}
               </button>
             </div>
           </div>

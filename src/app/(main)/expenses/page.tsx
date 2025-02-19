@@ -3,6 +3,7 @@
 import { ExpenseList } from '@/components/expense/ExpenseList';
 import { api } from '@/lib/trpc/react';
 import { Building2, Check, ChevronsUpDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 interface Property {
@@ -11,6 +12,7 @@ interface Property {
 }
 
 export default function ExpensesPage() {
+  const t = useTranslations();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -48,9 +50,9 @@ export default function ExpensesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Expenses</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('expenses.title')}</h1>
           <p className="mt-2 text-muted-foreground">
-            Track and manage your property and general expenses
+            {t('expenses.subtitle2')}
           </p>
         </div>
       </div>
@@ -66,7 +68,7 @@ export default function ExpensesPage() {
               <span>
                 {selectedPropertyId
                   ? properties.find(p => p.id === selectedPropertyId)?.name
-                  : 'All Expenses'}
+                  : t('expenses.filters.all')}
               </span>
             </div>
             <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
@@ -81,7 +83,7 @@ export default function ExpensesPage() {
                 }}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
               >
-                <span>All Expenses</span>
+                <span>{t('expenses.filters.all')}</span>
                 {!selectedPropertyId && <Check className="ml-auto h-4 w-4" />}
               </button>
               {properties.map(property => (

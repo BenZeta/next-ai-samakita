@@ -3,10 +3,12 @@
 import { api } from '@/lib/trpc/react';
 import { BillingStatus } from '@prisma/client';
 import { Building2, Check, ChevronsUpDown, FileText, Plus, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 export default function BillingPage() {
+  const t = useTranslations();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
@@ -54,8 +56,8 @@ export default function BillingPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Billing</h1>
-        <p className="mt-2 text-muted-foreground">Manage your tenant billing and payments</p>
+        <h1 className="text-3xl font-bold text-foreground">{t('billing.title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('billing.subtitle')}</p>
       </div>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
@@ -63,7 +65,7 @@ export default function BillingPage() {
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search billings..."
+            placeholder={t('billing.searchBilling')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full rounded-lg border border-input bg-background px-4 py-2 pl-10 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -79,8 +81,8 @@ export default function BillingPage() {
               <Building2 className="h-5 w-5 text-muted-foreground" />
               {selectedPropertyId
                 ? properties?.properties.find(p => p.id === selectedPropertyId)?.name ||
-                  'Select Property'
-                : 'All Properties'}
+                  t('billing.filters.property.select')
+                : t('billing.filters.property.all')}
             </span>
             <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -95,7 +97,7 @@ export default function BillingPage() {
                 }}
               >
                 <Check className={`h-4 w-4 ${!selectedPropertyId ? 'opacity-100' : 'opacity-0'}`} />
-                <span>All Properties</span>
+                <span>{t('billing.filters.property.all')}</span>
               </div>
               {properties?.properties.map(property => (
                 <div
@@ -123,10 +125,10 @@ export default function BillingPage() {
           onChange={e => setSelectedStatus(e.target.value as BillingStatus | 'ALL')}
           className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
         >
-          <option value="ALL">All Status</option>
+          <option value="ALL">{t('billing.status.all')}</option>
           {Object.values(BillingStatus).map(status => (
             <option key={status} value={status}>
-              {status}
+              {t(`billing.status.${status.toLowerCase()}`)}
             </option>
           ))}
         </select>
@@ -135,18 +137,18 @@ export default function BillingPage() {
       {!billings?.billings.length ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-background p-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 text-lg font-semibold text-foreground">No billings found</h3>
+          <h3 className="mt-4 text-lg font-semibold text-foreground">{t('billing.noBilling')}</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             {search || selectedStatus !== 'ALL' || selectedPropertyId
-              ? "Try adjusting your search or filters to find what you're looking for."
-              : 'Get started by creating your first billing.'}
+              ? t('billing.noResults.withFilters')
+              : t('billing.noResults.noFilters')}
           </p>
           <Link
             href="/billing/new"
             className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create New Billing
+            {t('billing.createNew')}
           </Link>
         </div>
       ) : (
@@ -165,7 +167,7 @@ export default function BillingPage() {
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-card-foreground">{billing.title}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Room {billing.tenant?.room?.number}
+                      {t('billing.details.room')} {billing.tenant?.room?.number}
                     </p>
                   </div>
                 </div>
@@ -178,19 +180,19 @@ export default function BillingPage() {
                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                   }`}
                 >
-                  {billing.status}
+                  {t(`billing.status.${billing.status.toLowerCase()}`)}
                 </span>
               </div>
 
               <div className="mb-4 space-y-2">
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Amount:</span>
+                  <span>{t('billing.details.amount')}:</span>
                   <span className="font-medium text-foreground">
                     Rp {billing.amount.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Due Date:</span>
+                  <span>{t('billing.details.dueDate')}:</span>
                   <span className="font-medium text-foreground">
                     {new Date(billing.dueDate).toLocaleDateString()}
                   </span>
