@@ -4,6 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { DollarSign } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
+import { useTranslations } from 'use-intl';
 
 // Dynamically import heavy chart component
 const Chart = dynamic(() => import('./charts/MonthlyTrendChart').then(mod => mod.default), {
@@ -38,22 +39,23 @@ const StatsDisplay = memo(function StatsDisplay({
     profitMargin: number;
   };
 }) {
+  const t = useTranslations();
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">Revenue</p>
+        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.revenue')}</p>
         <p className="mt-1 text-xl font-bold">Rp {summary.totalRevenue.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">Expenses</p>
+        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.expenses')}</p>
         <p className="mt-1 text-xl font-bold">Rp {summary.totalExpenses.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">Net Profit</p>
+        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.netProfit')}</p>
         <p className="mt-1 text-xl font-bold">Rp {summary.netProfit.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">Profit Margin</p>
+        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.profitMargin')}</p>
         <p className="mt-1 text-xl font-bold">{summary.profitMargin.toFixed(2)}%</p>
       </div>
     </div>
@@ -61,6 +63,7 @@ const StatsDisplay = memo(function StatsDisplay({
 });
 
 function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
+  const t = useTranslations();
   const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('month');
 
   const { data: financeData, isLoading } = api.finance.getStats.useQuery(
@@ -110,7 +113,7 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
         <div className="flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-            No financial data available
+            {t('dashboard.widgets.monthlyTrend.noData')}
           </p>
         </div>
       </div>
@@ -124,16 +127,16 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
           <div className="rounded-lg bg-primary/10 p-2">
             <DollarSign className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold">Monthly Trend</h2>
+          <h2 className="text-lg font-semibold">{t('dashboard.widgets.monthlyTrend.title')}</h2>
         </div>
         <select
           value={timeRange}
           onChange={e => setTimeRange(e.target.value as 'month' | 'quarter' | 'year')}
           className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
         >
-          <option value="month">This Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="year">This Year</option>
+          <option value="month">{t('dashboard.widgets.monthlyTrend.timeRange.thisMonth')}</option>
+          <option value="quarter">{t('dashboard.widgets.monthlyTrend.timeRange.thisQuarter')}</option>
+          <option value="year">{t('dashboard.widgets.monthlyTrend.timeRange.thisYear')}</option>
         </select>
       </div>
 

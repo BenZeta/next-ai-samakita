@@ -12,18 +12,18 @@ import { z } from 'zod';
 import { useTranslations } from 'next-intl';
 
 const tenantFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
+  name: z.string().min(1, 'properties.tenant.form.validation.nameRequired'),
+  email: z.string().email('properties.tenant.form.validation.emailInvalid'),
   phone: z
     .string()
     .regex(
       /^\+[1-9]\d{1,14}$/,
-      'Invalid phone number format. Must start with + followed by country code and number'
+      'properties.tenant.form.validation.phoneInvalid'
     ),
   ktpNumber: z.string().optional(),
-  depositAmount: z.number().min(1, 'Deposit amount is required'),
-  startDate: z.string().min(1, 'Start date is required'),
-  endDate: z.string().min(1, 'End date is required'),
+  depositAmount: z.number().min(1, 'properties.tenant.form.validation.depositRequired'),
+  startDate: z.string().min(1, 'properties.tenant.form.validation.startDateRequired'),
+  endDate: z.string().min(1, 'properties.tenant.form.validation.endDateRequired'),
   references: z.array(z.string()).optional(),
 });
 
@@ -47,6 +47,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
   const createMutation = api.tenant.create.useMutation();
+  const t = useTranslations();
 
   // Fetch room details to get the price
   const { data: room } = api.room.get.useQuery({ id: roomId });
@@ -204,7 +205,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.ktpNumber && (
-            <p className="mt-1 text-sm text-destructive">{errors.ktpNumber.message}</p>
+            <p className="mt-1 text-sm text-destructive">{t(errors.ktpNumber.message!)}</p>
           )}
         </div>
 
@@ -214,7 +215,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
               {t('rooms.tenants.new.form.rentAmount')}
             </label>
             <p className="mt-2 text-lg font-medium text-primary">
-              Rp {room.price.toLocaleString()}
+              {t('properties.tenant.form.price', { price: room.price.toLocaleString() })}
             </p>
           </div>
         )}

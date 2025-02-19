@@ -26,7 +26,84 @@
     "occupancyRate": "Occupancy Rate",
     "monthlyTrend": "Monthly Trend",
     "maintenanceTracker": "Maintenance Tracker",
-    "tenantOverview": "Tenant Overview"
+    "tenantOverview": "Tenant Overview",
+    "businessNotVerified": "Your business is not verified yet",
+    "completeVerification": "Please complete your business verification to access all features",
+    "loadDataError": "Failed to load property data",
+    "refreshPage": "Please try refreshing the page",
+    "noOccupancyData": "No occupancy data",
+    "currentRate": "Current Rate",
+    "timeRange": {
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "thisYear": "This Year",
+      "vsPrevious": "vs previous"
+    },
+    "allProperties": "All Properties",
+    "widgets": {
+      "common": {
+        "viewAll": "View All",
+        "room": "Room",
+        "status": "Status",
+        "total": "Total",
+        "description": "Description",
+        "reported": "Reported",
+        "name": "Name",
+        "leasePeriod": "Lease Period",
+        "rent": "Rent"
+      },
+      "monthlyTrend": {
+        "title": "Monthly Trend",
+        "noData": "No trend data available",
+        "revenue": "Revenue",
+        "expenses": "Expenses",
+        "profit": "Profit",
+        "timeRange": {
+          "thisMonth": "This Month",
+          "thisQuarter": "This Quarter",
+          "thisYear": "This Year"
+        },
+        "stats": {
+          "revenue": "Revenue",
+          "expenses": "Expenses",
+          "netProfit": "Net Profit",
+          "profitMargin": "Profit Margin"
+        }
+      },
+      "maintenanceTracker": {
+        "title": "Maintenance Tracker",
+        "noData": "No maintenance data",
+        "status": {
+          "pending": "Pending",
+          "inProgress": "In Progress",
+          "completed": "Completed"
+        },
+        "priority": {
+          "high": "High Priority",
+          "medium": "Medium Priority",
+          "low": "Low Priority"
+        },
+        "viewAllRequests": "View All Requests"
+      },
+      "tenantOverview": {
+        "title": "Tenant Overview",
+        "noData": "No tenant data",
+        "totalTenants": "Total Tenants",
+        "activeLeases": "Active Leases",
+        "upcomingRenewals": "Upcoming Renewals",
+        "vacantUnits": "Vacant Units",
+        "viewAllTenants": "View All Tenants",
+        "stats": {
+          "totalTenants": "Total Tenants",
+          "activeTenants": "Active Tenants", 
+          "inactiveTenants": "Inactive Tenants",
+          "upcomingMoveouts": "Upcoming Move-outs"
+        },
+        "noTenantsYet": "No tenants yet",
+        "getStarted": "Get started by adding your first tenant",
+        "addTenant": "Add Tenant"
+      }
+    }
   },
   "properties": {
     "title": "Properties",
@@ -35,7 +112,298 @@
     "searchProperties": "Search properties...",
     "noProperties": "No properties found",
     "propertyDetails": "Property Details",
-    "rooms": "Rooms"
+    "rooms": "Rooms",
+    "form": {
+      "name": "Property Name",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "description": "Description",
+      "type": "Property Type",
+      "status": "Status",
+      "createProperty": "Create Property",
+      "updateProperty": "Update Property",
+      "deleteProperty": "Delete Property",
+      "confirmDelete": "Are you sure you want to delete this property?",
+      "propertyDeleted": "Property deleted successfully",
+      "propertyCreated": "Property created successfully",
+      "propertyUpdated": "Property updated successfully"
+    },
+    "filters": {
+      "all": "All Properties",
+      "active": "Active",
+      "inactive": "Inactive",
+      "searchPlaceholder": "Search properties..."
+    },
+    "card": {
+      "rooms": "Rooms",
+      "tenants": "Tenants",
+      "occupancy": "Occupancy",
+      "revenue": "Monthly Revenue",
+      "viewDetails": "View Details",
+      "editProperty": "Edit Property",
+      "noImage": "No image available"
+    },
+    "empty": {
+      "title": "No properties found",
+      "description": "Get started by adding your first property",
+      "addProperty": "Add Property"
+    },
+    "pages": {
+      "list": {
+        "loading": "Loading properties...",
+        "searching": "Searching...",
+        "pagination": {
+          "page": "Page",
+          "of": "of",
+          "previous": "Previous",
+          "next": "Next"
+        }
+      },
+      "new": {
+        "title": "Add New Property"
+      },
+      "details": {
+        "loading": "Loading property details...",
+        "notFound": "Property not found",
+        "calendar": "Calendar",
+        "addRoom": "Add Room",
+        "propertyDetails": "Property Details",
+        "address": "Address",
+        "description": "Description",
+        "facilities": "Facilities",
+        "rooms": "Rooms",
+        "viewDetails": "View Details",
+        "roomInfo": {
+          "sqm": "sqm",
+          "status": {
+            "available": "Available",
+            "occupied": "Occupied",
+            "maintenance": "Maintenance"
+          }
+        }
+      },
+      "room": {
+        "new": {
+          "title": "Add New Room"
+        },
+        "edit": {
+          "title": "Edit Room",
+          "loading": "Loading room details...",
+          "notFound": "Room not found"
+        },
+        "details": {
+          "loading": "Loading room details...",
+          "notFound": "Room not found",
+          "editRoom": "Edit Room",
+          "maintenanceMode": {
+            "start": "Set to Maintenance",
+            "end": "End Maintenance",
+            "confirm": {
+              "title": "Set Room to Maintenance",
+              "endTitle": "End Maintenance",
+              "message": "Are you sure you want to set this room to maintenance? This will mark the room as unavailable.",
+              "endMessage": "Are you sure you want to mark this room as available? This will end the maintenance period.",
+              "cancel": "Cancel",
+              "confirm": "Confirm"
+            }
+          },
+          "stats": {
+            "status": "Status",
+            "price": "Price",
+            "pricePerMonth": "/month",
+            "currentTenant": "Current Tenant",
+            "noTenant": "No tenant",
+            "roomType": "Room Type",
+            "size": "Size",
+            "amenities": "Amenities"
+          },
+          "maintenance": {
+            "form": {
+              "title": "Add Maintenance Expense",
+              "amount": "Amount",
+              "description": "Description",
+              "date": "Date",
+              "skip": "Skip",
+              "submit": "Add Expense",
+              "submitting": "Adding..."
+            }
+          }
+        },
+        "notFound": "Room not found",
+        "title": "Room {number}",
+        "editRoom": "Edit Room",
+        "setMaintenance": "Set to Maintenance",
+        "endMaintenance": "End Maintenance",
+        "status": "Status",
+        "statusTypes": {
+          "available": "Available",
+          "occupied": "Occupied",
+          "maintenance": "Maintenance"
+        },
+        "price": "Price",
+        "priceValue": "Rp {price} /month",
+        "currentTenant": "Current Tenant",
+        "noTenant": "No tenant",
+        "tenantHistory": "Tenant History",
+        "present": "Present",
+        "viewDetails": "View Details",
+        "noTenantHistory": "No tenant history",
+        "maintenance": {
+          "startTitle": "Set Room to Maintenance",
+          "endTitle": "End Maintenance",
+          "startMessage": "Are you sure you want to set this room to maintenance? This will mark the room as unavailable.",
+          "endMessage": "Are you sure you want to mark this room as available? This will end the maintenance period.",
+          "cancel": "Cancel",
+          "confirm": "Confirm"
+        },
+        "expense": {
+          "title": "Add Maintenance Expense",
+          "amount": "Amount",
+          "amountPlaceholder": "Enter amount",
+          "description": "Description",
+          "descriptionPlaceholder": "Enter maintenance details",
+          "date": "Date",
+          "skip": "Skip",
+          "add": "Add Expense",
+          "adding": "Adding..."
+        },
+        "toast": {
+          "statusUpdated": "Room status updated successfully",
+          "expenseAdded": "Maintenance expense added successfully",
+          "fillRequired": "Please fill in all required fields"
+        },
+        "form": {
+          "validation": {
+            "numberRequired": "Room number is required",
+            "sizeRequired": "Size must be greater than 0",
+            "amenitiesRequired": "At least one amenity is required",
+            "priceRequired": "Price must be greater than or equal to 0"
+          },
+          "number": "Room Number",
+          "type": "Room Type",
+          "selectType": "Select a type",
+          "types": {
+            "single": "Single",
+            "double": "Double",
+            "suite": "Suite",
+            "studio": "Studio"
+          },
+          "size": "Size (m²)",
+          "price": "Price per Month",
+          "amenities": "Amenities",
+          "amenities": {
+            "bathroom": "Private Bathroom",
+            "ac": "Air Conditioning",
+            "balcony": "Balcony",
+            "tv": "TV",
+            "fridge": "Mini Fridge",
+            "desk": "Desk",
+            "wardrobe": "Wardrobe",
+            "waterHeater": "Water Heater",
+            "window": "Window"
+          },
+          "updating": "Updating...",
+          "creating": "Creating...",
+          "update": "Update Room",
+          "create": "Create Room",
+          "toast": {
+            "updated": "Room updated successfully!",
+            "created": "Room created successfully!",
+            "error": "Failed to save room. Please check the form and try again."
+          }
+        }
+      },
+      "expenses": {
+        "title": "Property Expenses",
+        "noPropertyId": "No property ID provided"
+      },
+      "tenants": {
+        "new": {
+          "title": "Add New Tenant",
+          "loading": "Loading...",
+          "noRooms": "No available rooms in this property"
+        },
+        "checkIn": {
+          "title": "Check-in",
+          "loading": "Loading tenant details...",
+          "notFound": "Tenant not found",
+          "room": "Room"
+        },
+        "payments": {
+          "title": "Payments",
+          "loading": "Loading tenant details...",
+          "notFound": "Tenant not found",
+          "room": "Room"
+        }
+      },
+      "calendar": {
+        "title": "Room Availability Calendar",
+        "loading": "Loading...",
+        "scheduleMaintenance": "Schedule Maintenance",
+        "toast": {
+          "scheduled": "Maintenance scheduled successfully"
+        },
+        "form": {
+          "room": "Room",
+          "selectRoom": "Select a room",
+          "maintenanceType": "Maintenance Type",
+          "selectType": "Select type",
+          "types": {
+            "cleaning": "Cleaning",
+            "repair": "Repair",
+            "inspection": "Inspection",
+            "other": "Other"
+          },
+          "description": "Description",
+          "startDate": "Start Date",
+          "endDate": "End Date",
+          "validation": {
+            "roomRequired": "Room is required",
+            "descriptionRequired": "Description is required"
+          }
+        },
+        "events": {
+          "occupancy": "Room {room} - {tenant}",
+          "maintenance": "Room {room} - {title}"
+        },
+        "resources": {
+          "room": "Room {number}"
+        }
+      }
+    },
+    "detail": {
+      "notFound": "Property not found",
+      "calendar": "Calendar",
+      "addRoom": "Add Room",
+      "propertyDetails": "Property Details",
+      "address": "Address",
+      "description": "Description",
+      "facilities": "Facilities",
+      "rooms": "Rooms",
+      "roomNumber": "Room {number}",
+      "roomDetails": "{size} sqm • {type}",
+      "status": {
+        "available": "Available",
+        "occupied": "Occupied",
+        "maintenance": "Maintenance"
+      },
+      "price": "Rp {price}",
+      "viewDetails": "View Details"
+    },
+    "tenant": {
+      "new": {
+        "loading": "Loading...",
+        "noRooms": "No available rooms in this property",
+        "title": "Add New Tenant"
+      },
+      "checkIn": {
+        "loading": "Loading tenant details...",
+        "notFound": "Tenant not found",
+        "title": "Check-in",
+        "room": "Room"
+      }
+    }
   },
   "tenants": {
     "title": "Tenants",

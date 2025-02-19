@@ -133,9 +133,9 @@ export default function SignUp() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-background/95 to-background/90 px-4 py-8 overflow-hidden">
+    <div className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-4 py-8">
       {/* Modern Geometric Background */}
-      <div className="pointer-events-none fixed inset-0" aria-hidden="true">
+      <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
         {/* Large Animated Circles */}
         <div className="absolute inset-0">
           <div className="absolute left-1/4 top-1/4 h-96 w-96 animate-morph rounded-full bg-gradient-to-r from-primary/40 to-foreground/40 blur-3xl"></div>

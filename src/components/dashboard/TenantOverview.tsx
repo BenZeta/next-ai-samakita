@@ -4,6 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
 import { AlertTriangle, CheckCircle, Clock, Users } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'use-intl';
 
 interface TenantOverviewProps {
   propertyId?: string;
@@ -27,6 +28,8 @@ interface TenantSummary {
 }
 
 export default function TenantOverview({ propertyId }: TenantOverviewProps) {
+  const t = useTranslations();
+
   const { data: tenantData, isLoading } = api.tenant.getStats.useQuery({
     propertyId,
   });
@@ -60,6 +63,14 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
     return `Rp ${rent.toLocaleString()}`;
   };
 
+  if (!tenantData) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <p>{t('dashboard.widgets.tenantOverview.noData')}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg bg-card p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -67,13 +78,13 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
           <div className="rounded-lg bg-primary/10 p-2">
             <Users className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-card-foreground">Tenant Overview</h2>
+          <h2 className="text-lg font-semibold text-card-foreground">{t('dashboard.widgets.tenantOverview.title')}</h2>
         </div>
         <Link
           href="/tenants"
           className="text-sm text-primary hover:text-primary/90 hover:underline"
         >
-          View All Tenants
+          {t('dashboard.widgets.tenantOverview.viewAllTenants')}
         </Link>
       </div>
 
@@ -81,14 +92,14 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
         <div className="rounded-lg bg-background/80 p-4 dark:bg-secondary/50">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-primary" />
-            <p className="text-sm font-medium text-foreground">Total Tenants</p>
+            <p className="text-sm font-medium text-foreground">{t('dashboard.widgets.tenantOverview.stats.totalTenants')}</p>
           </div>
           <p className="mt-2 text-2xl font-bold text-foreground">{stats.total}</p>
         </div>
         <div className="rounded-lg bg-green-50 p-4 dark:bg-green-400/10">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <p className="text-sm font-medium text-green-800 dark:text-green-200">Active Tenants</p>
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">{t('dashboard.widgets.tenantOverview.stats.activeTenants')}</p>
           </div>
           <p className="mt-2 text-2xl font-bold text-green-900 dark:text-green-300">
             {stats.active}
@@ -97,16 +108,14 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
         <div className="rounded-lg bg-red-50 p-4 dark:bg-red-400/10">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-red-600 dark:text-red-400" />
-            <p className="text-sm font-medium text-red-800 dark:text-red-200">Inactive Tenants</p>
+            <p className="text-sm font-medium text-red-800 dark:text-red-200">{t('dashboard.widgets.tenantOverview.stats.inactiveTenants')}</p>
           </div>
           <p className="mt-2 text-2xl font-bold text-red-900 dark:text-red-300">{stats.inactive}</p>
         </div>
         <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-400/10">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              Upcoming Move-outs
-            </p>
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">{t('dashboard.widgets.tenantOverview.stats.upcomingMoveouts')}</p>
           </div>
           <p className="mt-2 text-2xl font-bold text-yellow-900 dark:text-yellow-300">
             {stats.upcomingMoveOuts}
@@ -125,31 +134,31 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
                       scope="col"
                       className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Name
+                      {t('dashboard.widgets.common.name')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Room
+                      {t('dashboard.widgets.common.room')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Status
+                      {t('dashboard.widgets.common.status')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Lease Period
+                      {t('dashboard.widgets.common.leasePeriod')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-right text-sm font-semibold text-muted-foreground"
                     >
-                      Rent
+                      {t('dashboard.widgets.common.rent')}
                     </th>
                   </tr>
                 </thead>
@@ -188,15 +197,15 @@ export default function TenantOverview({ propertyId }: TenantOverviewProps) {
             ) : (
               <div className="flex flex-col items-center justify-center py-12">
                 <Users className="h-12 w-12 text-muted-foreground/50" />
-                <h3 className="mt-4 text-lg font-medium text-foreground">No tenants yet</h3>
+                <h3 className="mt-4 text-lg font-medium text-foreground">{t('dashboard.widgets.tenantOverview.noTenantsYet')}</h3>
                 <p className="mt-2 text-center text-sm text-muted-foreground">
-                  Get started by adding your first tenant.
+                  {t('dashboard.widgets.tenantOverview.getStarted')}
                 </p>
                 <Link
                   href="/tenants/new"
                   className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
-                  Add Tenant
+                  {t('dashboard.widgets.tenantOverview.addTenant')}
                 </Link>
               </div>
             )}

@@ -5,12 +5,15 @@ import { MaintenanceStatus } from '@prisma/client';
 import { AlertTriangle, CheckCircle2, Clock, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { memo, useMemo } from 'react';
+import { useTranslations } from 'use-intl';
 
 interface MaintenanceTrackerProps {
   propertyId?: string;
 }
 
 const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
+  const t = useTranslations();
+
   const { data: maintenanceData, isLoading } = api.maintenance.getStats.useQuery(
     {
       propertyId,
@@ -70,7 +73,7 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-            No maintenance requests
+            {t('dashboard.widgets.maintenanceTracker.noData')}
           </p>
         </div>
       </div>
@@ -84,13 +87,15 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
           <div className="rounded-lg bg-primary/10 p-2">
             <Wrench className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-card-foreground">Maintenance Tracker</h2>
+          <h2 className="text-lg font-semibold text-card-foreground">
+            {t('dashboard.widgets.maintenanceTracker.title')}
+          </h2>
         </div>
         <Link
           href="/maintenance"
           className="text-sm text-primary hover:text-primary/90 hover:underline"
         >
-          View All Requests
+          {t('dashboard.widgets.maintenanceTracker.viewAllRequests')}
         </Link>
       </div>
 
@@ -98,7 +103,9 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
         <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-400/10">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Pending</p>
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              {t('dashboard.widgets.maintenanceTracker.status.pending')}
+            </p>
           </div>
           <p className="mt-2 text-2xl font-semibold text-yellow-900 dark:text-yellow-100">
             {stats?.pending}
@@ -107,7 +114,9 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
         <div className="rounded-lg bg-green-50 p-4 dark:bg-green-400/10">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <p className="text-sm font-medium text-green-800 dark:text-green-200">Completed</p>
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              {t('dashboard.widgets.maintenanceTracker.status.completed')}
+            </p>
           </div>
           <p className="mt-2 text-2xl font-semibold text-green-900 dark:text-green-100">
             {stats?.completed}
@@ -135,25 +144,25 @@ const MaintenanceTracker = ({ propertyId }: MaintenanceTrackerProps) => {
                       scope="col"
                       className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Description
+                      {t('dashboard.widgets.common.description')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Room
+                      {t('dashboard.widgets.common.room')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Status
+                      {t('dashboard.widgets.common.status')}
                     </th>
                     <th
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-muted-foreground"
                     >
-                      Reported
+                      {t('dashboard.widgets.common.reported')}
                     </th>
                   </tr>
                 </thead>
