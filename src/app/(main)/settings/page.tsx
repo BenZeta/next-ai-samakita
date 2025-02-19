@@ -82,7 +82,9 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.profile.title')}</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                {t('settings.profile.title')}
+              </h2>
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
@@ -120,7 +122,9 @@ export default function SettingsPage() {
                 disabled={true}
                 className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-muted-foreground">{t('settings.profile.emailHint')}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('settings.profile.emailHint')}
+              </p>
             </div>
 
             <div>
@@ -181,13 +185,17 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.application.title')}</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                {t('settings.application.title')}
+              </h2>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">{t('settings.application.darkMode')}</p>
+                  <p className="font-medium text-foreground">
+                    {t('settings.application.darkMode')}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {t('settings.application.darkModeHint')}
                   </p>
@@ -212,7 +220,9 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <Lock className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.password.title')}</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">
+                {t('settings.password.title')}
+              </h2>
             </div>
 
             <form className="space-y-4">
@@ -259,9 +269,9 @@ export default function SettingsPage() {
               </div>
               <button
                 type="submit"
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                Update Password
+                {t('settings.password.updateButton')}
               </button>
             </form>
           </div>

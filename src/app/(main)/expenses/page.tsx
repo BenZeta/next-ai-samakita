@@ -16,7 +16,9 @@ export default function ExpensesPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | undefined>(undefined);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null | undefined>(
+    undefined
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingExpense, setIsAddingExpense] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,14 +48,18 @@ export default function ExpensesPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getSelectedPropertyName = () => {
+    if (selectedPropertyId === undefined) return t('expenses.filters.all');
+    if (selectedPropertyId === null) return t('expenses.filters.general');
+    return properties.find(p => p.id === selectedPropertyId)?.name;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">{t('expenses.title')}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {t('expenses.subtitle2')}
-          </p>
+          <p className="mt-2 text-muted-foreground">{t('expenses.subtitle2')}</p>
         </div>
       </div>
 
@@ -65,11 +71,7 @@ export default function ExpensesPage() {
           >
             <div className="flex items-center gap-2">
               <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {selectedPropertyId
-                  ? properties.find(p => p.id === selectedPropertyId)?.name
-                  : t('expenses.filters.all')}
-              </span>
+              <span>{getSelectedPropertyName()}</span>
             </div>
             <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -84,8 +86,19 @@ export default function ExpensesPage() {
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
               >
                 <span>{t('expenses.filters.all')}</span>
-                {!selectedPropertyId && <Check className="ml-auto h-4 w-4" />}
+                {selectedPropertyId === undefined && <Check className="ml-auto h-4 w-4" />}
               </button>
+              <button
+                onClick={() => {
+                  setSelectedPropertyId(null);
+                  setIsOpen(false);
+                }}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-accent"
+              >
+                <span>{t('expenses.filters.general')}</span>
+                {selectedPropertyId === null && <Check className="ml-auto h-4 w-4" />}
+              </button>
+              <div className="my-1 border-t border-input"></div>
               {properties.map(property => (
                 <button
                   key={property.id}
