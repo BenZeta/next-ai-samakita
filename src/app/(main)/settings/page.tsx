@@ -10,7 +10,6 @@ import { redirect } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-//test
 export default function SettingsPage() {
   const {
     data: session,
@@ -83,21 +82,21 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">Profile Information</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.profile.title')}</h2>
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               disabled={updateProfile.isLoading}
             >
-              {isEditing ? 'Cancel' : 'Edit Profile'}
+              {isEditing ? t('settings.profile.cancelButton') : t('settings.profile.editButton')}
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
-                Name
+                {t('settings.profile.name')}
               </label>
               <input
                 type="text"
@@ -111,7 +110,7 @@ export default function SettingsPage() {
 
             <div>
               <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
-                Email
+                {t('settings.profile.email')}
               </label>
               <input
                 type="email"
@@ -121,12 +120,12 @@ export default function SettingsPage() {
                 disabled={true}
                 className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
               />
-              <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t('settings.profile.emailHint')}</p>
             </div>
 
             <div>
               <label htmlFor="phone" className="mb-2 block text-sm font-medium text-foreground">
-                Phone
+                {t('settings.profile.phone')}
               </label>
               <input
                 type="tel"
@@ -147,10 +146,10 @@ export default function SettingsPage() {
                 {updateProfile.isLoading ? (
                   <div className="flex items-center justify-center">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-r-transparent"></div>
-                    <span className="ml-2">Saving...</span>
+                    <span className="ml-2">{t('settings.profile.saving')}</span>
                   </div>
                 ) : (
-                  'Save Changes'
+                  t('settings.profile.saveButton')
                 )}
               </button>
             )}
@@ -182,15 +181,15 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">Application Settings</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.application.title')}</h2>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-foreground">Dark Mode</p>
+                  <p className="font-medium text-foreground">{t('settings.application.darkMode')}</p>
                   <p className="text-sm text-muted-foreground">
-                    Toggle between light and dark themes
+                    {t('settings.application.darkModeHint')}
                   </p>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
@@ -213,7 +212,7 @@ export default function SettingsPage() {
               <div className="rounded-lg bg-primary/10 p-2">
                 <Lock className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">Change Password</h2>
+              <h2 className="text-lg font-semibold text-card-foreground">{t('settings.password.title')}</h2>
             </div>
 
             <form className="space-y-4">
@@ -222,7 +221,7 @@ export default function SettingsPage() {
                   htmlFor="current-password"
                   className="mb-2 block text-sm font-medium text-foreground"
                 >
-                  Current Password
+                  {t('settings.password.current')}
                 </label>
                 <input
                   type="password"
@@ -236,7 +235,7 @@ export default function SettingsPage() {
                   htmlFor="new-password"
                   className="mb-2 block text-sm font-medium text-foreground"
                 >
-                  New Password
+                  {t('settings.password.new')}
                 </label>
                 <input
                   type="password"
@@ -250,7 +249,7 @@ export default function SettingsPage() {
                   htmlFor="confirm-password"
                   className="mb-2 block text-sm font-medium text-foreground"
                 >
-                  Confirm New Password
+                  {t('settings.password.confirm')}
                 </label>
                 <input
                   type="password"
@@ -258,13 +257,6 @@ export default function SettingsPage() {
                   className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
                 />
               </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Update Password
-              </button>
             </form>
           </div>
         </div>

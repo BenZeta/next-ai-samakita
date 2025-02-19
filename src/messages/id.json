@@ -69,7 +69,26 @@
     "status": {
       "paid": "Lunas",
       "pending": "Menunggu",
-      "overdue": "Terlambat"
+      "overdue": "Terlambat",
+      "all": "Semua Status",
+      "sent": "Terkirim",
+      "draft": "Draft"
+    },
+    "filters": {
+      "property": {
+        "all": "Semua Properti",
+        "select": "Pilih Properti"
+      }
+    },
+    "noResults": {
+      "withFilters": "Coba sesuaikan pencarian atau filter untuk menemukan yang Anda cari.",
+      "noFilters": "Mulai dengan membuat tagihan pertama Anda."
+    },
+    "createNew": "Buat Tagihan Baru",
+    "details": {
+      "room": "Kamar",
+      "amount": "Jumlah",
+      "dueDate": "Jatuh Tempo"
     }
   },
   "settings": {
@@ -85,6 +104,28 @@
       "light": "Terang",
       "dark": "Gelap",
       "system": "Sistem"
+    },
+    "profile": {
+      "title": "Informasi Profil",
+      "editButton": "Ubah Profil",
+      "cancelButton": "Batal",
+      "name": "Nama",
+      "email": "Email",
+      "emailHint": "Email tidak dapat diubah",
+      "phone": "Telepon",
+      "saveButton": "Simpan Perubahan",
+      "saving": "Menyimpan..."
+    },
+    "application": {
+      "title": "Pengaturan Aplikasi",
+      "darkMode": "Mode Gelap",
+      "darkModeHint": "Beralih antara tema terang dan gelap"
+    },
+    "password": {
+      "title": "Ubah Kata Sandi",
+      "current": "Kata Sandi Saat Ini",
+      "new": "Kata Sandi Baru",
+      "confirm": "Konfirmasi Kata Sandi"
     }
   }
 }

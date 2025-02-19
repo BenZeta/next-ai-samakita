@@ -64,12 +64,31 @@
     "title": "Billing",
     "subtitle": "Manage your tenant billing and payments",
     "addBilling": "Add Billing",
-    "searchBilling": "Search billing...",
-    "noBilling": "No billing found",
+    "searchBilling": "Search billings...",
+    "noBilling": "No billings found",
     "status": {
       "paid": "Paid",
       "pending": "Pending",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "all": "All Status",
+      "sent": "Sent",
+      "draft": "Draft"
+    },
+    "filters": {
+      "property": {
+        "all": "All Properties",
+        "select": "Select Property"
+      }
+    },
+    "noResults": {
+      "withFilters": "Try adjusting your search or filters to find what you're looking for.",
+      "noFilters": "Get started by creating your first billing."
+    },
+    "createNew": "Create New Billing",
+    "details": {
+      "room": "Room",
+      "amount": "Amount",
+      "dueDate": "Due Date"
     }
   },
   "settings": {
@@ -85,6 +104,28 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "editButton": "Edit Profile",
+      "cancelButton": "Cancel",
+      "name": "Name",
+      "email": "Email",
+      "emailHint": "Email cannot be changed",
+      "phone": "Phone",
+      "saveButton": "Save Changes",
+      "saving": "Saving..."
+    },
+    "application": {
+      "title": "Application Settings",
+      "darkMode": "Dark Mode",
+      "darkModeHint": "Toggle between light and dark themes"
+    },
+    "password": {
+      "title": "Change Password",
+      "current": "Current Password", 
+      "new": "New Password",
+      "confirm": "Confirm Password"
     }
   }
 }
