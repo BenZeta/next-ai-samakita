@@ -107,7 +107,6 @@ async function getMonthlyTrend(
   userId: string
 ) {
   const now = new Date();
-  const periods = timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 12;
   const trend = [];
 
   // Base where conditions
@@ -130,11 +129,15 @@ async function getMonthlyTrend(
         tenant: { room: { property: { userId } } },
       };
 
+  // Determine number of periods and interval type
+  const periods = timeRange === 'month' ? 30 : timeRange === 'quarter' ? 3 : 12;
+  const isMonthly = timeRange === 'year' || timeRange === 'quarter';
+
   for (let i = 0; i < periods; i++) {
     const date = new Date();
     const endDate = new Date();
 
-    if (timeRange === 'year') {
+    if (isMonthly) {
       date.setMonth(now.getMonth() - i);
       endDate.setMonth(now.getMonth() - i + 1);
     } else {
@@ -175,10 +178,9 @@ async function getMonthlyTrend(
       },
     });
 
-    const month =
-      timeRange === 'year'
-        ? date.toLocaleDateString('en-US', { month: 'short' })
-        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const month = isMonthly
+      ? date.toLocaleDateString('en-US', { month: 'short' })
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     trend.push({
       month,
@@ -189,5 +191,5 @@ async function getMonthlyTrend(
   }
 
   // Return only the last 12 entries for year view, or all entries for other views
-  return timeRange === 'year' ? trend.reverse() : trend.reverse().slice(0, 30);
+  return timeRange === 'year' ? trend.reverse() : trend.reverse().slice(0, periods);
 }

@@ -4,22 +4,17 @@ import { countryCodes } from '@/lib/constants/countryCodes';
 import { api } from '@/lib/trpc/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronsUpDown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
-import { useTranslations } from 'next-intl';
 
 const tenantFormSchema = z.object({
   name: z.string().min(1, 'properties.tenant.form.validation.nameRequired'),
   email: z.string().email('properties.tenant.form.validation.emailInvalid'),
-  phone: z
-    .string()
-    .regex(
-      /^\+[1-9]\d{1,14}$/,
-      'properties.tenant.form.validation.phoneInvalid'
-    ),
+  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, 'properties.tenant.form.validation.phoneInvalid'),
   ktpNumber: z.string().optional(),
   depositAmount: z.number().min(1, 'properties.tenant.form.validation.depositRequired'),
   startDate: z.string().min(1, 'properties.tenant.form.validation.startDateRequired'),
@@ -35,7 +30,6 @@ interface TenantFormProps {
 }
 
 export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
-  const t = useTranslations();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ktpFile, setKtpFile] = useState<File | null>(null);
@@ -126,7 +120,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('name')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.name && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.name')}</p>}
+          {errors.name && (
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.name')}
+            </p>
+          )}
         </div>
 
         <div>
@@ -139,7 +137,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             {...register('email')}
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          {errors.email && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.email')}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.email')}
+            </p>
+          )}
         </div>
 
         <div>
@@ -191,7 +193,11 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
               placeholder={t('rooms.tenants.new.form.phoneNumber')}
             />
           </div>
-          {errors.phone && <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.phone')}</p>}
+          {errors.phone && (
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.phone')}
+            </p>
+          )}
         </div>
 
         <div>
@@ -231,7 +237,9 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.depositAmount && (
-            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.depositAmount')}</p>
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.depositAmount')}
+            </p>
           )}
         </div>
 
@@ -246,7 +254,9 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.startDate && (
-            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.startDate')}</p>
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.startDate')}
+            </p>
           )}
         </div>
 
@@ -261,7 +271,9 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           {errors.endDate && (
-            <p className="mt-1 text-sm text-destructive">{t('rooms.tenants.new.form.validation.endDate')}</p>
+            <p className="mt-1 text-sm text-destructive">
+              {t('rooms.tenants.new.form.validation.endDate')}
+            </p>
           )}
         </div>
       </div>
@@ -272,7 +284,9 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
           disabled={isSubmitting || !room}
           className="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
         >
-          {isSubmitting ? t('rooms.tenants.new.form.submit.loading') : t('rooms.tenants.new.form.submit.create')}
+          {isSubmitting
+            ? t('rooms.tenants.new.form.submit.loading')
+            : t('rooms.tenants.new.form.submit.create')}
         </button>
       </div>
     </form>

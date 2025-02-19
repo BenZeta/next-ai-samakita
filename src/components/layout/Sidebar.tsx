@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,12 +22,12 @@ import { useEffect, useState } from 'react';
 
 // All navigation items
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Properties', href: '/properties', icon: Building2 },
-  { name: 'Tenants', href: '/tenants', icon: Users },
-  { name: 'Expenses', href: '/expenses', icon: Receipt },
-  { name: 'Billing', href: '/billing', icon: CreditCard },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'sidebar.dashboard', href: '/dashboard', icon: Home },
+  { name: 'sidebar.properties', href: '/properties', icon: Building2 },
+  { name: 'sidebar.tenants', href: '/tenants', icon: Users },
+  { name: 'sidebar.expenses', href: '/expenses', icon: Receipt },
+  { name: 'sidebar.billing', href: '/billing', icon: CreditCard },
+  { name: 'sidebar.settings', href: '/settings', icon: Settings },
 ];
 
 const Sidebar = () => {
@@ -34,6 +35,7 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const { data: session } = useSession();
   const isVerified = session?.token?.businessVerified === true;
+  const t = useTranslations();
 
   // Auto-close sidebar on mobile with debounce
   useEffect(() => {
@@ -158,7 +160,7 @@ const Sidebar = () => {
                             exit={{ opacity: 0, x: -10 }}
                             className="relative z-10 ml-2 truncate"
                           >
-                            {item.name}
+                            {t(item.name)}
                           </motion.span>
                         )}
                       </AnimatePresence>
@@ -200,7 +202,7 @@ const Sidebar = () => {
                     exit={{ opacity: 0, x: -10 }}
                     className="ml-2 truncate"
                   >
-                    Sign Out
+                    {t('sidebar.signOut')}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -237,7 +239,7 @@ const Sidebar = () => {
                         exit={{ opacity: 0, x: -10 }}
                         className="truncate"
                       >
-                        Verify Business
+                        {t('sidebar.verifyBusiness')}
                       </motion.span>
                     )}
                   </AnimatePresence>

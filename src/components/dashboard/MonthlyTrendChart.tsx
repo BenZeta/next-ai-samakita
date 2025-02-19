@@ -43,19 +43,27 @@ const StatsDisplay = memo(function StatsDisplay({
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.revenue')}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {t('dashboard.widgets.monthlyTrend.stats.revenue')}
+        </p>
         <p className="mt-1 text-xl font-bold">Rp {summary.totalRevenue.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.expenses')}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {t('dashboard.widgets.monthlyTrend.stats.expenses')}
+        </p>
         <p className="mt-1 text-xl font-bold">Rp {summary.totalExpenses.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.netProfit')}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {t('dashboard.widgets.monthlyTrend.stats.netProfit')}
+        </p>
         <p className="mt-1 text-xl font-bold">Rp {summary.netProfit.toLocaleString()}</p>
       </div>
       <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">{t('dashboard.widgets.monthlyTrend.stats.profitMargin')}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+          {t('dashboard.widgets.monthlyTrend.stats.profitMargin')}
+        </p>
         <p className="mt-1 text-xl font-bold">{summary.profitMargin.toFixed(2)}%</p>
       </div>
     </div>
@@ -68,7 +76,7 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
 
   const { data: financeData, isLoading } = api.finance.getStats.useQuery(
     {
-      propertyId,
+      propertyId: propertyId === null ? undefined : propertyId,
       timeRange,
     },
     {
@@ -135,7 +143,9 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
           className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="month">{t('dashboard.widgets.monthlyTrend.timeRange.thisMonth')}</option>
-          <option value="quarter">{t('dashboard.widgets.monthlyTrend.timeRange.thisQuarter')}</option>
+          <option value="quarter">
+            {t('dashboard.widgets.monthlyTrend.timeRange.thisQuarter')}
+          </option>
           <option value="year">{t('dashboard.widgets.monthlyTrend.timeRange.thisYear')}</option>
         </select>
       </div>

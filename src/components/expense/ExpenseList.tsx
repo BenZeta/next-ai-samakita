@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 interface ExpenseListProps {
-  propertyId?: string;
+  propertyId?: string | null;
   isAddingExpense?: boolean;
   setIsAddingExpense?: (value: boolean) => void;
 }
@@ -49,6 +49,16 @@ interface ExpenseData {
   };
 }
 
+interface NewExpense {
+  category: string;
+  amount: string;
+  date: string;
+  description: string;
+  vendor: string;
+  notes: string;
+  propertyId: string | null | undefined;
+}
+
 export function ExpenseList({
   propertyId,
   isAddingExpense: isAddingExpenseFromProps,
@@ -60,14 +70,14 @@ export function ExpenseList({
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [isAddingExpenseLocal, setIsAddingExpenseLocal] = useState(false);
-  const [newExpense, setNewExpense] = useState({
+  const [newExpense, setNewExpense] = useState<NewExpense>({
     category: '',
     amount: '',
     date: '',
     description: '',
     vendor: '',
     notes: '',
-    propertyId: propertyId || undefined,
+    propertyId: propertyId === null ? null : propertyId,
   });
   const [isUploading, setIsUploading] = useState(false);
   const limit = 10;
@@ -83,7 +93,7 @@ export function ExpenseList({
 
   const { data, isLoading, refetch } = api.expense.list.useQuery(
     {
-      propertyId,
+      propertyId: propertyId === null ? undefined : propertyId,
       category,
       startDate,
       endDate,
@@ -106,7 +116,7 @@ export function ExpenseList({
         description: '',
         vendor: '',
         notes: '',
-        propertyId: propertyId || undefined,
+        propertyId: propertyId === null ? null : propertyId,
       });
       refetch();
     },
@@ -139,7 +149,7 @@ export function ExpenseList({
 
     try {
       await createMutation.mutateAsync({
-        ...(propertyId && { propertyId }),
+        ...(propertyId !== null && propertyId !== undefined && { propertyId }),
         category: newExpense.category as ExpenseCategory,
         amount: parseFloat(newExpense.amount),
         date: new Date(newExpense.date),
@@ -148,6 +158,13 @@ export function ExpenseList({
     } catch (error) {
       console.error('Failed to create expense:', error);
     }
+  };
+
+  const handlePropertyChange = (value: string) => {
+    setNewExpense(prev => ({
+      ...prev,
+      propertyId: value === '' ? null : value,
+    }));
   };
 
   if (isLoading) {
@@ -176,7 +193,9 @@ export function ExpenseList({
       {/* Filters */}
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.category')}</label>
+          <label className="block text-sm font-medium text-muted-foreground">
+            {t('expenses.category')}
+          </label>
           <select
             value={category ?? 'all'}
             onChange={e =>
@@ -196,7 +215,9 @@ export function ExpenseList({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.filters.startDate')}</label>
+          <label className="block text-sm font-medium text-muted-foreground">
+            {t('expenses.filters.startDate')}
+          </label>
           <input
             type="date"
             value={startDate}
@@ -206,7 +227,9 @@ export function ExpenseList({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.filters.endDate')}</label>
+          <label className="block text-sm font-medium text-muted-foreground">
+            {t('expenses.filters.endDate')}
+          </label>
           <input
             type="date"
             value={endDate}
@@ -270,7 +293,7 @@ export function ExpenseList({
                 </td>
                 {!propertyId && (
                   <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
-                    {expense.property?.name}
+                    {expense.property?.name || t('expenses.filters.general')}
                   </td>
                 )}
                 <td className="whitespace-nowrap px-6 py-4 text-sm">
@@ -323,11 +346,10 @@ export function ExpenseList({
                   </label>
                   <select
                     value={newExpense.propertyId || ''}
-                    onChange={e => setNewExpense(prev => ({ ...prev, propertyId: e.target.value }))}
+                    onChange={e => handlePropertyChange(e.target.value)}
                     className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                    required
                   >
-                    <option value="">{t('expenses.form.selectProperty')}</option>
+                    <option value="">{t('expenses.filters.general')}</option>
                     {properties.map(property => (
                       <option key={property.id} value={property.id}>
                         {property.name}
@@ -338,7 +360,9 @@ export function ExpenseList({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.category')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expenses.form.category')}
+                </label>
                 <select
                   value={newExpense.category}
                   onChange={e => setNewExpense(prev => ({ ...prev, category: e.target.value }))}
@@ -355,7 +379,9 @@ export function ExpenseList({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.amount')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expenses.form.amount')}
+                </label>
                 <input
                   type="number"
                   value={newExpense.amount}
@@ -366,7 +392,9 @@ export function ExpenseList({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.date')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expenses.form.date')}
+                </label>
                 <input
                   type="date"
                   value={newExpense.date}

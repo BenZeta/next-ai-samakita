@@ -141,7 +141,7 @@
     "filters": {
       "all": "Semua Properti",
       "active": "Aktif",
-      "inactive": "Tidak Aktif", 
+      "inactive": "Tidak Aktif",
       "searchPlaceholder": "Cari properti..."
     },
     "card": {
@@ -390,7 +390,7 @@
           "emailInvalid": "Format email tidak valid",
           "phoneInvalid": "Format nomor telepon tidak valid. Harus diawali dengan + diikuti kode negara dan nomor",
           "depositRequired": "Deposit harus diisi",
-          "startDateRequired": "Tanggal mulai harus diisi", 
+          "startDateRequired": "Tanggal mulai harus diisi",
           "endDateRequired": "Tanggal selesai harus diisi"
         },
         "name": "Nama",
@@ -695,6 +695,7 @@
     "filters": {
       "all": "Semua Pengeluaran",
       "property": "Pilih Properti",
+      "general": "Umum",
       "category": "Semua Kategori",
       "startDate": "Tanggal Mulai",
       "endDate": "Tanggal Selesai"
@@ -833,11 +834,22 @@
   },
   "settings": {
     "title": "Pengaturan",
-    "subtitle": "Kelola pengaturan aplikasi",
+    "subtitle": "Kelola pengaturan dan preferensi akun Anda",
+    "profile": {
+      "title": "Informasi Profil",
+      "name": "Nama",
+      "email": "Email",
+      "phone": "Telepon",
+      "emailHint": "Email Anda tidak dapat diubah",
+      "editButton": "Ubah Profil",
+      "cancelButton": "Batal",
+      "saveButton": "Simpan Perubahan",
+      "saving": "Menyimpan..."
+    },
     "language": "Bahasa",
     "languageOptions": {
-      "en": "English",
-      "id": "Bahasa Indonesia"
+      "en": "Inggris",
+      "id": "Indonesia"
     },
     "theme": "Tema",
     "themeOptions": {
@@ -845,27 +857,17 @@
       "dark": "Gelap",
       "system": "Sistem"
     },
-    "profile": {
-      "title": "Informasi Profil",
-      "editButton": "Ubah Profil",
-      "cancelButton": "Batal",
-      "name": "Nama",
-      "email": "Email",
-      "emailHint": "Email tidak dapat diubah",
-      "phone": "Telepon",
-      "saveButton": "Simpan Perubahan",
-      "saving": "Menyimpan..."
-    },
     "application": {
       "title": "Pengaturan Aplikasi",
       "darkMode": "Mode Gelap",
-      "darkModeHint": "Beralih antara tema terang dan gelap"
+      "darkModeHint": "Aktifkan mode gelap untuk pengalaman tampilan yang lebih baik dalam cahaya redup"
     },
     "password": {
       "title": "Ubah Kata Sandi",
       "current": "Kata Sandi Saat Ini",
       "new": "Kata Sandi Baru",
-      "confirm": "Konfirmasi Kata Sandi"
+      "confirm": "Konfirmasi Kata Sandi Baru",
+      "updateButton": "Perbarui Kata Sandi"
     }
   },
   "rooms": {
@@ -900,5 +902,15 @@
         }
       }
     }
+  },
+  "sidebar": {
+    "dashboard": "Dasbor",
+    "properties": "Properti",
+    "tenants": "Penyewa",
+    "expenses": "Pengeluaran",
+    "billing": "Tagihan",
+    "settings": "Pengaturan",
+    "signOut": "Keluar",
+    "verifyBusiness": "Verifikasi Bisnis"
   }
 }

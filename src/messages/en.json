@@ -95,7 +95,7 @@
         "viewAllTenants": "View All Tenants",
         "stats": {
           "totalTenants": "Total Tenants",
-          "activeTenants": "Active Tenants", 
+          "activeTenants": "Active Tenants",
           "inactiveTenants": "Inactive Tenants",
           "upcomingMoveouts": "Upcoming Move-outs"
         },
@@ -593,6 +593,7 @@
     "filters": {
       "all": "All Expenses",
       "property": "Select Property",
+      "general": "General",
       "category": "All Categories",
       "startDate": "Start Date",
       "endDate": "End Date"
@@ -731,39 +732,34 @@
   },
   "settings": {
     "title": "Settings",
-    "subtitle": "Manage your application settings",
+    "subtitle": "Manage your account settings and preferences",
+    "profile": {
+      "title": "Profile Information",
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "emailHint": "Your email cannot be changed",
+      "editButton": "Edit Profile",
+      "cancelButton": "Cancel",
+      "saveButton": "Save Changes",
+      "saving": "Saving..."
+    },
     "language": "Language",
     "languageOptions": {
       "en": "English",
-      "id": "Bahasa Indonesia"
-    },
-    "theme": "Theme",
-    "themeOptions": {
-      "light": "Light",
-      "dark": "Dark",
-      "system": "System"
-    },
-    "profile": {
-      "title": "Profile Information",
-      "editButton": "Edit Profile",
-      "cancelButton": "Cancel",
-      "name": "Name",
-      "email": "Email",
-      "emailHint": "Email cannot be changed",
-      "phone": "Phone",
-      "saveButton": "Save Changes",
-      "saving": "Saving..."
+      "id": "Indonesian"
     },
     "application": {
       "title": "Application Settings",
       "darkMode": "Dark Mode",
-      "darkModeHint": "Toggle between light and dark themes"
+      "darkModeHint": "Enable dark mode for a better viewing experience in low light"
     },
     "password": {
       "title": "Change Password",
-      "current": "Current Password", 
+      "current": "Current Password",
       "new": "New Password",
-      "confirm": "Confirm Password"
+      "confirm": "Confirm New Password",
+      "updateButton": "Update Password"
     }
   },
   "rooms": {
@@ -798,5 +794,15 @@
         }
       }
     }
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "tenants": "Tenants",
+    "expenses": "Expenses",
+    "billing": "Billing",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "verifyBusiness": "Verify Business"
   }
 }
