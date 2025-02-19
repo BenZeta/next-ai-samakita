@@ -3,6 +3,7 @@
 import { api } from '@/lib/trpc/react';
 import { ExpenseCategory } from '@prisma/client';
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
@@ -53,6 +54,7 @@ export function ExpenseList({
   isAddingExpense: isAddingExpenseFromProps,
   setIsAddingExpense: setIsAddingExpenseFromProps,
 }: ExpenseListProps) {
+  const t = useTranslations();
   const [category, setCategory] = useState<ExpenseCategory | undefined>();
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -118,7 +120,7 @@ export function ExpenseList({
   });
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
+    if (window.confirm(t('expenses.actions.confirmDelete'))) {
       try {
         await deleteMutation.mutateAsync({ id });
       } catch (error) {
@@ -161,20 +163,20 @@ export function ExpenseList({
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-medium text-foreground">Expense List</h2>
+        <h2 className="text-lg font-medium text-foreground">{t('expenses.list.title')}</h2>
         <button
           onClick={() => setIsAddingExpense(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <Plus className="h-4 w-4" />
-          Add Expense
+          {t('expenses.addExpense')}
         </button>
       </div>
 
       {/* Filters */}
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">Category</label>
+          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.category')}</label>
           <select
             value={category ?? 'all'}
             onChange={e =>
@@ -184,7 +186,7 @@ export function ExpenseList({
             }
             className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            <option value="all">All Categories</option>
+            <option value="all">{t('expenses.filters.category')}</option>
             {Object.values(ExpenseCategory).map(cat => (
               <option key={cat} value={cat}>
                 {cat}
@@ -194,7 +196,7 @@ export function ExpenseList({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">Start Date</label>
+          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.filters.startDate')}</label>
           <input
             type="date"
             value={startDate}
@@ -204,7 +206,7 @@ export function ExpenseList({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-muted-foreground">End Date</label>
+          <label className="block text-sm font-medium text-muted-foreground">{t('expenses.filters.endDate')}</label>
           <input
             type="date"
             value={endDate}
@@ -218,7 +220,7 @@ export function ExpenseList({
       {data && (
         <div className="mb-6">
           <div className="rounded-lg bg-accent/50 p-4">
-            <p className="text-sm text-muted-foreground">Total Expenses</p>
+            <p className="text-sm text-muted-foreground">{t('expenses.list.totalExpenses')}</p>
             <p className="mt-1 text-2xl font-semibold text-foreground">
               Rp {data.summary.total.toLocaleString()}
             </p>
@@ -227,33 +229,33 @@ export function ExpenseList({
       )}
 
       {/* Expenses Table */}
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="min-w-full divide-y divide-border">
           <thead className="bg-muted/50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Date
+                {t('expenses.list.table.date')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Category
+                {t('expenses.list.table.category')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Description
+                {t('expenses.list.table.description')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Amount
+                {t('expenses.list.table.amount')}
               </th>
               {!propertyId && (
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Property
+                  {t('expenses.list.table.property')}
                 </th>
               )}
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Actions
+                {t('expenses.list.table.actions')}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-border bg-background">
             {data?.expenses.map(expense => (
               <tr key={expense.id} className="hover:bg-muted/50">
                 <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
@@ -276,7 +278,7 @@ export function ExpenseList({
                     onClick={() => handleDelete(expense.id)}
                     className="text-sm font-medium text-destructive hover:text-destructive/90"
                   >
-                    Delete
+                    {t('expenses.actions.delete')}
                   </button>
                 </td>
               </tr>
@@ -286,24 +288,24 @@ export function ExpenseList({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {data && (
         <div className="mt-4 flex items-center justify-between">
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
             className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Previous
+            {t('expenses.pagination.previous')}
           </button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t('expenses.pagination.page', { page, totalPages: data.pagination.totalPages })}
           </span>
           <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
+            onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+            disabled={page === data.pagination.totalPages}
             className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Next
+            {t('expenses.pagination.next')}
           </button>
         </div>
       )}
@@ -312,12 +314,12 @@ export function ExpenseList({
       {isAddingExpense && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-medium text-foreground">Add New Expense</h3>
+            <h3 className="mb-4 text-lg font-medium text-foreground">{t('expenses.form.title')}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!propertyId && (
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground">
-                    Property
+                    {t('expenses.form.property')}
                   </label>
                   <select
                     value={newExpense.propertyId || ''}
@@ -325,7 +327,7 @@ export function ExpenseList({
                     className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
                     required
                   >
-                    <option value="">Select Property</option>
+                    <option value="">{t('expenses.form.selectProperty')}</option>
                     {properties.map(property => (
                       <option key={property.id} value={property.id}>
                         {property.name}
@@ -336,14 +338,14 @@ export function ExpenseList({
               )}
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">Category</label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.category')}</label>
                 <select
                   value={newExpense.category}
                   onChange={e => setNewExpense(prev => ({ ...prev, category: e.target.value }))}
                   className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
                   required
                 >
-                  <option value="">Select Category</option>
+                  <option value="">{t('expenses.form.selectCategory')}</option>
                   {Object.values(ExpenseCategory).map(cat => (
                     <option key={cat} value={cat}>
                       {cat}
@@ -353,7 +355,7 @@ export function ExpenseList({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">Amount</label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.amount')}</label>
                 <input
                   type="number"
                   value={newExpense.amount}
@@ -364,7 +366,7 @@ export function ExpenseList({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">Date</label>
+                <label className="block text-sm font-medium text-muted-foreground">{t('expenses.form.date')}</label>
                 <input
                   type="date"
                   value={newExpense.date}
@@ -376,7 +378,7 @@ export function ExpenseList({
 
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">
-                  Description
+                  {t('expenses.form.description')}
                 </label>
                 <textarea
                   value={newExpense.description}
@@ -392,14 +394,14 @@ export function ExpenseList({
                   onClick={() => setIsAddingExpense(false)}
                   className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  Cancel
+                  {t('expenses.actions.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isUploading}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isUploading ? 'Adding...' : 'Add Expense'}
+                  {isUploading ? t('expenses.form.adding') : t('expenses.form.add')}
                 </button>
               </div>
             </form>

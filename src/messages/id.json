@@ -58,7 +58,51 @@
     "amount": "Jumlah",
     "date": "Tanggal",
     "description": "Deskripsi",
-    "property": "Properti"
+    "property": "Properti",
+    "filters": {
+      "all": "Semua Pengeluaran",
+      "property": "Pilih Properti",
+      "category": "Semua Kategori",
+      "startDate": "Tanggal Mulai",
+      "endDate": "Tanggal Selesai"
+    },
+    "list": {
+      "title": "Daftar Pengeluaran",
+      "totalExpenses": "Total Pengeluaran",
+      "table": {
+        "date": "Tanggal",
+        "category": "Kategori",
+        "description": "Deskripsi",
+        "amount": "Jumlah",
+        "property": "Properti",
+        "actions": "Aksi"
+      }
+    },
+    "actions": {
+      "delete": "Hapus",
+      "edit": "Ubah",
+      "cancel": "Batal",
+      "confirm": "Konfirmasi",
+      "confirmDelete": "Apakah Anda yakin ingin menghapus pengeluaran ini?"
+    },
+    "form": {
+      "title": "Tambah Pengeluaran Baru",
+      "property": "Properti",
+      "selectProperty": "Pilih Properti",
+      "category": "Kategori",
+      "selectCategory": "Pilih Kategori",
+      "amount": "Jumlah",
+      "date": "Tanggal",
+      "description": "Deskripsi",
+      "adding": "Menambahkan...",
+      "add": "Tambah Pengeluaran"
+    },
+    "pagination": {
+      "previous": "Sebelumnya",
+      "next": "Selanjutnya",
+      "page": "Halaman {page} dari {totalPages}"
+    },
+    "subtitle2": "Lacak dan kelola pengeluaran properti dan umum Anda"
   },
   "billing": {
     "title": "Tagihan",
