@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { api } from '@/lib/trpc/react';
 import { format } from 'date-fns';
 import {
@@ -206,108 +205,108 @@ export default function TenantDetailsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="w-full lg:w-auto">
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{tenant.name}</h1>
-          <p className="mt-2 text-muted-foreground">
+    <div className="container mx-auto min-h-screen px-2 py-4 sm:px-4 sm:py-8">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-8 sm:gap-4">
+        <div className="w-full">
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
+            {tenant.name}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:mt-2">
             {tenant.ktpNumber && t('tenants.details.ktpNumber', { number: tenant.ktpNumber })}
           </p>
         </div>
-        <div className="grid w-full grid-cols-2 gap-4 px-0 sm:grid-cols-2 sm:gap-4 sm:px-6 lg:w-auto lg:flex lg:items-center lg:gap-6 lg:px-0">
-          <div className="col-span-1">
-            <Link
-              href={`/tenants/${tenant.id}/payments`}
-              className="flex h-10 w-full items-center justify-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              {t('tenants.details.payments.title')}
-            </Link>
-          </div>
-          <div className="col-span-1 justify-self-end">
-            <Link
-              href={`/billing/new?tenantId=${tenant.id}`}
-              className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              {t('billing.addBilling')}
-            </Link>
-          </div>
-          <div className="col-span-1">
-            <button
-              onClick={() => setShowConfirmation(true)}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
-            >
-              <Calendar className="h-4 w-4" />
-              {t('tenants.details.extendLease')}
-            </button>
-          </div>
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:flex lg:items-center lg:gap-4">
+          <Link
+            href={`/tenants/${tenant.id}/payments`}
+            className="flex h-9 w-full items-center justify-center rounded-md bg-card px-3 py-2 text-sm text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:h-10 sm:px-4"
+          >
+            <CreditCard className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+            {t('tenants.details.payments.title')}
+          </Link>
+          <Link
+            href={`/billing/new?tenantId=${tenant.id}`}
+            className="flex h-9 w-full items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:h-10 sm:px-4"
+          >
+            <FileText className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+            {t('billing.addBilling')}
+          </Link>
+          <button
+            onClick={() => setShowConfirmation(true)}
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:h-10 sm:px-4"
+          >
+            <Calendar className="h-4 w-4" />
+            {t('tenants.details.extendLease')}
+          </button>
           {tenant?.status === 'ACTIVE' && (
-            <div className="col-span-1 justify-self-end">
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow hover:bg-destructive/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
-              >
-                <UserX className="h-4 w-4" />
-                {t('tenants.details.deactivateTenant')}
-              </button>
-            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground shadow hover:bg-destructive/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:h-10 sm:px-4"
+            >
+              <UserX className="h-4 w-4" />
+              {t('tenants.details.deactivateTenant')}
+            </button>
           )}
         </div>
       </div>
 
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-6">
-          <div className="rounded-lg bg-card p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold text-foreground">
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+          <div className="rounded-lg bg-card p-3 shadow-sm sm:p-4">
+            <h2 className="mb-3 text-base font-medium text-card-foreground sm:mb-4 sm:text-lg">
               {t('tenants.details.personalInfo')}
             </h2>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <Mail className="mr-3 h-5 w-5 text-muted-foreground" />
-                <span className="text-foreground">{tenant.email}</span>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-start gap-3">
+                <Mail className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <span className="text-sm text-foreground sm:text-base">{tenant.email}</span>
               </div>
-              <div className="flex items-center">
-                <Phone className="mr-3 h-5 w-5 text-muted-foreground" />
-                <span className="text-foreground">{tenant.phone}</span>
+              <div className="flex items-start gap-3">
+                <Phone className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <span className="text-sm text-foreground sm:text-base">{tenant.phone}</span>
               </div>
-              <div className="flex items-center">
-                <Home className="mr-3 h-5 w-5 text-muted-foreground" />
-                <span className="text-foreground">
+              <div className="flex items-start gap-3">
+                <Home className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <span className="text-sm text-foreground sm:text-base">
                   {t('tenants.details.roomAt', {
                     number: tenant.room.number,
                     property: tenant.room.property.name,
                   })}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">
-                  {t('tenants.details.leasePeriod')}
-                </span>
-                <span className="text-foreground">
-                  {tenant.startDate ? format(new Date(tenant.startDate), 'MMM d, yyyy') : 'Not set'}{' '}
-                  - {tenant.endDate ? format(new Date(tenant.endDate), 'MMM d, yyyy') : 'Not set'}
-                </span>
+              <div className="flex items-start gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <div>
+                  <span className="text-sm font-medium text-foreground sm:text-base">
+                    {t('tenants.details.leasePeriod')}
+                  </span>
+                  <span className="ml-2 text-sm text-foreground sm:text-base">
+                    {tenant.startDate
+                      ? format(new Date(tenant.startDate), 'MMM d, yyyy')
+                      : 'Not set'}{' '}
+                    - {tenant.endDate ? format(new Date(tenant.endDate), 'MMM d, yyyy') : 'Not set'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">
-                  {t('tenants.details.rentAmount')}
-                </span>
-                <span className="text-foreground">
-                  Rp {tenant.rentAmount?.toLocaleString() ?? 'Not set'}
-                </span>
+              <div className="flex items-start gap-3">
+                <CreditCard className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <div>
+                  <span className="text-sm font-medium text-foreground sm:text-base">
+                    {t('tenants.details.rentAmount')}
+                  </span>
+                  <span className="ml-2 text-sm text-foreground sm:text-base">
+                    Rp {tenant.rentAmount?.toLocaleString() ?? 'Not set'}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center">
-                <FileText className="mr-3 h-5 w-5 text-muted-foreground" />
-                <div className="flex space-x-2">
+              <div className="flex items-start gap-3">
+                <FileText className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                <div className="flex gap-2">
                   {tenant.ktpFile && (
                     <a
                       href={tenant.ktpFile}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:text-primary/90 transition-colors"
+                      className="text-sm text-primary hover:text-primary/90 transition-colors sm:text-base"
                     >
                       {t('tenants.details.viewKtp')}
                     </a>
@@ -317,7 +316,7 @@ export default function TenantDetailsPage() {
                       href={tenant.kkFile}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:text-primary/90 transition-colors"
+                      className="text-sm text-primary hover:text-primary/90 transition-colors sm:text-base"
                     >
                       View KK
                     </a>
@@ -327,64 +326,61 @@ export default function TenantDetailsPage() {
             </div>
           </div>
 
-          <div className="rounded-lg bg-card p-6 shadow">
+          <div className="rounded-lg bg-card p-3 shadow-sm sm:p-4">
             <div className="flex flex-col space-y-4">
               <div className="flex flex-col space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">
+                <h2 className="text-base font-medium text-card-foreground sm:text-lg">
                   {t('tenants.details.contract.title')}
                 </h2>
-                <div className="rounded-lg border p-4">
-                  <div className="flex flex-col space-y-4">
+                <div className="rounded-lg border p-3 sm:p-4">
+                  <div className="flex flex-col space-y-3 sm:space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="text-sm font-medium text-foreground sm:text-base">
                         {t('billing.details.status')}
                       </span>
-                      <span className="text-sm text-foreground">
+                      <span className="text-sm text-foreground sm:text-base">
                         {tenant.contractFile
                           ? t('tenants.details.contract.status.generated')
                           : t('tenants.details.contract.status.none')}
                       </span>
                     </div>
                     {tenant.contractFile ? (
-                      <div className="flex flex-col space-y-4">
-                        <Button
-                          variant="outline"
-                          className="w-full"
+                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                        <button
                           onClick={() =>
                             tenant.contractFile && window.open(tenant.contractFile, '_blank')
                           }
+                          className="inline-flex items-center justify-center rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 sm:text-sm"
                         >
-                          <FileText className="mr-2 h-4 w-4" />
+                          <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                           {t('tenants.details.contract.view')}
-                        </Button>
+                        </button>
                         {tenant.status === 'ACTIVE' && (
-                          <Button
-                            variant="outline"
-                            className="w-full"
+                          <button
                             onClick={() => setShowUploadModal(true)}
+                            className="inline-flex items-center justify-center rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 sm:text-sm"
                           >
-                            <Upload className="mr-2 h-4 w-4" />
+                            <Upload className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                             {t('tenants.details.contract.upload')}
-                          </Button>
+                          </button>
                         )}
                       </div>
                     ) : (
-                      <div className="pt-4">
-                        <Button
-                          variant="outline"
-                          className="w-full"
+                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                        <button
                           onClick={handleGenerateContract}
                           disabled={isGenerating}
+                          className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:text-sm"
                         >
                           {isGenerating ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin sm:h-4 sm:w-4" />
                           ) : (
-                            <FileText className="mr-2 h-4 w-4" />
+                            <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                           )}
                           {isGenerating
                             ? t('tenants.details.contract.generating')
                             : t('tenants.details.contract.generate')}
-                        </Button>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -461,41 +457,68 @@ export default function TenantDetailsPage() {
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowUploadModal(false)}
           />
-          <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg border border-border">
-            <h3 className="mb-4 text-lg font-medium text-foreground">
-              {t('tenants.details.contract.upload')}
-            </h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-muted-foreground">
-                {t('tenants.details.contract.fileError')}
-              </label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring file:border-0 file:bg-transparent file:text-foreground file:text-sm file:font-medium hover:file:text-primary"
-              />
-            </div>
-            <div className="flex justify-end space-x-4">
+          <div className="relative z-50 w-[95%] max-w-md rounded-lg bg-card p-3 shadow-lg sm:p-4">
+            <div className="mb-3 flex items-center justify-between sm:mb-4">
+              <h3 className="text-base font-medium text-card-foreground sm:text-lg">
+                {t('tenants.details.contract.upload')}
+              </h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                className="rounded-full p-1 text-muted-foreground hover:bg-accent"
               >
-                {t('common.cancel')}
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={!uploadFile || isUploading}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-              >
-                {isUploading
-                  ? t('tenants.details.contract.uploading')
-                  : t('tenants.details.contract.upload')}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </button>
             </div>
+            <form onSubmit={handleUpload} className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('tenants.details.contract.file')}
+                </label>
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  accept="application/pdf"
+                  className="mt-1.5 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:mr-4 file:border-0 file:bg-transparent file:text-sm file:font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!uploadFile || isUploading}
+                  className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin sm:h-4 sm:w-4" />
+                      {t('tenants.details.contract.uploading')}
+                    </>
+                  ) : (
+                    t('tenants.details.contract.upload')
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
