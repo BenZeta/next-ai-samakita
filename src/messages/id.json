@@ -137,11 +137,13 @@
       "uploadPropertyImages": "Unggah Foto Properti",
       "clickToUpload": "Klik untuk unggah",
       "orDragAndDrop": "atau seret dan lepas",
-      "acceptedFormats": "PNG, JPG atau JPEG (maks. 10MB)"
+      "acceptedFormats": "PNG, JPG atau JPEG (maks. 10MB)",
+      "createProperty": "Buat Properti"
     },
     "common": {
       "back": "Kembali",
-      "next": "Lanjut"
+      "next": "Lanjut",
+      "creating": "Membuat..."
     },
     "filters": {
       "all": "Semua Properti",
@@ -292,6 +294,15 @@
         "created": "Kamar berhasil dibuat",
         "updated": "Kamar berhasil diperbarui",
         "error": "Gagal menyimpan kamar"
+      }
+    },
+    "tenant": {
+      "form": {
+        "price": "Harga per Bulan",
+        "priceValue": "Rp {value}",
+        "status": {
+          "status": "Status"
+        }
       }
     }
   },

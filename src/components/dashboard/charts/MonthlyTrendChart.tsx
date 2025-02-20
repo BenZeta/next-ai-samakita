@@ -88,8 +88,8 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   const yAxisMax = Math.max(1000000, Math.ceil((maxValue * 1.2) / 1000000) * 1000000);
 
   return (
-    <div style={{ width: '100%', minHeight: '300px', position: 'relative' }}>
-      <ResponsiveContainer width="100%" height={300}>
+    <div className="h-[400px] w-full" style={{ minHeight: '400px' }}>
+      <ResponsiveContainer width="100%" height={400}>
         <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
           <ChartGradients />
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />

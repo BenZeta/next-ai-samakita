@@ -137,11 +137,13 @@
       "uploadPropertyImages": "Upload Property Images",
       "clickToUpload": "Click to upload",
       "orDragAndDrop": "or drag and drop",
-      "acceptedFormats": "PNG, JPG or JPEG (max. 10MB)"
+      "acceptedFormats": "PNG, JPG or JPEG (max. 10MB)",
+      "createProperty": "Create Property"
     },
     "common": {
       "back": "Back",
-      "next": "Next"
+      "next": "Next",
+      "creating": "Creating..."
     },
     "filters": {
       "all": "All Properties",
@@ -240,10 +242,10 @@
           "confirm": "Confirm"
         },
         "form": {
-          "status": "Status",
           "price": "Monthly Price",
           "priceValue": "Rp {value}",
           "status": {
+            "status": "Status",
             "available": "Available",
             "occupied": "Occupied",
             "maintenance": "Maintenance"
@@ -338,6 +340,13 @@
         "notFound": "Tenant not found",
         "title": "Check-in",
         "room": "Room"
+      },
+      "form": {
+        "price": "Monthly Price",
+        "priceValue": "Rp {value}",
+        "status": {
+          "status": "Status"
+        }
       }
     },
     "room": {
