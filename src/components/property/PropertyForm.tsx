@@ -85,6 +85,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
     defaultValues: {
       facilities: [],
       images: [],
+      dueDate: 5, // Default due date is 5th of each month
     },
   });
 
@@ -186,6 +187,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         ...data,
         images: imageUrls,
         location: selectedLocation ? `${selectedLocation.lat},${selectedLocation.lng}` : '',
+        dueDate: Number(data.dueDate), // Ensure dueDate is a number
       });
     } catch (error) {
       toast.error('Failed to create property');
@@ -349,7 +351,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                   id="dueDate"
                   min="1"
                   max="31"
-                  placeholder={t('form.dueDate')}
+                  placeholder={t('form.dueDatePlaceholder')}
                   {...register('dueDate', { valueAsNumber: true })}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />

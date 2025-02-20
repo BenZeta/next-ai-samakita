@@ -46,6 +46,9 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
     initialData?.amenities || []
   );
   const [customAmenity, setCustomAmenity] = useState('');
+  const [formattedPrice, setFormattedPrice] = useState(
+    initialData?.price ? initialData.price.toLocaleString() : ''
+  );
   const t = useTranslations('properties.room');
 
   const {
@@ -86,6 +89,22 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
       setIsLoading(false);
     },
   });
+
+  const formatPrice = (value: string) => {
+    // Remove non-digit characters
+    const number = value.replace(/\D/g, '');
+    // Format with thousand separators
+    return number ? parseInt(number).toLocaleString() : '';
+  };
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPrice(e.target.value);
+    setFormattedPrice(formatted);
+    // Set the actual numeric value in the form
+    setValue('price', formatted ? parseInt(formatted.replace(/\D/g, '')) : 0, {
+      shouldValidate: true,
+    });
+  };
 
   const onSubmit = async (data: RoomFormData) => {
     try {
@@ -195,9 +214,10 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
             Rp
           </span>
           <input
-            type="number"
+            type="text"
             id="price"
-            {...register('price')}
+            value={formattedPrice}
+            onChange={handlePriceChange}
             className="mt-1 block w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
           />
         </div>

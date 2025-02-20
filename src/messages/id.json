@@ -13,7 +13,8 @@
     "actions": "Aksi",
     "creating": "Membuat...",
     "back": "Kembali",
-    "next": "Lanjut"
+    "next": "Lanjut",
+    "saving": "Menyimpan..."
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -595,6 +596,8 @@
     "form": {
       "title": "Tambah Pengeluaran Baru",
       "quickAddOperational": "Tambah Cepat Pengeluaran Operasional",
+      "amountPlaceholder": "Masukkan jumlah pengeluaran",
+      "descriptionPlaceholder": "Masukkan deskripsi pengeluaran",
       "property": "Properti",
       "selectProperty": "Pilih Properti",
       "category": "Kategori",
@@ -763,7 +766,8 @@
       "current": "Kata Sandi Saat Ini",
       "new": "Kata Sandi Baru",
       "confirm": "Konfirmasi Kata Sandi Baru",
-      "updateButton": "Perbarui Kata Sandi"
+      "updateButton": "Perbarui Kata Sandi",
+      "confirmMessage": "Apakah Anda yakin ingin memperbarui kata sandi Anda? Tindakan ini tidak dapat dibatalkan."
     }
   },
   "rooms": {
