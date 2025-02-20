@@ -5,7 +5,7 @@ import { api } from '@/lib/trpc/react';
 import { AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import { memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, Suspense, useCallback, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 // Constants for fixed dimensions to prevent layout shifts
@@ -145,27 +145,6 @@ const DashboardContent = memo(function DashboardContent({
 }: {
   selectedPropertyId?: string;
 }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Delay mounting to ensure proper hydration
-    const timer = setTimeout(() => setMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Pre-render skeleton with fixed dimensions
-  if (!mounted) {
-    return (
-      <div className="flex flex-col gap-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="w-full">
-            <WidgetSkeleton />
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div className="w-full rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -187,62 +166,58 @@ const DashboardContent = memo(function DashboardContent({
   );
 });
 
-// Wrap dashboard content in error boundary
-function DashboardWithErrorBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <ErrorBoundary
-      error={new Error('Failed to load dashboard')}
-      reset={() => window.location.reload()}
-    >
-      {children}
-    </ErrorBoundary>
-  );
-}
-
 export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>();
   const { data: session } = useSession();
   const isVerified = session?.token?.businessVerified === true;
   const t = useTranslations();
 
-  // Memoize property query options with aggressive caching
-  const propertyQueryOptions = useMemo(
-    () => ({
-      staleTime: 60000,
-      cacheTime: 3600000,
-      refetchOnWindowFocus: false,
-      retry: 3,
-      suspense: true,
-    }),
-    []
-  );
-
-  const { data: properties, isError } = api.property.list.useQuery(
+  const {
+    data: properties,
+    isError,
+    error,
+  } = api.property.list.useQuery(
     {
       page: 1,
       limit: 100,
     },
-    propertyQueryOptions
+    {
+      staleTime: 30000,
+      refetchOnWindowFocus: false,
+      retry: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+    }
   );
 
   const handlePropertyChange = useCallback((id: string) => {
     setSelectedPropertyId(id || undefined);
   }, []);
 
+  // If there's an error fetching properties, show the error boundary
+  if (isError) {
+    return (
+      <ErrorBoundary
+        error={new Error(error?.message || 'Failed to load dashboard')}
+        reset={() => window.location.reload()}
+      >
+        <div />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <div className="container mx-auto min-h-screen px-4 py-8">
-      <DashboardWithErrorBoundary>
-        <Suspense fallback={<LoadingSpinner />}>
-          <DashboardHeader
-            isVerified={isVerified}
-            properties={properties?.properties || []}
-            selectedPropertyId={selectedPropertyId}
-            onPropertyChange={handlePropertyChange}
-            isError={isError}
-          />
-          <DashboardContent selectedPropertyId={selectedPropertyId} />
-        </Suspense>
-      </DashboardWithErrorBoundary>
+      <Suspense fallback={<LoadingSpinner />}>
+        <DashboardHeader
+          isVerified={isVerified}
+          properties={properties?.properties || []}
+          selectedPropertyId={selectedPropertyId}
+          onPropertyChange={handlePropertyChange}
+          isError={isError}
+        />
+        <DashboardContent selectedPropertyId={selectedPropertyId} />
+      </Suspense>
     </div>
   );
 }
