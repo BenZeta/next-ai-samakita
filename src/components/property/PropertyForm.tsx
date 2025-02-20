@@ -408,11 +408,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                   >
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <p className="mb-2 text-sm text-foreground">
-                        <span className="font-semibold">{t('form.clickToUpload')}</span> {t('form.orDragAndDrop')}
+                        <span className="font-semibold">{t('form.clickToUpload')}</span>{' '}
+                        {t('form.orDragAndDrop')}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t('form.acceptedFormats')}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{t('form.acceptedFormats')}</p>
                     </div>
                     <input
                       id="images"
@@ -467,7 +466,9 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           <h2 className="text-lg font-semibold text-foreground">
             {t('form.step')} {currentStep} {t('form.of')} 5: {stepTitles[currentStep - 1]}
           </h2>
-          <span className="text-sm text-muted-foreground">{calculateProgress()}% {t('form.complete')}</span>
+          <span className="text-sm text-muted-foreground">
+            {calculateProgress()}% {t('form.complete')}
+          </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
           <div

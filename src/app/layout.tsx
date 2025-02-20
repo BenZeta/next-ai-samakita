@@ -11,7 +11,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'Sama Kita CMS',
+  title: 'Sama Kita',
   description: 'A modern boarding house management system',
 };
 

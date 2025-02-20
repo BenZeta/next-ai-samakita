@@ -80,8 +80,12 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
       timeRange,
     },
     {
-      staleTime: 30000,
+      staleTime: 300000, // 5 minutes
       refetchOnWindowFocus: false,
+      retry: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      cacheTime: 300000, // 5 minutes
     }
   );
 

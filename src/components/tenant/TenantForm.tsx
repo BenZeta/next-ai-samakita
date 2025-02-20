@@ -221,7 +221,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
               {t('rooms.tenants.new.form.rentAmount')}
             </label>
             <p className="mt-2 text-lg font-medium text-primary">
-              {t('properties.tenant.form.price', { price: room.price.toLocaleString() })}
+              {t('properties.tenant.form.priceValue', { value: room.price.toLocaleString() })}
             </p>
           </div>
         )}
