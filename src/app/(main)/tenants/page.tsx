@@ -3,9 +3,9 @@
 import { api } from '@/lib/trpc/react';
 import { TenantStatus } from '@prisma/client';
 import { Building2, CreditCard, Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'use-intl';
 
 export default function TenantsPage() {
   const t = useTranslations();

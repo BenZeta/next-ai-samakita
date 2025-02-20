@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -39,7 +39,9 @@ function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProp
           <div className="mr-4 rounded-full bg-destructive/10 p-3">
             <UserX className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="text-lg font-medium text-card-foreground">{t('tenants.details.deactivate.confirmTitle')}</h3>
+          <h3 className="text-lg font-medium text-card-foreground">
+            {t('tenants.details.deactivate.confirmTitle')}
+          </h3>
         </div>
         <p className="mb-6 text-muted-foreground">
           {t('tenants.details.deactivate.confirmMessage')}
@@ -205,45 +207,51 @@ export default function TenantDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{tenant.name}</h1>
+      <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="w-full lg:w-auto">
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{tenant.name}</h1>
           <p className="mt-2 text-muted-foreground">
             {tenant.ktpNumber && t('tenants.details.ktpNumber', { number: tenant.ktpNumber })}
           </p>
         </div>
-        <div className="flex space-x-4">
-          <Link
-            href={`/tenants/${tenant.id}/check-in`}
-            className="flex items-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <ClipboardList className="mr-2 h-5 w-5" />
-            {t('tenants.details.checkInItems')}
-          </Link>
-          <Link
-            href={`/tenants/${tenant.id}/payments`}
-            className="flex items-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <CreditCard className="mr-2 h-5 w-5" />
-            {t('tenants.details.payments.title')}
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowConfirmation(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Calendar className="h-4 w-4" />
-            {t('tenants.details.extendLease')}
-          </button>
-          {tenant?.status === 'ACTIVE' && (
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow-sm hover:bg-destructive/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+        <div className="grid w-full grid-cols-2 gap-4 px-0 sm:grid-cols-2 sm:gap-4 sm:px-6 lg:w-auto lg:flex lg:items-center lg:gap-6 lg:px-0">
+          <div className="col-span-1">
+            <Link
+              href={`/tenants/${tenant.id}/payments`}
+              className="flex h-10 w-full items-center justify-center rounded-md bg-card px-4 py-2 text-foreground shadow hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
             >
-              <UserX className="h-4 w-4" />
-              {t('tenants.details.deactivateTenant')}
+              <CreditCard className="mr-2 h-5 w-5" />
+              {t('tenants.details.payments.title')}
+            </Link>
+          </div>
+          <div className="col-span-1 justify-self-end">
+            <Link
+              href={`/billing/new?tenantId=${tenant.id}`}
+              className="flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
+            >
+              <FileText className="mr-2 h-5 w-5" />
+              {t('billing.addBilling')}
+            </Link>
+          </div>
+          <div className="col-span-1">
+            <button
+              onClick={() => setShowConfirmation(true)}
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
+            >
+              <Calendar className="h-4 w-4" />
+              {t('tenants.details.extendLease')}
             </button>
+          </div>
+          {tenant?.status === 'ACTIVE' && (
+            <div className="col-span-1 justify-self-end">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground shadow hover:bg-destructive/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring sm:w-[180px]"
+              >
+                <UserX className="h-4 w-4" />
+                {t('tenants.details.deactivateTenant')}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -251,7 +259,9 @@ export default function TenantDetailsPage() {
       <div className="space-y-6">
         <div className="grid grid-cols-2 gap-6">
           <div className="rounded-lg bg-card p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold text-foreground">{t('tenants.details.personalInfo')}</h2>
+            <h2 className="mb-4 text-xl font-semibold text-foreground">
+              {t('tenants.details.personalInfo')}
+            </h2>
             <div className="space-y-4">
               <div className="flex items-center">
                 <Mail className="mr-3 h-5 w-5 text-muted-foreground" />
@@ -264,12 +274,17 @@ export default function TenantDetailsPage() {
               <div className="flex items-center">
                 <Home className="mr-3 h-5 w-5 text-muted-foreground" />
                 <span className="text-foreground">
-                  {t('tenants.details.roomAt', { number: tenant.room.number, property: tenant.room.property.name })}
+                  {t('tenants.details.roomAt', {
+                    number: tenant.room.number,
+                    property: tenant.room.property.name,
+                  })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">{t('tenants.details.leasePeriod')}</span>
+                <span className="font-medium text-foreground">
+                  {t('tenants.details.leasePeriod')}
+                </span>
                 <span className="text-foreground">
                   {tenant.startDate ? format(new Date(tenant.startDate), 'MMM d, yyyy') : 'Not set'}{' '}
                   - {tenant.endDate ? format(new Date(tenant.endDate), 'MMM d, yyyy') : 'Not set'}
@@ -277,7 +292,9 @@ export default function TenantDetailsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium text-foreground">{t('tenants.details.rentAmount')}</span>
+                <span className="font-medium text-foreground">
+                  {t('tenants.details.rentAmount')}
+                </span>
                 <span className="text-foreground">
                   Rp {tenant.rentAmount?.toLocaleString() ?? 'Not set'}
                 </span>
@@ -313,13 +330,19 @@ export default function TenantDetailsPage() {
           <div className="rounded-lg bg-card p-6 shadow">
             <div className="flex flex-col space-y-4">
               <div className="flex flex-col space-y-2">
-                <h2 className="text-lg font-semibold text-foreground">{t('tenants.details.contract.title')}</h2>
+                <h2 className="text-lg font-semibold text-foreground">
+                  {t('tenants.details.contract.title')}
+                </h2>
                 <div className="rounded-lg border p-4">
                   <div className="flex flex-col space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">{t('billing.details.status')}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {t('billing.details.status')}
+                      </span>
                       <span className="text-sm text-foreground">
-                        {tenant.contractFile ? t('tenants.details.contract.status.generated') : t('tenants.details.contract.status.none')}
+                        {tenant.contractFile
+                          ? t('tenants.details.contract.status.generated')
+                          : t('tenants.details.contract.status.none')}
                       </span>
                     </div>
                     {tenant.contractFile ? (
@@ -358,7 +381,9 @@ export default function TenantDetailsPage() {
                           ) : (
                             <FileText className="mr-2 h-4 w-4" />
                           )}
-                          {isGenerating ? t('tenants.details.contract.generating') : t('tenants.details.contract.generate')}
+                          {isGenerating
+                            ? t('tenants.details.contract.generating')
+                            : t('tenants.details.contract.generate')}
                         </Button>
                       </div>
                     )}
@@ -370,7 +395,18 @@ export default function TenantDetailsPage() {
         </div>
 
         <div className="rounded-lg bg-card p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-foreground">{t('tenants.details.checkInItems')}</h2>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-foreground">
+              {t('tenants.details.checkInItems')}
+            </h2>
+            <Link
+              href={`/tenants/${tenant.id}/check-in`}
+              className="flex h-10 w-[160px] items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <ClipboardList className="mr-2 h-5 w-5" />
+              {t('tenants.details.checkInItems')}
+            </Link>
+          </div>
           {tenant.checkInItems.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenant.checkInItems.map(item => (
@@ -392,7 +428,9 @@ export default function TenantDetailsPage() {
       {showConfirmation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-xl border border-border">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">{t('tenants.details.lease.confirmTitle')}</h3>
+            <h3 className="mb-4 text-lg font-semibold text-foreground">
+              {t('tenants.details.lease.confirmTitle')}
+            </h3>
             <p className="mb-6 text-muted-foreground">
               {t('tenants.details.lease.confirmMessage', { name: tenant.name })}
             </p>
@@ -427,7 +465,9 @@ export default function TenantDetailsPage() {
             onClick={() => setShowUploadModal(false)}
           />
           <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg border border-border">
-            <h3 className="mb-4 text-lg font-medium text-foreground">{t('tenants.details.contract.upload')}</h3>
+            <h3 className="mb-4 text-lg font-medium text-foreground">
+              {t('tenants.details.contract.upload')}
+            </h3>
             <div className="mb-4">
               <label className="block text-sm font-medium text-muted-foreground">
                 {t('tenants.details.contract.fileError')}
@@ -451,7 +491,9 @@ export default function TenantDetailsPage() {
                 disabled={!uploadFile || isUploading}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
               >
-                {isUploading ? t('tenants.details.contract.uploading') : t('tenants.details.contract.upload')}
+                {isUploading
+                  ? t('tenants.details.contract.uploading')
+                  : t('tenants.details.contract.upload')}
               </button>
             </div>
           </div>

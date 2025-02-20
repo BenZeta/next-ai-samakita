@@ -5,10 +5,10 @@ import { useTheme } from '@/components/providers/ThemeProvider';
 import { api } from '@/lib/trpc/react';
 import { Lock, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'use-intl';
 
 export default function SettingsPage() {
   const {

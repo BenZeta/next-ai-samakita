@@ -6,7 +6,7 @@ import { Building2, CreditCard, Mail, Phone, UserX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -26,7 +26,9 @@ function ConfirmationModal({ isOpen, onClose, onConfirm }: ConfirmationModalProp
           <div className="mr-4 rounded-full bg-destructive/10 p-3">
             <UserX className="h-6 w-6 text-destructive" />
           </div>
-          <h3 className="text-lg font-medium text-card-foreground">{t('tenants.details.deactivate.confirmTitle')}</h3>
+          <h3 className="text-lg font-medium text-card-foreground">
+            {t('tenants.details.deactivate.confirmTitle')}
+          </h3>
         </div>
         <p className="mb-6 text-muted-foreground">
           {t('tenants.details.deactivate.confirmMessage')}
@@ -113,7 +115,9 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-medium text-card-foreground">{tenant.name}</h3>
-              <p className="text-sm text-muted-foreground">{t('tenants.details.room')} {tenant.room.number}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('tenants.details.room')} {tenant.room.number}
+              </p>
             </div>
           </div>
 
@@ -146,7 +150,9 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
         </div>
 
         <div className="rounded-lg bg-card p-6 shadow">
-          <h3 className="mb-4 text-lg font-medium text-card-foreground">{t('tenants.details.propertyDetails')}</h3>
+          <h3 className="mb-4 text-lg font-medium text-card-foreground">
+            {t('tenants.details.propertyDetails')}
+          </h3>
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">{t('properties.title')}</p>
@@ -167,4 +173,4 @@ export default function TenantDetailPage({ params }: { params: { tenantId: strin
       />
     </div>
   );
-} 
+}

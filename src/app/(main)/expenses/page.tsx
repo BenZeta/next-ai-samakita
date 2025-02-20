@@ -3,8 +3,8 @@
 import { ExpenseList } from '@/components/expense/ExpenseList';
 import { api } from '@/lib/trpc/react';
 import { Building2, Check, ChevronsUpDown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'use-intl';
 
 interface Property {
   id: string;

@@ -4,7 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { ArrowDown, ArrowUp, Building } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 
 // Dynamically import heavy chart components
 const Chart = dynamic(() => import('./charts/OccupancyChart').then(mod => mod.default), {
@@ -51,7 +51,7 @@ const StatsDisplay = memo(function StatsDisplay({
   timeRange: string;
 }) {
   const t = useTranslations();
-  
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div className="rounded-lg bg-accent/50 p-4">

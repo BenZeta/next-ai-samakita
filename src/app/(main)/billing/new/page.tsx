@@ -1,18 +1,21 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { Building2, Search } from 'lucide-react';
-import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { PaymentType } from '@prisma/client';
+import { Building2, CreditCard, Search } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'use-intl';
 
 export default function NewBillingPage() {
   const router = useRouter();
   const t = useTranslations();
   const [search, setSearch] = useState('');
+  const searchParams = useSearchParams();
+  const initialTenantId = searchParams.get('tenantId');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
-  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(initialTenantId);
   const [isLoading, setIsLoading] = useState(false);
 
   // Form state
@@ -20,10 +23,24 @@ export default function NewBillingPage() {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [type, setType] = useState<PaymentType>(PaymentType.RENT);
 
   const { data: properties, isLoading: propertiesLoading } = api.property.list.useQuery({
     search,
   });
+
+  // If we have an initial tenant ID, fetch their details to get the property ID
+  const { data: initialTenant } = api.tenant.detail.useQuery(
+    { id: initialTenantId || '' },
+    { enabled: !!initialTenantId }
+  );
+
+  // Set the initial property ID when we get the tenant details
+  useEffect(() => {
+    if (initialTenant && !selectedPropertyId) {
+      setSelectedPropertyId(initialTenant.room.propertyId);
+    }
+  }, [initialTenant, selectedPropertyId]);
 
   const { data: tenants, isLoading: tenantsLoading } = api.tenant.list.useQuery(
     {
@@ -58,10 +75,32 @@ export default function NewBillingPage() {
         amount: parseFloat(amount),
         dueDate: new Date(dueDate),
         tenantId: selectedTenantId || undefined,
+        type,
       });
     } catch (error) {
       console.error('Failed to create billing:', error);
     }
+  };
+
+  const handleAutoFillRent = () => {
+    const selectedTenant = initialTenant || tenants?.find(t => t.id === selectedTenantId);
+    if (!selectedTenant) return;
+
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const dueDate = new Date(nextMonth.setDate(5)); // Set due date to 5th of next month
+
+    setTitle(t('billing.type.RENT'));
+    setDescription(
+      t('billing.new.form.rentDescription', {
+        room: selectedTenant.room.number,
+        month: nextMonth.toLocaleString('default', { month: 'long' }),
+        year: nextMonth.getFullYear(),
+      })
+    );
+    setAmount(selectedTenant.rentAmount?.toString() || '');
+    setDueDate(dueDate.toISOString().split('T')[0]);
+    setType(PaymentType.RENT);
   };
 
   if (propertiesLoading || tenantsLoading) {
@@ -78,7 +117,9 @@ export default function NewBillingPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.new.property.title')}</h2>
+          <h2 className="mb-4 text-lg font-medium text-foreground">
+            {t('billing.new.property.title')}
+          </h2>
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -107,8 +148,12 @@ export default function NewBillingPage() {
                   <Building2 className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground">{t('billing.new.property.allProperties')}</h3>
-                  <p className="text-sm text-muted-foreground">{t('billing.new.property.allPropertiesHint')}</p>
+                  <h3 className="font-medium text-foreground">
+                    {t('billing.new.property.allProperties')}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('billing.new.property.allPropertiesHint')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -140,7 +185,9 @@ export default function NewBillingPage() {
 
         {selectedPropertyId && tenants && tenants.length > 0 && (
           <div>
-            <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.new.tenant.title')}</h2>
+            <h2 className="mb-4 text-lg font-medium text-foreground">
+              {t('billing.new.tenant.title')}
+            </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenants.map(tenant => (
                 <div
@@ -152,7 +199,9 @@ export default function NewBillingPage() {
                 >
                   <div>
                     <h3 className="font-medium text-foreground">{tenant.name}</h3>
-                    <p className="text-sm text-muted-foreground">{t('billing.new.tenant.room')} {tenant.room.number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('billing.new.tenant.room')} {tenant.room.number}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -161,6 +210,35 @@ export default function NewBillingPage() {
         )}
 
         <div className="space-y-4">
+          {selectedTenantId && (
+            <button
+              type="button"
+              onClick={handleAutoFillRent}
+              className="mb-4 inline-flex items-center rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/90"
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              {t('billing.new.form.autoFillRent')}
+            </button>
+          )}
+
+          <div>
+            <label htmlFor="type" className="block text-sm font-medium text-foreground">
+              {t('billing.new.form.type')}
+            </label>
+            <select
+              id="type"
+              value={type}
+              onChange={e => setType(e.target.value as PaymentType)}
+              className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              {Object.values(PaymentType).map(type => (
+                <option key={type} value={type}>
+                  {t(`billing.type.${type}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-foreground">
               {t('billing.new.form.title')}

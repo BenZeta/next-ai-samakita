@@ -4,11 +4,11 @@ import { countryCodes } from '@/lib/constants/countryCodes';
 import { api } from '@/lib/trpc/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronsUpDown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'use-intl';
 import { z } from 'zod';
 
 const tenantFormSchema = z.object({

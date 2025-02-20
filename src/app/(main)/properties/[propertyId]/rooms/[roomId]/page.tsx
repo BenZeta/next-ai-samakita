@@ -1,8 +1,9 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { api } from '@/lib/trpc/react';
 import { ExpenseCategory, RoomStatus, TenantStatus } from '@prisma/client';
-import { Building2, Calendar, DollarSign, Users, Wrench } from 'lucide-react';
+import { Building2, DollarSign, PencilIcon, Users, WrenchIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -30,9 +31,11 @@ export default function RoomDetailPage() {
     description: '',
     date: new Date().toISOString().split('T')[0],
   });
-  const t = useTranslations('properties.room');
+  const t = useTranslations('properties.pages.room');
 
-  const { data: room, isLoading } = api.room.get.useQuery({ id: roomId });
+  const { data: room, isLoading } = api.room.get.useQuery({
+    id: roomId,
+  });
   const utils = api.useContext();
 
   const updateRoomStatus = api.room.updateStatus.useMutation({
@@ -106,7 +109,7 @@ export default function RoomDetailPage() {
 
     await createExpense.mutateAsync({
       propertyId,
-      category: ExpenseCategory.MAINTENANCE,
+      category: ExpenseCategory.REPAIRS,
       amount: parseFloat(maintenanceExpense.amount),
       date: new Date(maintenanceExpense.date),
       description: maintenanceExpense.description,
@@ -139,7 +142,7 @@ export default function RoomDetailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('title', { number: room.number })}</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t('title')}</h1>
           <p className="mt-2 text-muted-foreground">{room.property.name}</p>
         </div>
         <div className="flex gap-4">
@@ -147,9 +150,10 @@ export default function RoomDetailPage() {
             href={`/properties/${propertyId}/rooms/${roomId}/edit`}
             className="inline-flex items-center gap-2 rounded-lg bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
           >
-            {t('editRoom')}
+            <PencilIcon className="h-4 w-4" />
+            {t('edit.title')}
           </Link>
-          <button
+          <Button
             onClick={handleMaintenanceToggle}
             disabled={isUpdating}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
@@ -158,9 +162,9 @@ export default function RoomDetailPage() {
                 : 'bg-primary text-primary-foreground hover:bg-primary/90'
             }`}
           >
-            <Wrench className="h-4 w-4" />
+            <WrenchIcon className="h-4 w-4" />
             {room.status === RoomStatus.MAINTENANCE ? t('endMaintenance') : t('setMaintenance')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -171,8 +175,10 @@ export default function RoomDetailPage() {
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('status')}</p>
-              <p className="mt-1 font-medium text-foreground">{t(`statusTypes.${room.status.toLowerCase()}`)}</p>
+              <p className="text-sm text-muted-foreground">{t('form.status.status')}</p>
+              <p className="mt-1 font-medium text-foreground">
+                {t(`form.status.${room.status.toLowerCase()}`)}
+              </p>
             </div>
           </div>
         </div>
@@ -183,9 +189,9 @@ export default function RoomDetailPage() {
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('price')}</p>
+              <p className="text-sm text-muted-foreground">{t('form.price')}</p>
               <p className="mt-1 font-medium text-foreground">
-                {t('priceValue', { price: room.price.toLocaleString() })}
+                {t('form.priceValue', { value: room.price })}
               </p>
             </div>
           </div>
@@ -220,7 +226,9 @@ export default function RoomDetailPage() {
                     <p className="font-medium text-foreground">{tenant.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(tenant.startDate!).toLocaleDateString()} -{' '}
-                      {tenant.endDate ? new Date(tenant.endDate).toLocaleDateString() : t('present')}
+                      {tenant.endDate
+                        ? new Date(tenant.endDate).toLocaleDateString()
+                        : t('present')}
                     </p>
                   </div>
                   <Link
@@ -240,7 +248,10 @@ export default function RoomDetailPage() {
 
       {showMaintenanceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowMaintenanceModal(false)} />
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setShowMaintenanceModal(false)}
+          />
           <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
             <h3 className="mb-4 text-lg font-medium">
               {room.status === RoomStatus.MAINTENANCE
@@ -296,7 +307,9 @@ export default function RoomDetailPage() {
             </div>
             <form onSubmit={handleExpenseSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expense.amount')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expense.amount')}
+                </label>
                 <input
                   type="number"
                   value={maintenanceExpense.amount}
@@ -310,7 +323,9 @@ export default function RoomDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expense.description')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expense.description')}
+                </label>
                 <textarea
                   value={maintenanceExpense.description}
                   onChange={e =>
@@ -323,7 +338,9 @@ export default function RoomDetailPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">{t('expense.date')}</label>
+                <label className="block text-sm font-medium text-muted-foreground">
+                  {t('expense.date')}
+                </label>
                 <input
                   type="date"
                   value={maintenanceExpense.date}

@@ -1,0 +1,4 @@
+- Added operational and non-operational expense categories with proper translations and UI components to manage them effectively.
+- Added quick add functionality for operational expenses with support for recurring expenses (monthly, quarterly, yearly).
+- Implemented recurring expense processing to automatically create new expense entries based on the configured interval.
+- Added daily background job using Inngest to automatically process recurring expenses and create new expense entries.

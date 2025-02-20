@@ -1,11 +1,13 @@
 'use client';
 
 import { api } from '@/lib/trpc/react';
-import { BillingStatus } from '@prisma/client';
+import { BillingStatus, PaymentType } from '@prisma/client';
 import { Building2, Check, ChevronsUpDown, FileText, Plus, Search } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'use-intl';
+
+type BillingTypeFilter = 'ALL' | PaymentType;
 
 export default function BillingPage() {
   const t = useTranslations();
@@ -13,6 +15,7 @@ export default function BillingPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<BillingStatus | 'ALL'>('ALL');
+  const [selectedType, setSelectedType] = useState<BillingTypeFilter>('ALL');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +27,12 @@ export default function BillingPage() {
     search: debouncedSearch,
     propertyId: selectedPropertyId ?? undefined,
     status: selectedStatus === 'ALL' ? undefined : selectedStatus,
+  });
+
+  // Filter billings based on type
+  const filteredBillings = billings?.billings.filter(billing => {
+    if (selectedType === 'ALL') return true;
+    return billing.type === selectedType;
   });
 
   useEffect(() => {
@@ -55,13 +64,22 @@ export default function BillingPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">{t('billing.title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('billing.subtitle')}</p>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">{t('billing.title')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('billing.subtitle')}</p>
+        </div>
+        <Link
+          href="/billing/new"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          {t('billing.createNew')}
+        </Link>
       </div>
 
-      <div className="mb-8 grid gap-4 md:grid-cols-3">
-        <div className="relative">
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -72,69 +90,86 @@ export default function BillingPage() {
           />
         </div>
 
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={selectedType}
+            onChange={e => setSelectedType(e.target.value as BillingTypeFilter)}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
           >
-            <span className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-              {selectedPropertyId
-                ? properties?.properties.find(p => p.id === selectedPropertyId)?.name ||
-                  t('billing.filters.property.select')
-                : t('billing.filters.property.all')}
-            </span>
-            <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
-          </button>
+            <option value="ALL">{t('billing.type.all')}</option>
+            {Object.values(PaymentType).map(type => (
+              <option key={type} value={type}>
+                {t(`billing.type.${type}`)}
+              </option>
+            ))}
+          </select>
 
-          {isOpen && (
-            <div className="absolute z-10 mt-2 w-full rounded-lg border border-input bg-card p-2 shadow-lg">
-              <div
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent"
-                onClick={() => {
-                  setSelectedPropertyId(null);
-                  setIsOpen(false);
-                }}
-              >
-                <Check className={`h-4 w-4 ${!selectedPropertyId ? 'opacity-100' : 'opacity-0'}`} />
-                <span>{t('billing.filters.property.all')}</span>
-              </div>
-              {properties?.properties.map(property => (
+          <select
+            value={selectedStatus}
+            onChange={e => setSelectedStatus(e.target.value as BillingStatus | 'ALL')}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="ALL">{t('billing.status.all')}</option>
+            {Object.values(BillingStatus).map(status => (
+              <option key={status} value={status}>
+                {t(`billing.status.${status.toLowerCase()}`)}
+              </option>
+            ))}
+          </select>
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <span>
+                {selectedPropertyId
+                  ? properties?.properties.find(p => p.id === selectedPropertyId)?.name ||
+                    t('billing.filters.property.select')
+                  : t('billing.filters.property.all')}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 text-muted-foreground" />
+            </button>
+
+            {isOpen && (
+              <div className="absolute right-0 z-50 mt-1 min-w-[200px] rounded-lg border border-input bg-card p-1 shadow-md">
                 <div
-                  key={property.id}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent"
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 hover:bg-accent"
                   onClick={() => {
-                    setSelectedPropertyId(property.id);
+                    setSelectedPropertyId(null);
                     setIsOpen(false);
                   }}
                 >
                   <Check
-                    className={`h-4 w-4 ${
-                      selectedPropertyId === property.id ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`h-4 w-4 ${!selectedPropertyId ? 'opacity-100' : 'opacity-0'}`}
                   />
-                  <span>{property.name}</span>
+                  <span>{t('billing.filters.property.all')}</span>
                 </div>
-              ))}
-            </div>
-          )}
+                {properties?.properties.map(property => (
+                  <div
+                    key={property.id}
+                    className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 hover:bg-accent"
+                    onClick={() => {
+                      setSelectedPropertyId(property.id);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={`h-4 w-4 ${
+                        selectedPropertyId === property.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    />
+                    <span>{property.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-
-        <select
-          value={selectedStatus}
-          onChange={e => setSelectedStatus(e.target.value as BillingStatus | 'ALL')}
-          className="w-full rounded-lg border border-input bg-background px-4 py-2 text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
-        >
-          <option value="ALL">{t('billing.status.all')}</option>
-          {Object.values(BillingStatus).map(status => (
-            <option key={status} value={status}>
-              {t(`billing.status.${status.toLowerCase()}`)}
-            </option>
-          ))}
-        </select>
       </div>
 
-      {!billings?.billings.length ? (
+      {!filteredBillings?.length ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-background p-12 text-center">
           <FileText className="h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">{t('billing.noBilling')}</h3>
@@ -143,59 +178,46 @@ export default function BillingPage() {
               ? t('billing.noResults.withFilters')
               : t('billing.noResults.noFilters')}
           </p>
-          <Link
-            href="/billing/new"
-            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {t('billing.createNew')}
-          </Link>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {billings.billings.map(billing => (
+        <div className="divide-y divide-border rounded-lg border border-border bg-card">
+          {filteredBillings.map(billing => (
             <Link
               key={billing.id}
               href={`/billing/${billing.id}`}
-              className="rounded-lg bg-card p-6 shadow transition-shadow hover:shadow-md"
+              className="flex items-center gap-4 p-4 transition-colors hover:bg-accent"
             >
-              <div className="mb-4 flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="rounded-full bg-primary/10 p-3">
-                    <FileText className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-medium text-card-foreground">{billing.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('billing.details.room')} {billing.tenant?.room?.number}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    billing.status === 'SENT'
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                      : billing.status === 'DRAFT'
-                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                  }`}
-                >
-                  {t(`billing.status.${billing.status.toLowerCase()}`)}
-                </span>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <FileText className="h-5 w-5 text-primary" />
               </div>
 
-              <div className="mb-4 space-y-2">
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>{t('billing.details.amount')}:</span>
-                  <span className="font-medium text-foreground">
-                    Rp {billing.amount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>{t('billing.details.dueDate')}:</span>
-                  <span className="font-medium text-foreground">
-                    {new Date(billing.dueDate).toLocaleDateString()}
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="truncate">
+                    <p className="truncate font-medium text-foreground">{billing.title}</p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {billing.tenant?.room?.number
+                        ? `${t('billing.details.room')} ${billing.tenant.room.number}`
+                        : t('billing.details.property')}{' '}
+                      - Rp {billing.amount.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-4">
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(billing.dueDate).toLocaleDateString()}
+                    </p>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        billing.status === 'SENT'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                          : billing.status === 'DRAFT'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                      }`}
+                    >
+                      {t(`billing.status.${billing.status.toLowerCase()}`)}
+                    </span>
+                  </div>
                 </div>
               </div>
             </Link>
