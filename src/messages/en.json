@@ -241,6 +241,22 @@
           "cancel": "Cancel",
           "confirm": "Confirm"
         },
+        "expense": {
+          "title": "Add Maintenance Expense",
+          "amount": "Amount",
+          "amountPlaceholder": "Enter expense amount",
+          "description": "Description",
+          "descriptionPlaceholder": "Enter maintenance description",
+          "date": "Date",
+          "skip": "Skip",
+          "add": "Add Expense",
+          "adding": "Adding expense...",
+          "toast": {
+            "fillRequired": "Please fill in all required fields",
+            "expenseAdded": "Maintenance expense added successfully",
+            "statusUpdated": "Room status updated successfully"
+          }
+        },
         "form": {
           "price": "Monthly Price",
           "priceValue": "Rp {value}",
