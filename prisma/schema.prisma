@@ -109,6 +109,8 @@ model Property {
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   rooms               Room[]
   transactions        Transaction[]
+
+  @@index([userId])
 }
 
 model Room {
@@ -126,6 +128,9 @@ model Room {
   maintenanceRequests MaintenanceRequest[]
   property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tenants             Tenant[]
+
+  @@index([propertyId])
+  @@index([status])
 }
 
 model Tenant {
@@ -152,6 +157,9 @@ model Tenant {
   serviceRequests ServiceRequest[]
   room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
   billings        Billing[]
+
+  @@index([roomId])
+  @@index([status])
 }
 
 model CheckInItem {
@@ -200,6 +208,11 @@ model Payment {
   tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   billing         Billing?      @relation(fields: [billingId], references: [id])
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([dueDate])
 }
 
 model Expense {
@@ -219,6 +232,11 @@ model Expense {
   recurringInterval String?   // 'MONTHLY', 'QUARTERLY', 'YEARLY'
   nextDueDate DateTime?
   lastProcessedDate DateTime?
+
+  @@index([userId])
+  @@index([propertyId])
+  @@index([date])
+  @@index([isRecurring])
 }
 
 model MaintenanceRequest {
@@ -233,6 +251,10 @@ model MaintenanceRequest {
   roomId      String
   property    Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   room        Room                @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([roomId])
+  @@index([status])
 }
 
 model Lease {

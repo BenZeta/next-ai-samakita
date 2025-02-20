@@ -1,10 +1,11 @@
 'use client';
 
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { api } from '@/lib/trpc/react';
-import { AlertTriangle, ChevronDown } from 'lucide-react';
+import { AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 // Constants for fixed dimensions to prevent layout shifts
@@ -58,6 +59,15 @@ function WidgetSkeleton() {
         ))}
       </div>
       <div className="mt-4 h-[200px] rounded-lg bg-muted"></div>
+    </div>
+  );
+}
+
+// Optimized loading spinner
+function LoadingSpinner() {
+  return (
+    <div className="flex h-[200px] w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
 }
@@ -177,6 +187,18 @@ const DashboardContent = memo(function DashboardContent({
   );
 });
 
+// Wrap dashboard content in error boundary
+function DashboardWithErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      error={new Error('Failed to load dashboard')}
+      reset={() => window.location.reload()}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 export default function DashboardPage() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>();
   const { data: session } = useSession();
@@ -190,6 +212,7 @@ export default function DashboardPage() {
       cacheTime: 3600000,
       refetchOnWindowFocus: false,
       retry: 3,
+      suspense: true,
     }),
     []
   );
@@ -208,14 +231,18 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto min-h-screen px-4 py-8">
-      <DashboardHeader
-        isVerified={isVerified}
-        properties={properties?.properties || []}
-        selectedPropertyId={selectedPropertyId}
-        onPropertyChange={handlePropertyChange}
-        isError={isError}
-      />
-      <DashboardContent selectedPropertyId={selectedPropertyId} />
+      <DashboardWithErrorBoundary>
+        <Suspense fallback={<LoadingSpinner />}>
+          <DashboardHeader
+            isVerified={isVerified}
+            properties={properties?.properties || []}
+            selectedPropertyId={selectedPropertyId}
+            onPropertyChange={handlePropertyChange}
+            isError={isError}
+          />
+          <DashboardContent selectedPropertyId={selectedPropertyId} />
+        </Suspense>
+      </DashboardWithErrorBoundary>
     </div>
   );
 }
