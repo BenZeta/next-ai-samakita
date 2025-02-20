@@ -595,6 +595,8 @@
     "form": {
       "title": "Tambah Pengeluaran Baru",
       "quickAddOperational": "Tambah Cepat Pengeluaran Operasional",
+      "amountPlaceholder": "Masukkan jumlah pengeluaran",
+      "descriptionPlaceholder": "Masukkan deskripsi pengeluaran",
       "property": "Properti",
       "selectProperty": "Pilih Properti",
       "category": "Kategori",

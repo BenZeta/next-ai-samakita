@@ -1,5 +1,7 @@
 'use client';
 
+import { ExpenseForm } from '@/components/expense/ExpenseForm';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { api } from '@/lib/trpc/react';
 import { ExpenseCategory } from '@prisma/client';
 import { Plus, Trash2 } from 'lucide-react';
@@ -138,11 +140,13 @@ export function ExpenseList({
     description: string;
     isRecurring: boolean;
     recurringInterval?: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+    formattedAmount: string;
   }>({
     category: '',
     amount: '',
     description: '',
     isRecurring: false,
+    formattedAmount: '',
   });
   const limit = 10;
 
@@ -200,6 +204,7 @@ export function ExpenseList({
         amount: '',
         description: '',
         isRecurring: false,
+        formattedAmount: '',
       });
       refetch();
     },
@@ -245,6 +250,22 @@ export function ExpenseList({
     setNewExpense(prev => ({
       ...prev,
       propertyId: value === '' ? null : value,
+    }));
+  };
+
+  const formatAmount = (value: string) => {
+    // Remove non-digit characters
+    const number = value.replace(/\D/g, '');
+    // Format with thousand separators
+    return number ? parseInt(number).toLocaleString() : '';
+  };
+
+  const handleQuickAddAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatAmount(e.target.value);
+    setQuickAddExpense(prev => ({
+      ...prev,
+      formattedAmount: formatted,
+      amount: formatted.replace(/\D/g, ''),
     }));
   };
 
@@ -337,24 +358,20 @@ export function ExpenseList({
           <label htmlFor="startDate" className="mb-1.5 block text-sm font-medium text-foreground">
             {t('expenses.filters.startDate')}
           </label>
-          <input
-            type="date"
-            id="startDate"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
+          <DatePicker
+            value={startDate ? new Date(startDate) : null}
+            onChange={date => setStartDate(date ? date.toISOString().split('T')[0] : '')}
+            placeholder={t('expenses.filters.startDate')}
           />
         </div>
         <div className="flex-1">
           <label htmlFor="endDate" className="mb-1.5 block text-sm font-medium text-foreground">
             {t('expenses.filters.endDate')}
           </label>
-          <input
-            type="date"
-            id="endDate"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
+          <DatePicker
+            value={endDate ? new Date(endDate) : null}
+            onChange={date => setEndDate(date ? date.toISOString().split('T')[0] : '')}
+            placeholder={t('expenses.filters.endDate')}
           />
         </div>
       </div>
@@ -496,6 +513,28 @@ export function ExpenseList({
         </>
       )}
 
+      {isAddingExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setIsAddingExpense(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-lg sm:p-6">
+            <h3 className="mb-4 text-lg font-medium text-card-foreground">
+              {t('expenses.form.title')}
+            </h3>
+            <ExpenseForm
+              propertyId={propertyId === null ? undefined : propertyId}
+              onSuccess={() => {
+                setIsAddingExpense(false);
+                refetch();
+              }}
+              onCancel={() => setIsAddingExpense(false)}
+            />
+          </div>
+        </div>
+      )}
+
       <DeleteConfirmationModal
         isOpen={deleteConfirmation.isOpen}
         onClose={() => setDeleteConfirmation({ isOpen: false, id: null })}
@@ -543,14 +582,19 @@ export function ExpenseList({
                 <label htmlFor="amount" className="block text-sm font-medium text-foreground">
                   {t('expenses.quickAdd.amount')}
                 </label>
-                <input
-                  type="number"
-                  id="amount"
-                  value={quickAddExpense.amount}
-                  onChange={e => setQuickAddExpense(prev => ({ ...prev, amount: e.target.value }))}
-                  className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-                  placeholder={t('expenses.quickAdd.amountPlaceholder')}
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    Rp
+                  </span>
+                  <input
+                    type="text"
+                    id="amount"
+                    value={quickAddExpense.formattedAmount}
+                    onChange={handleQuickAddAmountChange}
+                    className="mt-1.5 block w-full rounded-lg border border-input bg-background pl-8 pr-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder={t('expenses.quickAdd.amountPlaceholder')}
+                  />
+                </div>
               </div>
 
               <div>

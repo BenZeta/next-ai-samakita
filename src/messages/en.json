@@ -57,21 +57,22 @@
       },
       "monthlyTrend": {
         "title": "Monthly Trend",
-        "noData": "No trend data available",
-        "revenue": "Revenue",
-        "expenses": "Expenses",
-        "profit": "Profit",
+        "subtitle": "Track your revenue, expenses, and profit over time",
         "timeRange": {
           "thisMonth": "This Month",
           "thisQuarter": "This Quarter",
           "thisYear": "This Year"
         },
         "stats": {
-          "revenue": "Revenue",
-          "expenses": "Expenses",
+          "revenue": "Total Revenue",
+          "expenses": "Total Expenses",
           "netProfit": "Net Profit",
           "profitMargin": "Profit Margin"
-        }
+        },
+        "noData": "No financial data available",
+        "revenue": "Revenue",
+        "expenses": "Expenses",
+        "profit": "Profit"
       },
       "maintenanceTracker": {
         "title": "Maintenance Tracker",
@@ -685,6 +686,8 @@
     "form": {
       "title": "Add New Expense",
       "quickAddOperational": "Quick Add Operational",
+      "amountPlaceholder": "Enter amount",
+      "descriptionPlaceholder": "Enter description",
       "property": "Property",
       "selectProperty": "Select Property",
       "category": "Category",
