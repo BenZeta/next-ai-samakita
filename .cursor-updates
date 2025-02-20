@@ -2,3 +2,4 @@
 - Added quick add functionality for operational expenses with support for recurring expenses (monthly, quarterly, yearly).
 - Implemented recurring expense processing to automatically create new expense entries based on the configured interval.
 - Added daily background job using Inngest to automatically process recurring expenses and create new expense entries.
+- Fixed toast notifications by consolidating ToastContainer components and ensuring consistent configuration across the app, with proper theme support and auto-close timing.
