@@ -33,14 +33,6 @@ export default function SettingsPage() {
     phone: '',
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-
-  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
-
   const updateProfile = api.user.updateProfile.useMutation({
     onSuccess: async data => {
       toast.success('Profile updated successfully!');
@@ -59,19 +51,39 @@ export default function SettingsPage() {
     },
   });
 
-  const updatePassword = api.user.updatePassword.useMutation({
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+
+  const updatePasswordMutation = api.user.updatePassword.useMutation({
     onSuccess: () => {
       toast.success('Password updated successfully!');
-      setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
+      setShowPasswordConfirmation(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
     },
     onError: error => {
-      toast.error(error.message);
+      // Get the first validation error message if it exists, otherwise use the main error message
+      const message =
+        error.data?.zodError?.fieldErrors?.newPassword?.[0] ||
+        error.data?.zodError?.fieldErrors?.confirmPassword?.[0] ||
+        error.message;
+      toast.error(message);
     },
   });
+
+  const confirmPasswordUpdate = () => {
+    updatePasswordMutation.mutate({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+  };
+
+  const isPasswordUpdateDisabled =
+    !currentPassword || !newPassword || !confirmPassword || newPassword !== confirmPassword;
 
   if (status === 'loading') {
     return (
@@ -87,16 +99,6 @@ export default function SettingsPage() {
       name: formData.name,
       phone: formData.phone,
     });
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowPasswordConfirmation(true);
-  };
-
-  const confirmPasswordUpdate = () => {
-    updatePassword.mutate(passwordData);
-    setShowPasswordConfirmation(false);
   };
 
   return (
@@ -263,7 +265,13 @@ export default function SettingsPage() {
               </h2>
             </div>
 
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                setShowPasswordConfirmation(true);
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label
                   htmlFor="current-password"
@@ -274,11 +282,9 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   id="current-password"
-                  value={passwordData.currentPassword}
-                  onChange={e =>
-                    setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))
-                  }
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
 
@@ -292,11 +298,9 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   id="new-password"
-                  value={passwordData.newPassword}
-                  onChange={e =>
-                    setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))
-                  }
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
 
@@ -310,63 +314,57 @@ export default function SettingsPage() {
                 <input
                   type="password"
                   id="confirm-password"
-                  value={passwordData.confirmPassword}
-                  onChange={e =>
-                    setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))
-                  }
-                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
               <button
                 type="submit"
-                disabled={updatePassword.isLoading}
-                className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isPasswordUpdateDisabled}
+                className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {updatePassword.isLoading
-                  ? t('common.saving')
-                  : t('settings.password.updateButton')}
+                {t('settings.password.updateButton')}
               </button>
             </form>
           </div>
-
-          {/* Password Update Confirmation Modal */}
-          {showPasswordConfirmation && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div
-                className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-                onClick={() => setShowPasswordConfirmation(false)}
-              />
-              <div className="relative z-50 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg">
-                <div className="mb-4 flex items-center">
-                  <div className="mr-4 rounded-full bg-primary/10 p-3">
-                    <Lock className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-medium text-card-foreground">
-                    {t('settings.password.title')}
-                  </h3>
-                </div>
-                <p className="mb-6 text-muted-foreground">
-                  Are you sure you want to update your password? This action cannot be undone.
-                </p>
-                <div className="flex justify-end space-x-4">
-                  <button
-                    onClick={() => setShowPasswordConfirmation(false)}
-                    className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
-                  >
-                    {t('common.cancel')}
-                  </button>
-                  <button
-                    onClick={confirmPasswordUpdate}
-                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                  >
-                    {t('common.save')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Password Update Confirmation Modal */}
+      {showPasswordConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setShowPasswordConfirmation(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg">
+            <div className="mb-4 flex items-center">
+              <div className="mr-4 rounded-full bg-primary/10 p-3">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-medium text-card-foreground">
+                {t('settings.password.title')}
+              </h3>
+            </div>
+            <p className="mb-6 text-muted-foreground">{t('settings.password.confirmMessage')}</p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowPasswordConfirmation(false)}
+                className="rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={confirmPasswordUpdate}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

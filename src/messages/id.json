@@ -766,7 +766,8 @@
       "current": "Kata Sandi Saat Ini",
       "new": "Kata Sandi Baru",
       "confirm": "Konfirmasi Kata Sandi Baru",
-      "updateButton": "Perbarui Kata Sandi"
+      "updateButton": "Perbarui Kata Sandi",
+      "confirmMessage": "Apakah Anda yakin ingin memperbarui kata sandi Anda? Tindakan ini tidak dapat dibatalkan."
     }
   },
   "rooms": {
