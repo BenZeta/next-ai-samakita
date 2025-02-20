@@ -241,6 +241,22 @@
           "cancel": "Batal",
           "confirm": "Konfirmasi"
         },
+        "expense": {
+          "title": "Tambah Biaya Pemeliharaan",
+          "amount": "Jumlah",
+          "amountPlaceholder": "Masukkan jumlah biaya",
+          "description": "Deskripsi",
+          "descriptionPlaceholder": "Masukkan deskripsi pemeliharaan",
+          "date": "Tanggal",
+          "skip": "Lewati",
+          "add": "Tambah Biaya",
+          "adding": "Menambahkan biaya...",
+          "toast": {
+            "fillRequired": "Harap isi semua kolom yang wajib",
+            "expenseAdded": "Biaya pemeliharaan berhasil ditambahkan",
+            "statusUpdated": "Status kamar berhasil diperbarui"
+          }
+        },
         "form": {
           "price": "Harga per Bulan",
           "priceValue": "Rp {value}",

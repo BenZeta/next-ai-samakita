@@ -132,11 +132,7 @@ export default function RoomDetailPage() {
     );
   }
 
-  const activeTenant = (room.tenants as Tenant[])?.find(
-    tenant =>
-      tenant.status === TenantStatus.ACTIVE &&
-      (!tenant.endDate || new Date(tenant.endDate) > new Date())
-  );
+  const currentTenant = room.tenants.length > 0 ? room.tenants[0] : null;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -205,7 +201,7 @@ export default function RoomDetailPage() {
             <div>
               <p className="text-sm text-muted-foreground">{t('currentTenant')}</p>
               <p className="mt-1 font-medium text-foreground">
-                {activeTenant ? activeTenant.name : t('noTenant')}
+                {currentTenant ? currentTenant.name : t('noTenant')}
               </p>
             </div>
           </div>
