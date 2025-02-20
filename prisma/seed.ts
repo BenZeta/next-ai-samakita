@@ -71,6 +71,13 @@ async function main() {
 
   const tenants = await Promise.all([
     prisma.$transaction(async tx => {
+      // First update room status
+      await tx.room.update({
+        where: { id: rooms[0].id },
+        data: { status: RoomStatus.OCCUPIED },
+      });
+
+      // Then create tenant with proper room relationship
       const tenant = await tx.tenant.create({
         data: {
           name: 'John Doe',
@@ -85,17 +92,21 @@ async function main() {
           rentAmount: 1000000,
           depositAmount: 2000000,
         },
-      });
-
-      // Update room status to OCCUPIED
-      await tx.room.update({
-        where: { id: rooms[0].id },
-        data: { status: RoomStatus.OCCUPIED },
+        include: {
+          room: true, // Include room data in the response
+        },
       });
 
       return tenant;
     }),
     prisma.$transaction(async tx => {
+      // First update room status
+      await tx.room.update({
+        where: { id: rooms[1].id },
+        data: { status: RoomStatus.OCCUPIED },
+      });
+
+      // Then create tenant with proper room relationship
       const tenant = await tx.tenant.create({
         data: {
           name: 'Jane Smith',
@@ -110,12 +121,9 @@ async function main() {
           rentAmount: 1500000,
           depositAmount: 3000000,
         },
-      });
-
-      // Update room status to OCCUPIED
-      await tx.room.update({
-        where: { id: rooms[1].id },
-        data: { status: RoomStatus.OCCUPIED },
+        include: {
+          room: true, // Include room data in the response
+        },
       });
 
       return tenant;

@@ -175,7 +175,7 @@ export default function RoomDetailPage() {
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('form.status')}</p>
+              <p className="text-sm text-muted-foreground">{t('form.status.status')}</p>
               <p className="mt-1 font-medium text-foreground">
                 {t(`form.status.${room.status.toLowerCase()}`)}
               </p>

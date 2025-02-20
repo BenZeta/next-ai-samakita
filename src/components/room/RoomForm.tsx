@@ -46,7 +46,7 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
     initialData?.amenities || []
   );
   const [customAmenity, setCustomAmenity] = useState('');
-  const t = useTranslations('properties.pages.room.form');
+  const t = useTranslations('properties.room');
 
   const {
     register,
@@ -65,7 +65,7 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
 
   const createMutation = api.room.create.useMutation({
     onSuccess: () => {
-      toast.success(initialData ? t('toast.updated') : t('toast.created'));
+      toast.success(t('toast.created'));
       router.push(`/properties/${propertyId}`);
       router.refresh();
     },
@@ -99,8 +99,6 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
         amenities: selectedAmenities,
         propertyId,
       };
-
-      console.log('Submitting room data:', roomData);
 
       if (initialData) {
         await updateMutation.mutateAsync({
@@ -138,7 +136,9 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className="text-sm font-medium">{t('number')}</label>
+        <label htmlFor="number" className="text-sm font-medium">
+          {t('number')}
+        </label>
         <input
           type="text"
           id="number"
@@ -151,7 +151,9 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
       </div>
 
       <div>
-        <label className="text-sm font-medium">{t('type')}</label>
+        <label htmlFor="type" className="text-sm font-medium">
+          {t('type')}
+        </label>
         <select
           id="type"
           {...register('type')}
@@ -167,24 +169,38 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
       </div>
 
       <div>
-        <label className="text-sm font-medium">{t('size')}</label>
-        <input
-          type="number"
-          id="size"
-          {...register('size')}
-          className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-        />
+        <label htmlFor="size" className="text-sm font-medium">
+          {t('size')}
+        </label>
+        <div className="relative">
+          <input
+            type="number"
+            id="size"
+            {...register('size')}
+            className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            m²
+          </span>
+        </div>
         {errors.size && <p className="mt-1 text-sm text-red-600">{t('validation.sizeRequired')}</p>}
       </div>
 
       <div>
-        <label className="text-sm font-medium">{t('price')}</label>
-        <input
-          type="number"
-          id="price"
-          {...register('price')}
-          className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
-        />
+        <label htmlFor="price" className="text-sm font-medium">
+          {t('price')}
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            Rp
+          </span>
+          <input
+            type="number"
+            id="price"
+            {...register('price')}
+            className="mt-1 block w-full rounded-md border border-input bg-background pl-8 pr-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+          />
+        </div>
         {errors.price && (
           <p className="mt-1 text-sm text-red-600">{t('validation.priceRequired')}</p>
         )}

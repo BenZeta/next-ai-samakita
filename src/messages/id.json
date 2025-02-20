@@ -220,49 +220,78 @@
         "edit": {
           "title": "Ubah Kamar"
         },
+        "title": "Detail Kamar",
+        "loading": "Memuat detail kamar...",
+        "notFound": "Kamar tidak ditemukan",
+        "currentTenant": "Penyewa Saat Ini",
+        "noTenant": "Belum ada penyewa",
+        "tenantHistory": "Riwayat Penyewa",
+        "noTenantHistory": "Belum ada riwayat penyewa",
+        "viewDetails": "Lihat Detail",
+        "present": "Saat Ini",
+        "setMaintenance": "Atur Pemeliharaan",
+        "endMaintenance": "Akhiri Pemeliharaan",
+        "maintenance": {
+          "startTitle": "Mulai Pemeliharaan",
+          "endTitle": "Akhiri Pemeliharaan",
+          "startMessage": "Apakah Anda yakin ingin mengatur kamar ini dalam mode pemeliharaan? Kamar akan ditandai sebagai tidak tersedia.",
+          "endMessage": "Apakah Anda yakin ingin mengakhiri mode pemeliharaan? Kamar akan ditandai sebagai tersedia.",
+          "cancel": "Batal",
+          "confirm": "Konfirmasi"
+        },
         "form": {
-          "number": "Nomor Kamar",
-          "type": "Tipe Kamar",
-          "selectType": "Pilih tipe kamar",
-          "size": "Ukuran Kamar (m²)",
-          "price": "Harga Bulanan",
-          "amenitiesLabel": "Fasilitas",
-          "types": {
-            "standard": "Standar",
-            "deluxe": "Deluxe",
-            "suite": "Suite",
-            "studio": "Studio"
-          },
-          "amenities": {
-            "bathroom": "Kamar Mandi Pribadi",
-            "ac": "AC",
-            "balcony": "Balkon",
-            "tv": "TV",
-            "fridge": "Kulkas Mini",
-            "desk": "Meja Belajar",
-            "wardrobe": "Lemari",
-            "waterHeater": "Pemanas Air",
-            "window": "Jendela",
-            "custom": "Tambah fasilitas kustom",
-            "add": "Tambah"
-          },
-          "validation": {
-            "numberRequired": "Nomor kamar wajib diisi",
-            "typeRequired": "Tipe kamar wajib diisi",
-            "sizeRequired": "Ukuran kamar wajib diisi",
-            "amenitiesRequired": "Minimal satu fasilitas wajib dipilih",
-            "priceRequired": "Harga harus lebih besar atau sama dengan 0"
-          },
-          "create": "Buat Kamar",
-          "update": "Perbarui Kamar",
-          "creating": "Membuat...",
-          "updating": "Memperbarui...",
-          "toast": {
-            "created": "Kamar berhasil dibuat!",
-            "updated": "Kamar berhasil diperbarui!",
-            "error": "Gagal menyimpan kamar. Mohon periksa form dan coba lagi."
+          "price": "Harga per Bulan",
+          "priceValue": "Rp {value}",
+          "status": {
+            "status": "Status",
+            "available": "Tersedia",
+            "occupied": "Terisi",
+            "maintenance": "Pemeliharaan"
           }
         }
+      }
+    },
+    "room": {
+      "number": "Nomor Kamar",
+      "type": "Tipe Kamar",
+      "size": "Ukuran Kamar",
+      "price": "Harga per Bulan",
+      "amenitiesLabel": "Fasilitas Kamar",
+      "selectType": "Pilih tipe kamar",
+      "types": {
+        "standard": "Standar",
+        "deluxe": "Deluxe",
+        "suite": "Suite",
+        "studio": "Studio"
+      },
+      "amenities": {
+        "bathroom": "Kamar Mandi Dalam",
+        "ac": "AC",
+        "balcony": "Balkon",
+        "tv": "TV",
+        "fridge": "Kulkas",
+        "desk": "Meja Belajar",
+        "wardrobe": "Lemari",
+        "waterHeater": "Pemanas Air",
+        "window": "Jendela",
+        "custom": "Tambah fasilitas lain",
+        "add": "Tambah"
+      },
+      "validation": {
+        "numberRequired": "Nomor kamar wajib diisi",
+        "typeRequired": "Tipe kamar wajib diisi",
+        "sizeRequired": "Ukuran kamar wajib diisi",
+        "priceRequired": "Harga per bulan wajib diisi",
+        "amenitiesRequired": "Minimal satu fasilitas wajib dipilih"
+      },
+      "creating": "Membuat kamar...",
+      "updating": "Memperbarui kamar...",
+      "create": "Buat Kamar",
+      "update": "Perbarui Kamar",
+      "toast": {
+        "created": "Kamar berhasil dibuat",
+        "updated": "Kamar berhasil diperbarui",
+        "error": "Gagal menyimpan kamar"
       }
     }
   },

@@ -224,7 +224,7 @@
         "loading": "Loading room details...",
         "notFound": "Room not found",
         "currentTenant": "Current Tenant",
-        "noTenant": "No Tenant",
+        "noTenant": "No tenant assigned",
         "tenantHistory": "Tenant History",
         "noTenantHistory": "No tenant history available",
         "viewDetails": "View Details",
@@ -239,71 +239,14 @@
           "cancel": "Cancel",
           "confirm": "Confirm"
         },
-        "expense": {
-          "title": "Add Maintenance Expense",
-          "amount": "Amount",
-          "amountPlaceholder": "Enter expense amount",
-          "description": "Description",
-          "descriptionPlaceholder": "Enter expense description",
-          "date": "Date",
-          "skip": "Skip",
-          "add": "Add Expense",
-          "adding": "Adding..."
-        },
-        "toast": {
-          "statusUpdated": "Room status updated successfully",
-          "expenseAdded": "Maintenance expense added successfully",
-          "fillRequired": "Please fill in all required fields"
-        },
         "form": {
           "status": "Status",
-          "price": "Price",
+          "price": "Monthly Price",
           "priceValue": "Rp {value}",
           "status": {
             "available": "Available",
             "occupied": "Occupied",
             "maintenance": "Maintenance"
-          },
-          "number": "Room Number",
-          "type": "Room Type",
-          "selectType": "Select room type",
-          "size": "Room Size (m²)",
-          "price": "Monthly Price",
-          "amenitiesLabel": "Amenities",
-          "types": {
-            "standard": "Standard",
-            "deluxe": "Deluxe",
-            "suite": "Suite",
-            "studio": "Studio"
-          },
-          "amenities": {
-            "bathroom": "Private Bathroom",
-            "ac": "AC",
-            "balcony": "Balcony",
-            "tv": "TV",
-            "fridge": "Mini Fridge",
-            "desk": "Study Desk",
-            "wardrobe": "Wardrobe",
-            "waterHeater": "Water Heater",
-            "window": "Window",
-            "custom": "Add custom amenity",
-            "add": "Add"
-          },
-          "validation": {
-            "numberRequired": "Room number is required",
-            "typeRequired": "Room type is required",
-            "sizeRequired": "Room size is required",
-            "amenitiesRequired": "At least one amenity is required",
-            "priceRequired": "Price must be greater than or equal to 0"
-          },
-          "create": "Create Room",
-          "update": "Update Room",
-          "creating": "Creating...",
-          "updating": "Updating...",
-          "toast": {
-            "created": "Room created successfully!",
-            "updated": "Room updated successfully!",
-            "error": "Failed to save room. Please check the form and try again."
           }
         }
       },
@@ -395,6 +338,49 @@
         "notFound": "Tenant not found",
         "title": "Check-in",
         "room": "Room"
+      }
+    },
+    "room": {
+      "number": "Room Number",
+      "type": "Room Type",
+      "size": "Room Size",
+      "price": "Monthly Price",
+      "amenitiesLabel": "Room Amenities",
+      "selectType": "Select room type",
+      "types": {
+        "standard": "Standard",
+        "deluxe": "Deluxe",
+        "suite": "Suite",
+        "studio": "Studio"
+      },
+      "amenities": {
+        "bathroom": "Private Bathroom",
+        "ac": "Air Conditioner",
+        "balcony": "Balcony",
+        "tv": "TV",
+        "fridge": "Refrigerator",
+        "desk": "Study Desk",
+        "wardrobe": "Wardrobe",
+        "waterHeater": "Water Heater",
+        "window": "Window",
+        "custom": "Add custom amenity",
+        "add": "Add"
+      },
+      "validation": {
+        "numberRequired": "Room number is required",
+        "typeRequired": "Room type is required",
+        "sizeRequired": "Room size is required",
+        "priceRequired": "Monthly price is required",
+        "amenitiesRequired": "At least one amenity is required"
+      },
+      "creating": "Creating room...",
+      "updating": "Updating room...",
+      "create": "Create Room",
+      "update": "Update Room",
+      "toast": {
+        "created": "Room created successfully",
+        "updated": "Room updated successfully",
+        "error": "Failed to save room"
       }
     }
   },
