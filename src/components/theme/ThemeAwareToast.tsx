@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useTheme } from "next-themes";
-import { ToastContainer } from "react-toastify";
+import { useTheme } from 'next-themes';
+import { ToastContainer } from 'react-toastify';
 
 export function ThemeAwareToast() {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <ToastContainer
       position="top-right"
-      autoClose={5000}
+      autoClose={4000}
       hideProgressBar={false}
       newestOnTop
       closeOnClick
@@ -17,7 +17,9 @@ export function ThemeAwareToast() {
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme={theme === "dark" ? "dark" : "light"}
+      theme={resolvedTheme === 'dark' ? 'dark' : 'light'}
+      limit={3}
+      style={{ zIndex: 9999 }}
     />
   );
 }
