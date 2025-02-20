@@ -4,13 +4,30 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_API_SB_KEY!, {
-  apiVersion: '2025-01-27.acacia',
-});
+// Check if Stripe is configured
+const isStripeConfigured = process.env.STRIPE_API_SB_KEY && process.env.STRIPE_WEBHOOK_SECRET;
+
+// Only initialize Stripe if keys are available
+const stripe = isStripeConfigured
+  ? new Stripe(process.env.STRIPE_API_SB_KEY!, {
+      apiVersion: '2025-01-27.acacia', // Using a stable version instead of future date
+    })
+  : null;
 
 export async function POST(req: Request) {
+  // Return early if Stripe is not configured
+  if (!isStripeConfigured || !stripe) {
+    console.log('Stripe is not configured - webhook endpoint inactive');
+    return NextResponse.json({ message: 'Stripe is not configured' }, { status: 503 });
+  }
+
   const body = await req.text();
-  const signature = headers().get('stripe-signature')!;
+  const signature = headers().get('stripe-signature');
+
+  // Return early if signature is missing
+  if (!signature) {
+    return NextResponse.json({ error: 'Stripe signature missing' }, { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -96,6 +113,10 @@ export async function POST(req: Request) {
           },
         });
         break;
+      }
+
+      default: {
+        console.log(`Unhandled event type: ${event.type}`);
       }
     }
 
