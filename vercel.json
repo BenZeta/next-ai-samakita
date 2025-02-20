@@ -1,4 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install"
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install",
+  "functions": {
+    "api/inngest/route.ts": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
 }
