@@ -215,9 +215,14 @@ export const roomRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           tenants: {
+            where: {
+              status: TenantStatus.ACTIVE,
+              OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+            },
             select: {
               id: true,
               name: true,
+              status: true,
               startDate: true,
               endDate: true,
             },
