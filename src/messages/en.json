@@ -13,7 +13,8 @@
     "actions": "Actions",
     "creating": "Creating...",
     "back": "Back",
-    "next": "Next"
+    "next": "Next",
+    "saving": "Saving..."
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -854,7 +855,8 @@
       "current": "Current Password",
       "new": "New Password",
       "confirm": "Confirm New Password",
-      "updateButton": "Update Password"
+      "updateButton": "Update Password",
+      "confirmMessage": "Are you sure you want to update your password? This action cannot be undone."
     }
   },
   "rooms": {

@@ -13,7 +13,8 @@
     "actions": "Aksi",
     "creating": "Membuat...",
     "back": "Kembali",
-    "next": "Lanjut"
+    "next": "Lanjut",
+    "saving": "Menyimpan..."
   },
   "navigation": {
     "dashboard": "Dasbor",
