@@ -590,12 +590,38 @@
     "addExpense": "Add Expense",
     "quickAddOperational": "Quick Add Operational",
     "searchExpenses": "Search expenses...",
+    "noExpensesDescription": "No expenses found. Add an expense to get started.",
     "noExpenses": "No expenses found",
     "category": "Category",
     "amount": "Amount",
     "date": "Date",
     "description": "Description",
     "property": "Property",
+    "quickAdd": {
+      "amount": "Amount",
+      "amountPlaceholder": "Enter amount",
+      "category": "Category",
+      "categoryPlaceholder": "Select category",
+      "date": "Date",
+      "datePlaceholder": "Select date",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter description",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "Enter vendor name",
+      "receipt": "Receipt",
+      "receiptPlaceholder": "Upload receipt",
+      "notes": "Notes",
+      "notesPlaceholder": "Enter notes",
+      "recurring": "Make this a recurring expense",
+      "recurringInterval": "Recurring Interval",
+      "selectInterval": "Select interval",
+      "interval": "Interval",
+      "intervals": {
+        "monthly": "Monthly",
+        "quarterly": "Quarterly",
+        "yearly": "Yearly"
+      }
+    },
     "filters": {
       "all": "All Expenses",
       "operational": "Operational Expenses",
@@ -621,36 +647,33 @@
       }
     },
     "categories": {
-      "operational": {
-        "SALARY": "Salary",
-        "STAFF_BENEFITS": "Staff Benefits",
-        "STAFF_TRAINING": "Staff Training",
-        "ELECTRICITY": "Electricity",
-        "WATER": "Water",
-        "INTERNET": "Internet",
-        "GAS": "Gas",
-        "CLEANING": "Cleaning",
-        "REPAIRS": "Repairs",
-        "GARDENING": "Gardening",
-        "PEST_CONTROL": "Pest Control",
-        "OFFICE_SUPPLIES": "Office Supplies",
-        "MARKETING": "Marketing",
-        "INSURANCE": "Insurance",
-        "TAX": "Tax",
-        "LICENSE_PERMIT": "License & Permits",
-        "SECURITY": "Security",
-        "WASTE_MANAGEMENT": "Waste Management"
-      },
-      "nonOperational": {
-        "RENOVATION": "Renovation",
-        "FURNITURE": "Furniture",
-        "EQUIPMENT": "Equipment",
-        "EMERGENCY": "Emergency",
-        "LEGAL": "Legal",
-        "CONSULTING": "Consulting",
-        "MISC_NON_OPERATIONAL": "Miscellaneous (Non-Operational)",
-        "OTHER": "Other"
-      }
+      "ALL": "All Categories",
+      "SALARY": "Salary",
+      "STAFF_BENEFITS": "Staff Benefits",
+      "STAFF_TRAINING": "Staff Training",
+      "ELECTRICITY": "Electricity",
+      "WATER": "Water",
+      "INTERNET": "Internet",
+      "GAS": "Gas",
+      "CLEANING": "Cleaning",
+      "REPAIRS": "Repairs",
+      "GARDENING": "Gardening",
+      "PEST_CONTROL": "Pest Control",
+      "OFFICE_SUPPLIES": "Office Supplies",
+      "MARKETING": "Marketing",
+      "INSURANCE": "Insurance",
+      "TAX": "Tax",
+      "LICENSE_PERMIT": "License & Permits",
+      "SECURITY": "Security",
+      "WASTE_MANAGEMENT": "Waste Management",
+      "RENOVATION": "Renovation",
+      "FURNITURE": "Furniture",
+      "EQUIPMENT": "Equipment",
+      "EMERGENCY": "Emergency",
+      "LEGAL": "Legal",
+      "CONSULTING": "Consulting",
+      "MISC_NON_OPERATIONAL": "Miscellaneous (Non-Operational)",
+      "OTHER": "Other"
     },
     "actions": {
       "delete": "Delete",
@@ -661,7 +684,7 @@
     },
     "form": {
       "title": "Add New Expense",
-      "quickAddOperational": "Quick Add Operational Expense",
+      "quickAddOperational": "Quick Add Operational",
       "property": "Property",
       "selectProperty": "Select Property",
       "category": "Category",
@@ -695,6 +718,16 @@
     "addBilling": "Add Billing",
     "searchBilling": "Search billings...",
     "noBilling": "No billings found",
+    "form": {
+      "type": "Billing Type",
+      "title": "Add New Billing",
+      "property": "Property",
+      "selectProperty": "Select Property",
+      "tenant": "Tenant",
+      "selectTenant": "Select Tenant",
+      "amount": "Amount",
+      "date": "Date"
+    },
     "status": {
       "paid": "Paid",
       "pending": "Pending",
@@ -714,7 +747,8 @@
       "UTILITY": "Utility",
       "OTHER": "Other",
       "all": "All Types",
-      "other": "Other Types"
+      "other": "Other Types",
+      "MAINTENANCE": "Maintenance"
     },
     "filters": {
       "property": {
@@ -775,6 +809,7 @@
         "room": "Room"
       },
       "form": {
+        "type": "Billing Type",
         "title": "Title",
         "description": "Description (Optional)",
         "amount": "Amount",

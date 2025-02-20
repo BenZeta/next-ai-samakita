@@ -2,7 +2,7 @@
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { api } from '@/lib/trpc/react';
-import { AlertTriangle, ChevronDown, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { memo, Suspense, useCallback, useState } from 'react';
@@ -48,17 +48,17 @@ const TenantOverview = dynamic(() => import('@/components/dashboard/TenantOvervi
 // Optimized skeleton with fixed dimensions
 function WidgetSkeleton() {
   return (
-    <div className="relative h-full min-h-[400px] overflow-hidden rounded-lg border border-border bg-card p-6">
+    <div className="relative h-full min-h-[350px] overflow-hidden rounded-lg border border-border bg-card p-4 sm:min-h-[400px] sm:p-6">
       <div className="flex items-center gap-2">
-        <div className="h-10 w-10 rounded-lg bg-muted"></div>
-        <div className="h-7 w-48 rounded bg-muted"></div>
+        <div className="h-8 w-8 rounded-lg bg-muted sm:h-10 sm:w-10"></div>
+        <div className="h-6 w-36 rounded bg-muted sm:h-7 sm:w-48"></div>
       </div>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-24 rounded-lg bg-muted"></div>
+          <div key={i} className="h-20 rounded-lg bg-muted sm:h-24"></div>
         ))}
       </div>
-      <div className="mt-4 h-[200px] rounded-lg bg-muted"></div>
+      <div className="mt-4 h-[180px] rounded-lg bg-muted sm:h-[200px]"></div>
     </div>
   );
 }
@@ -66,8 +66,8 @@ function WidgetSkeleton() {
 // Optimized loading spinner
 function LoadingSpinner() {
   return (
-    <div className="flex h-[200px] w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="flex h-[180px] w-full items-center justify-center sm:h-[200px]">
+      <Loader2 className="h-6 w-6 animate-spin text-primary sm:h-8 sm:w-8" />
     </div>
   );
 }
@@ -89,40 +89,40 @@ const DashboardHeader = memo(function DashboardHeader({
   const t = useTranslations();
 
   return (
-    <div className="mb-6 space-y-4">
+    <div className="mb-4 space-y-3 sm:mb-6">
       {!isVerified && (
-        <div className="flex items-center gap-2 rounded-lg bg-warning/15 p-4 text-warning">
-          <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+        <div className="flex items-center gap-2 rounded-lg bg-warning/15 p-3 text-warning sm:p-4">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
           <div className="flex-1">
-            <p className="text-sm font-medium">{t('dashboard.businessNotVerified')}</p>
-            <p className="text-xs">{t('dashboard.completeVerification')}</p>
+            <p className="text-xs font-medium sm:text-sm">{t('dashboard.businessNotVerified')}</p>
+            <p className="text-xs sm:text-sm">{t('dashboard.completeVerification')}</p>
           </div>
         </div>
       )}
 
       {isError && (
-        <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-4 text-destructive">
-          <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+        <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-destructive sm:p-4">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5" />
           <div className="flex-1">
-            <p className="text-sm font-medium">{t('dashboard.loadDataError')}</p>
-            <p className="text-xs">{t('dashboard.refreshPage')}</p>
+            <p className="text-xs font-medium sm:text-sm">{t('dashboard.loadDataError')}</p>
+            <p className="text-xs sm:text-sm">{t('dashboard.refreshPage')}</p>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl md:text-3xl">
             {t('dashboard.title')}
           </h1>
-          <p className="mt-2 text-muted-foreground">{t('dashboard.subtitle')}</p>
+          <p className="mt-1 text-sm text-muted-foreground sm:mt-2">{t('dashboard.subtitle')}</p>
         </div>
         {properties.length > 0 && (
-          <div className="relative w-full sm:w-[200px]">
+          <div className="w-full sm:w-[200px]">
             <select
               value={selectedPropertyId}
               onChange={e => onPropertyChange(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-input bg-card px-4 py-2 pr-10 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full appearance-none rounded-lg border border-input bg-card px-3 py-2 pr-8 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">{t('dashboard.allProperties')}</option>
               {properties.map(property => (
@@ -131,7 +131,6 @@ const DashboardHeader = memo(function DashboardHeader({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         )}
       </div>
@@ -146,20 +145,20 @@ const DashboardContent = memo(function DashboardContent({
   selectedPropertyId?: string;
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="w-full rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <div className="grid gap-3 sm:gap-4 md:gap-6">
+      <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
         <OccupancyWidget key={selectedPropertyId} propertyId={selectedPropertyId} />
       </div>
 
-      <div className="w-full rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+      <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
         <MonthlyTrendChart key={selectedPropertyId} propertyId={selectedPropertyId} />
       </div>
 
-      <div className="w-full rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+      <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
         <MaintenanceTracker key={selectedPropertyId} propertyId={selectedPropertyId} />
       </div>
 
-      <div className="w-full rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+      <div className="w-full overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
         <TenantOverview key={selectedPropertyId} propertyId={selectedPropertyId} />
       </div>
     </div>
@@ -194,7 +193,6 @@ export default function DashboardPage() {
     setSelectedPropertyId(id || undefined);
   }, []);
 
-  // If there's an error fetching properties, show the error boundary
   if (isError) {
     return (
       <ErrorBoundary
@@ -207,17 +205,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto min-h-screen px-4 py-8">
-      <Suspense fallback={<LoadingSpinner />}>
-        <DashboardHeader
-          isVerified={isVerified}
-          properties={properties?.properties || []}
-          selectedPropertyId={selectedPropertyId}
-          onPropertyChange={handlePropertyChange}
-          isError={isError}
-        />
-        <DashboardContent selectedPropertyId={selectedPropertyId} />
-      </Suspense>
+    <div className="min-h-screen w-full px-2 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
+      <div className="mx-auto max-w-[1600px]">
+        <Suspense fallback={<LoadingSpinner />}>
+          <DashboardHeader
+            isVerified={isVerified}
+            properties={properties?.properties || []}
+            selectedPropertyId={selectedPropertyId}
+            onPropertyChange={handlePropertyChange}
+            isError={isError}
+          />
+          <DashboardContent selectedPropertyId={selectedPropertyId} />
+        </Suspense>
+      </div>
     </div>
   );
 }

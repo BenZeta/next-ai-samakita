@@ -108,8 +108,8 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full max-w-4xl mx-auto p-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground">
             {t('rooms.tenants.new.form.name')}
@@ -144,16 +144,16 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
           )}
         </div>
 
-        <div>
+        <div className="col-span-full sm:col-span-2">
           <label htmlFor="phone" className="block text-sm font-medium text-foreground">
             {t('rooms.tenants.new.form.phone')}
           </label>
-          <div className="relative mt-1 flex w-full items-center gap-2">
-            <div className="relative" ref={countryDropdownRef}>
+          <div className="relative mt-1 flex w-full flex-col xs:flex-row items-start xs:items-center gap-2">
+            <div className="relative w-full xs:w-auto" ref={countryDropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                className="flex h-[42px] items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                className="flex w-full xs:w-auto h-[42px] items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <span className="text-base">{selectedCountry.flag}</span>
                 <span className="text-sm font-medium">{selectedCountry.dial_code}</span>
@@ -189,7 +189,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
                 const value = e.target.value.replace(/[^0-9]/g, '');
                 setPhoneNumber(value);
               }}
-              className="h-[42px] flex-1 rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-[42px] w-full rounded-lg border border-input bg-background px-3 text-foreground shadow-sm transition-colors hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder={t('rooms.tenants.new.form.phoneNumber')}
             />
           </div>
@@ -278,7 +278,7 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         </div>
       </div>
 
-      <div>
+      <div className="mt-8">
         <button
           type="submit"
           disabled={isSubmitting || !room}

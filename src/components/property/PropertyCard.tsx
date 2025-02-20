@@ -64,66 +64,72 @@ export function PropertyCard({ property }: PropertyCardProps) {
             alt={property.name}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-muted">
-            <Building2 className="h-12 w-12 text-muted-foreground" />
-            <p>{t('properties.card.noImage')}</p>
+            <Building2 className="h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" />
+            <p className="ml-2 text-sm text-muted-foreground">{t('properties.card.noImage')}</p>
           </div>
         )}
         {nextDueDate && (
-          <div className="absolute right-3 top-3 flex items-center gap-2 rounded-full bg-background/95 px-3 py-1.5 shadow backdrop-blur-sm">
-            <Calendar className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">
+          <div className="absolute right-2 top-2 flex items-center gap-1.5 rounded-full bg-background/95 px-2.5 py-1 shadow backdrop-blur-sm sm:right-3 sm:top-3 sm:gap-2 sm:px-3 sm:py-1.5">
+            <Calendar className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <span className="text-xs font-medium text-foreground sm:text-sm">
               {formatDueDate(nextDueDate.dueDate)}
             </span>
           </div>
         )}
       </div>
 
-      <div className="p-4">
-        <div className="mb-4">
-          <h2 className="mb-1 text-lg font-semibold text-foreground transition-colors group-hover:text-primary">
+      <div className="p-3 sm:p-4">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="mb-1 line-clamp-1 text-base font-semibold text-foreground transition-colors group-hover:text-primary sm:text-lg">
             {property.name}
           </h2>
-          <p className="text-sm text-muted-foreground">{property.address}</p>
+          <p className="line-clamp-1 text-xs text-muted-foreground sm:text-sm">
+            {property.address}
+          </p>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <Home className="h-4 w-4 text-primary" />
+        <div className="mb-3 grid grid-cols-2 gap-3 sm:mb-4 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 sm:h-9 sm:w-9">
+              <Home className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">{totalRooms}</p>
-              <p className="text-xs text-muted-foreground">{t('properties.card.rooms')}</p>
+              <p className="text-xs font-medium text-foreground sm:text-sm">{totalRooms}</p>
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
+                {t('properties.card.rooms')}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-              <Users className="h-4 w-4 text-primary" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 sm:h-9 sm:w-9">
+              <Users className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">{occupancyRate}%</p>
-              <p className="text-xs text-muted-foreground">{t('properties.card.occupancy')}</p>
+              <p className="text-xs font-medium text-foreground sm:text-sm">{occupancyRate}%</p>
+              <p className="text-[10px] text-muted-foreground sm:text-xs">
+                {t('properties.card.occupancy')}
+              </p>
             </div>
           </div>
         </div>
 
         {property.facilities.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {property.facilities.slice(0, 3).map(facility => (
               <span
                 key={facility}
-                className="rounded-full bg-accent px-2 py-1 text-xs text-accent-foreground"
+                className="rounded-full bg-accent px-2 py-0.5 text-[10px] text-accent-foreground sm:px-2.5 sm:py-1 sm:text-xs"
               >
                 {facility}
               </span>
             ))}
             {property.facilities.length > 3 && (
-              <span className="rounded-full bg-accent px-2 py-1 text-xs text-accent-foreground">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] text-accent-foreground sm:px-2.5 sm:py-1 sm:text-xs">
                 +{property.facilities.length - 3} {t('properties.card.more')}
               </span>
             )}

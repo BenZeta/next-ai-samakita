@@ -238,48 +238,50 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <label className="text-sm font-medium">{t('form.name')}</label>
+              <label className="mb-1.5 block text-sm font-medium">{t('form.name')}</label>
               <input
                 type="text"
                 id="name"
                 placeholder={t('form.name')}
                 {...register('name')}
-                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
               />
               {errors.name && (
-                <p className="mt-1.5 text-sm font-medium text-destructive">{errors.name.message}</p>
+                <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="text-sm font-medium">{t('form.description')}</label>
+              <label className="mb-1.5 block text-sm font-medium">{t('form.description')}</label>
               <textarea
                 id="description"
                 rows={4}
                 placeholder={t('form.description')}
                 {...register('description')}
-                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
               />
               {errors.description && (
-                <p className="mt-1.5 text-sm font-medium text-destructive">
+                <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                   {errors.description.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="text-sm font-medium">{t('form.address')}</label>
+              <label className="mb-1.5 block text-sm font-medium">{t('form.address')}</label>
               <input
                 type="text"
                 id="address"
                 placeholder={t('form.address')}
                 {...register('address')}
-                className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
               />
               {errors.address && (
-                <p className="mt-1.5 text-sm font-medium text-destructive">
+                <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                   {errors.address.message}
                 </p>
               )}
@@ -288,60 +290,60 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         );
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-sm font-medium">{t('form.city')}</label>
+                <label className="mb-1.5 block text-sm font-medium">{t('form.city')}</label>
                 <input
                   type="text"
                   id="city"
                   placeholder={t('form.city')}
                   {...register('city')}
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />
                 {errors.city && (
-                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                  <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                     {errors.city.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium">{t('form.province')}</label>
+                <label className="mb-1.5 block text-sm font-medium">{t('form.province')}</label>
                 <input
                   type="text"
                   id="province"
                   placeholder={t('form.province')}
                   {...register('province')}
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />
                 {errors.province && (
-                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                  <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                     {errors.province.message}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-sm font-medium">{t('form.postalCode')}</label>
+                <label className="mb-1.5 block text-sm font-medium">{t('form.postalCode')}</label>
                 <input
                   type="text"
                   id="postalCode"
                   placeholder={t('form.postalCode')}
                   {...register('postalCode')}
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />
                 {errors.postalCode && (
-                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                  <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                     {errors.postalCode.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-sm font-medium">{t('form.dueDate')}</label>
+                <label className="mb-1.5 block text-sm font-medium">{t('form.dueDate')}</label>
                 <input
                   type="number"
                   id="dueDate"
@@ -349,10 +351,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                   max="31"
                   placeholder={t('form.dueDate')}
                   {...register('dueDate', { valueAsNumber: true })}
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />
                 {errors.dueDate && (
-                  <p className="mt-1.5 text-sm font-medium text-destructive">
+                  <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
                     {errors.dueDate.message}
                   </p>
                 )}
@@ -362,10 +364,10 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         );
       case 3:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <label className="text-sm font-medium">{t('form.selectLocation')}</label>
-              <div className="h-[400px] overflow-hidden rounded-lg border border-input">
+              <label className="mb-1.5 block text-sm font-medium">{t('form.selectLocation')}</label>
+              <div className="h-[300px] overflow-hidden rounded-lg border border-input sm:h-[400px]">
                 <Map onLocationSelect={handleLocationSelect} selectedLocation={selectedLocation} />
               </div>
             </div>
@@ -373,16 +375,18 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         );
       case 4:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <label className="text-sm font-medium">{t('form.selectFacilities')}</label>
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <label className="mb-1.5 block text-sm font-medium">
+                {t('form.selectFacilities')}
+              </label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 sm:gap-3">
                 {FACILITIES.map(facility => (
                   <button
                     key={facility}
                     type="button"
                     onClick={() => toggleFacility(facility)}
-                    className={`flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    className={`flex h-10 items-center justify-center rounded-lg border px-3 text-xs font-medium transition-colors sm:h-11 sm:px-4 sm:text-sm ${
                       selectedFacilities.includes(facility)
                         ? 'border-primary bg-primary/10 text-primary'
                         : 'border-input bg-background text-foreground hover:bg-accent'
@@ -397,17 +401,19 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         );
       case 5:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <label className="text-sm font-medium">{t('form.uploadPropertyImages')}</label>
-              <div className="grid gap-4">
+              <label className="mb-1.5 block text-sm font-medium">
+                {t('form.uploadPropertyImages')}
+              </label>
+              <div className="grid gap-3 sm:gap-4">
                 <div className="flex items-center justify-center">
                   <label
                     htmlFor="images"
-                    className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input bg-background px-4 transition-colors hover:bg-accent"
+                    className="flex h-24 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-input bg-background px-3 transition-colors hover:bg-accent sm:h-32 sm:px-4"
                   >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <p className="mb-2 text-sm text-foreground">
+                    <div className="flex flex-col items-center justify-center py-4 sm:py-5">
+                      <p className="mb-1 text-xs text-foreground sm:mb-2 sm:text-sm">
                         <span className="font-semibold">{t('form.clickToUpload')}</span>{' '}
                         {t('form.orDragAndDrop')}
                       </p>
@@ -425,7 +431,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                 </div>
 
                 {imagePreviews.length > 0 && (
-                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 sm:gap-3">
                     {imagePreviews.map((preview, index) => (
                       <div
                         key={index}
@@ -436,7 +442,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                           alt={`Preview ${index + 1}`}
                           className="object-cover"
                           fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       </div>
                     ))}
@@ -460,17 +466,17 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
   ];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <div className="relative mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
+      <div className="relative mb-6 sm:mb-8">
+        <div className="mb-3 flex flex-col gap-1 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">
             {t('form.step')} {currentStep} {t('form.of')} 5: {stepTitles[currentStep - 1]}
           </h2>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-muted-foreground sm:text-sm">
             {calculateProgress()}% {t('form.complete')}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary sm:h-2">
           <div
             className="h-full bg-primary transition-all duration-300 ease-in-out"
             style={{ width: `${calculateProgress()}%` }}
@@ -480,12 +486,12 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
       {renderStepContent()}
 
-      <div className="flex justify-between space-x-4">
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between sm:gap-4">
         {currentStep > 1 && (
           <button
             type="button"
             onClick={handleBack}
-            className="rounded-lg border border-input bg-background px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto sm:px-6 sm:py-2.5"
           >
             {t('common.back')}
           </button>
@@ -494,7 +500,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           <button
             type="button"
             onClick={handleNext}
-            className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto sm:px-6 sm:py-2.5"
           >
             {t('common.next')}
           </button>
@@ -502,7 +508,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="ml-auto rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-6 sm:py-2.5"
           >
             {isLoading ? t('common.creating') : t('form.createProperty')}
           </button>

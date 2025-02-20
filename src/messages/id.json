@@ -507,6 +507,31 @@
     "date": "Tanggal",
     "description": "Deskripsi",
     "property": "Properti",
+    "quickAdd": {
+      "amount": "Jumlah",
+      "amountPlaceholder": "Masukkan jumlah pengeluaran",
+      "category": "Kategori",
+      "categoryPlaceholder": "Pilih kategori",
+      "date": "Tanggal",
+      "datePlaceholder": "Pilih tanggal",
+      "description": "Deskripsi",
+      "descriptionPlaceholder": "Masukkan deskripsi pengeluaran",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "Masukkan nama vendor",
+      "receipt": "Bukti Pembayaran",
+      "receiptPlaceholder": "Unggah bukti pembayaran",
+      "notes": "Catatan",
+      "notesPlaceholder": "Masukkan catatan pengeluaran",
+      "recurring": "Jadikan pengeluaran berulang",
+      "recurringInterval": "Interval Berulang",
+      "selectInterval": "Pilih interval",
+      "interval": "Interval",
+      "intervals": {
+        "monthly": "Bulanan",
+        "quarterly": "Tiga Bulanan",
+        "yearly": "Tahunan"
+      }
+    },
     "filters": {
       "all": "Semua Pengeluaran",
       "operational": "Pengeluaran Operasional",
@@ -532,36 +557,33 @@
       }
     },
     "categories": {
-      "operational": {
-        "SALARY": "Gaji",
-        "STAFF_BENEFITS": "Tunjangan Staf",
-        "STAFF_TRAINING": "Pelatihan Staf",
-        "ELECTRICITY": "Listrik",
-        "WATER": "Air",
-        "INTERNET": "Internet",
-        "GAS": "Gas",
-        "CLEANING": "Kebersihan",
-        "REPAIRS": "Perbaikan",
-        "GARDENING": "Taman",
-        "PEST_CONTROL": "Pengendalian Hama",
-        "OFFICE_SUPPLIES": "Perlengkapan Kantor",
-        "MARKETING": "Pemasaran",
-        "INSURANCE": "Asuransi",
-        "TAX": "Pajak",
-        "LICENSE_PERMIT": "Lisensi & Perizinan",
-        "SECURITY": "Keamanan",
-        "WASTE_MANAGEMENT": "Pengelolaan Sampah"
-      },
-      "nonOperational": {
-        "RENOVATION": "Renovasi",
-        "FURNITURE": "Furnitur",
-        "EQUIPMENT": "Peralatan",
-        "EMERGENCY": "Darurat",
-        "LEGAL": "Hukum",
-        "CONSULTING": "Konsultasi",
-        "MISC_NON_OPERATIONAL": "Lain-lain (Non-Operasional)",
-        "OTHER": "Lainnya"
-      }
+      "ALL": "Semua Kategori",
+      "SALARY": "Gaji",
+      "STAFF_BENEFITS": "Tunjangan Staf",
+      "STAFF_TRAINING": "Pelatihan Staf",
+      "ELECTRICITY": "Listrik",
+      "WATER": "Air",
+      "INTERNET": "Internet",
+      "GAS": "Gas",
+      "CLEANING": "Kebersihan",
+      "REPAIRS": "Perbaikan",
+      "GARDENING": "Taman",
+      "PEST_CONTROL": "Pengendalian Hama",
+      "OFFICE_SUPPLIES": "Perlengkapan Kantor",
+      "MARKETING": "Pemasaran",
+      "INSURANCE": "Asuransi",
+      "TAX": "Pajak",
+      "LICENSE_PERMIT": "Lisensi & Perizinan",
+      "SECURITY": "Keamanan",
+      "WASTE_MANAGEMENT": "Pengelolaan Sampah",
+      "RENOVATION": "Renovasi",
+      "FURNITURE": "Furnitur",
+      "EQUIPMENT": "Peralatan",
+      "EMERGENCY": "Darurat",
+      "LEGAL": "Hukum",
+      "CONSULTING": "Konsultasi",
+      "MISC_NON_OPERATIONAL": "Lain-lain (Non-Operasional)",
+      "OTHER": "Lainnya"
     },
     "actions": {
       "delete": "Hapus",
@@ -606,6 +628,14 @@
     "addBilling": "Tambah Tagihan",
     "searchBilling": "Cari tagihan...",
     "noBilling": "Tidak ada tagihan ditemukan",
+    "form": {
+      "type": "Jenis Tagihan",
+      "title": "Tambah Tagihan Baru",
+      "property": "Properti",
+      "selectProperty": "Pilih Properti",
+      "tenant": "Penyewa",
+      "selectTenant": "Pilih Penyewa"
+    },
     "status": {
       "paid": "Lunas",
       "pending": "Menunggu",
@@ -623,7 +653,10 @@
       "RENT": "Sewa",
       "DEPOSIT": "Deposit",
       "UTILITY": "Utilitas",
-      "OTHER": "Lainnya"
+      "OTHER": "Lainnya",
+      "all": "Semua Jenis",
+      "other": "Jenis Lainnya",
+      "MAINTENANCE": "Pemeliharaan"
     },
     "filters": {
       "property": {
@@ -684,6 +717,7 @@
         "room": "Kamar"
       },
       "form": {
+        "type": "Jenis Tagihan",
         "title": "Judul",
         "description": "Deskripsi (Opsional)",
         "amount": "Jumlah",
