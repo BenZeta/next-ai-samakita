@@ -287,308 +287,238 @@ export function ExpenseList({
   const totalPages = data?.pagination?.totalPages ?? 1;
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-medium text-foreground">{t('expenses.list.title')}</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsQuickAddOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary shadow transition-colors hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <Plus className="h-4 w-4" />
-            {t('expenses.quickAddOperational')}
-          </button>
-          <button
-            onClick={() => setIsAddingExpense(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <Plus className="h-4 w-4" />
-            {t('expenses.addExpense')}
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground">
-            {t('expenses.filters.category')}
-          </label>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           <select
             value={expenseType}
-            onChange={e =>
-              setExpenseType(e.target.value as 'ALL' | 'OPERATIONAL' | 'NON_OPERATIONAL')
-            }
-            className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            onChange={e => setExpenseType(e.target.value as typeof expenseType)}
+            className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
           >
             <option value="ALL">{t('expenses.filters.all')}</option>
             <option value="OPERATIONAL">{t('expenses.filters.operational')}</option>
             <option value="NON_OPERATIONAL">{t('expenses.filters.nonOperational')}</option>
           </select>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground">
-            {t('expenses.filters.category')}
-          </label>
           <select
             value={category}
             onChange={e => setCategory(e.target.value as ExpenseCategory | 'ALL')}
-            className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
           >
-            <option value="ALL">{t('expenses.filters.all')}</option>
+            <option value="ALL">{t('expenses.categories.ALL')}</option>
             {Object.values(ExpenseCategory).map(cat => (
               <option key={cat} value={cat}>
-                {t(
-                  `expenses.categories.${
-                    isOperationalExpense(cat) ? 'operational' : 'nonOperational'
-                  }.${cat}`
-                )}
+                {t(`expenses.categories.${cat.toUpperCase()}`)}
               </option>
             ))}
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          <button
+            onClick={() => setIsQuickAddOpen(true)}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t('expenses.form.quickAddOperational')}
+          </button>
+          <button
+            onClick={() => setIsAddingExpense(true)}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t('expenses.form.add')}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+        <div className="flex-1">
+          <label htmlFor="startDate" className="mb-1.5 block text-sm font-medium text-foreground">
             {t('expenses.filters.startDate')}
           </label>
           <input
             type="date"
+            id="startDate"
             value={startDate}
             onChange={e => setStartDate(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
           />
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-muted-foreground">
+        <div className="flex-1">
+          <label htmlFor="endDate" className="mb-1.5 block text-sm font-medium text-foreground">
             {t('expenses.filters.endDate')}
           </label>
           <input
             type="date"
+            id="endDate"
             value={endDate}
             onChange={e => setEndDate(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:h-10"
           />
         </div>
       </div>
 
-      {/* Summary Cards */}
-      {data && (
-        <div className="mb-6">
-          <div className="rounded-lg bg-accent/50 p-4">
-            <p className="text-sm text-muted-foreground">{t('expenses.list.totalExpenses')}</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground">
-              Rp {data.summary.total.toLocaleString()}
-            </p>
-          </div>
+      {isLoading ? (
+        <div className="flex h-[200px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
         </div>
-      )}
-
-      {/* Expenses Table */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {t('expenses.list.table.date')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {t('expenses.list.table.category')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {t('expenses.list.table.description')}
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {t('expenses.list.table.amount')}
-              </th>
-              {!propertyId && (
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {t('expenses.list.table.property')}
-                </th>
-              )}
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {t('expenses.list.table.actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border bg-background">
-            {data?.expenses.map(expense => (
-              <tr key={expense.id} className="hover:bg-muted/50">
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
-                  {new Date(expense.date).toLocaleDateString()}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
-                  {t(
-                    `expenses.categories.${
-                      isOperationalExpense(expense.category) ? 'operational' : 'nonOperational'
-                    }.${expense.category}`
-                  )}
-                </td>
-                <td className="px-6 py-4 text-sm text-foreground">{expense.description}</td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
-                  Rp {expense.amount.toLocaleString()}
-                </td>
-                {!propertyId && (
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-foreground">
-                    {expense.property?.name || t('expenses.filters.general')}
-                  </td>
-                )}
-                <td className="whitespace-nowrap px-6 py-4 text-sm">
-                  <button
-                    onClick={() => handleDelete(expense.id)}
-                    className="text-sm font-medium text-destructive hover:text-destructive/90"
-                  >
-                    {t('expenses.actions.delete')}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {data && (
-        <div className="mt-4 flex items-center justify-between">
+      ) : !data ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-background/50 px-3 py-8 text-center sm:px-4 sm:py-12">
+          <p className="text-base font-medium text-foreground sm:text-lg">
+            {t('expenses.noExpenses')}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('expenses.noExpensesDescription')}
+          </p>
           <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => setIsAddingExpense(true)}
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
           >
-            {t('expenses.pagination.previous')}
-          </button>
-          <span className="text-sm text-muted-foreground">
-            {t('expenses.pagination.page', { page, totalPages: data.pagination.totalPages })}
-          </span>
-          <button
-            onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
-            disabled={page === data.pagination.totalPages}
-            className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t('expenses.pagination.next')}
+            <Plus className="mr-2 h-4 w-4" />
+            {t('expenses.actions.add')}
           </button>
         </div>
-      )}
-
-      {/* Add Expense Modal */}
-      {isAddingExpense && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-medium text-foreground">{t('expenses.form.title')}</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!propertyId && (
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground">
-                    {t('expenses.form.property')}
-                  </label>
-                  <select
-                    value={newExpense.propertyId || ''}
-                    onChange={e => handlePropertyChange(e.target.value)}
-                    className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="">{t('expenses.filters.general')}</option>
-                    {properties.map(property => (
-                      <option key={property.id} value={property.id}>
-                        {property.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.category')}
-                </label>
-                <select
-                  value={newExpense.category}
-                  onChange={e => setNewExpense(prev => ({ ...prev, category: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
-                >
-                  <option value="">{t('expenses.form.selectCategory')}</option>
-                  {Object.values(ExpenseCategory).map(cat => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.amount')}
-                </label>
-                <input
-                  type="number"
-                  value={newExpense.amount}
-                  onChange={e => setNewExpense(prev => ({ ...prev, amount: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.date')}
-                </label>
-                <input
-                  type="date"
-                  value={newExpense.date}
-                  onChange={e => setNewExpense(prev => ({ ...prev, date: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.description')}
-                </label>
-                <textarea
-                  value={newExpense.description}
-                  onChange={e => setNewExpense(prev => ({ ...prev, description: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsAddingExpense(false)}
-                  className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {t('expenses.actions.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUploading}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isUploading ? t('expenses.form.adding') : t('expenses.form.add')}
-                </button>
-              </div>
-            </form>
-          </div>
+      ) : data.expenses.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-muted-foreground/25 bg-background/50 px-3 py-8 text-center sm:px-4 sm:py-12">
+          <p className="text-base font-medium text-foreground sm:text-lg">
+            {t('expenses.noExpenses')}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('expenses.noExpensesDescription')}
+          </p>
+          <button
+            onClick={() => setIsAddingExpense(true)}
+            className="mt-4 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t('expenses.form.add')}
+          </button>
         </div>
+      ) : (
+        <>
+          <div className="grid gap-2 sm:grid-cols-1 sm:gap-4 lg:grid-cols-3">
+            <div className="rounded-lg bg-accent/50 p-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('expenses.list.totalExpenses')}
+              </p>
+              <p className="mt-1 text-xl font-bold">Rp {data.summary.total.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg bg-accent/50 p-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('expenses.list.operationalExpenses')}
+              </p>
+              <p className="mt-1 text-xl font-bold">
+                Rp {data.summary.operationalTotal.toLocaleString()}
+              </p>
+            </div>
+            <div className="rounded-lg bg-accent/50 p-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t('expenses.list.nonOperationalExpenses')}
+              </p>
+              <p className="mt-1 text-xl font-bold">
+                Rp {data.summary.nonOperationalTotal.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="px-3 py-3 text-xs font-medium text-muted-foreground sm:px-4">
+                    {t('expenses.list.table.date')}
+                  </th>
+                  <th className="px-3 py-3 text-xs font-medium text-muted-foreground sm:px-4">
+                    {t('expenses.list.table.category')}
+                  </th>
+                  <th className="px-3 py-3 text-xs font-medium text-muted-foreground sm:px-4">
+                    {t('expenses.list.table.description')}
+                  </th>
+                  <th className="px-3 py-3 text-xs font-medium text-muted-foreground sm:px-4">
+                    {t('expenses.list.table.amount')}
+                  </th>
+                  <th className="px-3 py-3 text-xs font-medium text-muted-foreground sm:px-4">
+                    {t('expenses.list.table.actions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {data.expenses.map(expense => (
+                  <tr key={expense.id} className="hover:bg-accent/50">
+                    <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground sm:px-4">
+                      {new Date(expense.date).toLocaleDateString()}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground sm:px-4">
+                      {t(`expenses.categories.${expense.category.toUpperCase()}`)}
+                    </td>
+                    <td className="max-w-[200px] truncate px-3 py-3 text-sm text-foreground sm:px-4">
+                      {expense.description}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground sm:px-4">
+                      Rp {expense.amount.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-foreground sm:px-4">
+                      <button
+                        onClick={() => handleDelete(expense.id)}
+                        className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {data.pagination.totalPages > 1 && (
+            <div className="mt-4 flex flex-col items-center justify-center gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              >
+                {t('common.previous')}
+              </button>
+              <span className="text-sm text-muted-foreground">
+                {t('common.page')} {page} {t('common.of')} {data.pagination.totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(data.pagination.totalPages, p + 1))}
+                disabled={page === data.pagination.totalPages}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              >
+                {t('common.next')}
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {/* Quick Add Operational Expense Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, id: null })}
+        onConfirm={confirmDelete}
+      />
+
       {isQuickAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-medium text-foreground">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setIsQuickAddOpen(false)}
+          />
+          <div className="relative z-50 w-full max-w-md rounded-lg border border-border bg-card p-4 shadow-lg sm:p-6">
+            <h3 className="mb-4 text-lg font-medium text-card-foreground">
               {t('expenses.form.quickAddOperational')}
             </h3>
             <form onSubmit={handleQuickAdd} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">
+                <label htmlFor="category" className="block text-sm font-medium text-foreground">
                   {t('expenses.form.category')}
                 </label>
                 <select
+                  id="category"
                   value={quickAddExpense.category}
                   onChange={e =>
                     setQuickAddExpense(prev => ({
@@ -596,50 +526,51 @@ export function ExpenseList({
                       category: e.target.value as ExpenseCategory,
                     }))
                   }
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
+                  className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <option value="">{t('expenses.form.selectCategory')}</option>
+                  <option value="">{t('expenses.categories.ALL')}</option>
                   {Object.values(ExpenseCategory)
                     .filter(isOperationalExpense)
                     .map(cat => (
                       <option key={cat} value={cat}>
-                        {t(`expenses.categories.operational.${cat}`)}
+                        {t(`expenses.categories.${cat.toUpperCase()}`)}
                       </option>
                     ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.amount')}
+                <label htmlFor="amount" className="block text-sm font-medium text-foreground">
+                  {t('expenses.quickAdd.amount')}
                 </label>
                 <input
                   type="number"
+                  id="amount"
                   value={quickAddExpense.amount}
                   onChange={e => setQuickAddExpense(prev => ({ ...prev, amount: e.target.value }))}
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
+                  className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder={t('expenses.quickAdd.amountPlaceholder')}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-muted-foreground">
-                  {t('expenses.form.description')}
+                <label htmlFor="description" className="block text-sm font-medium text-foreground">
+                  {t('expenses.quickAdd.description')}
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  id="description"
                   value={quickAddExpense.description}
                   onChange={e =>
                     setQuickAddExpense(prev => ({ ...prev, description: e.target.value }))
                   }
-                  className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                  required
+                  rows={3}
+                  className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder={t('expenses.quickAdd.descriptionPlaceholder')}
                 />
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
+              <div>
+                <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="isRecurring"
@@ -647,65 +578,62 @@ export function ExpenseList({
                     onChange={e =>
                       setQuickAddExpense(prev => ({ ...prev, isRecurring: e.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring"
+                    className="h-4 w-4 rounded border-input bg-background text-primary focus:ring-2 focus:ring-ring"
                   />
                   <label htmlFor="isRecurring" className="text-sm font-medium text-foreground">
-                    {t('expenses.form.recurring')}
+                    {t('expenses.quickAdd.recurring')}
                   </label>
                 </div>
 
                 {quickAddExpense.isRecurring && (
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground">
-                      {t('expenses.form.recurringInterval')}
+                  <div className="mt-3">
+                    <label
+                      htmlFor="recurringInterval"
+                      className="block text-sm font-medium text-foreground"
+                    >
+                      {t('expenses.quickAdd.interval')}
                     </label>
                     <select
-                      value={quickAddExpense.recurringInterval || ''}
+                      id="recurringInterval"
+                      value={quickAddExpense.recurringInterval}
                       onChange={e =>
                         setQuickAddExpense(prev => ({
                           ...prev,
                           recurringInterval: e.target.value as 'MONTHLY' | 'QUARTERLY' | 'YEARLY',
                         }))
                       }
-                      className="mt-1 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring"
-                      required
+                      className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <option value="">{t('expenses.form.selectInterval')}</option>
-                      <option value="MONTHLY">{t('expenses.form.intervals.monthly')}</option>
-                      <option value="QUARTERLY">{t('expenses.form.intervals.quarterly')}</option>
-                      <option value="YEARLY">{t('expenses.form.intervals.yearly')}</option>
+                      <option value="MONTHLY">{t('expenses.quickAdd.intervals.monthly')}</option>
+                      <option value="QUARTERLY">
+                        {t('expenses.quickAdd.intervals.quarterly')}
+                      </option>
+                      <option value="YEARLY">{t('expenses.quickAdd.intervals.yearly')}</option>
                     </select>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-end gap-4">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setIsQuickAddOpen(false)}
-                  className="rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto"
                 >
-                  {t('expenses.actions.cancel')}
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={quickAddMutation.isLoading}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
-                  {quickAddMutation.isLoading ? t('expenses.form.adding') : t('expenses.form.add')}
+                  {quickAddMutation.isLoading ? t('common.saving') : t('common.save')}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={deleteConfirmation.isOpen}
-        onClose={() => setDeleteConfirmation({ isOpen: false, id: null })}
-        onConfirm={confirmDelete}
-      />
     </div>
   );
 }

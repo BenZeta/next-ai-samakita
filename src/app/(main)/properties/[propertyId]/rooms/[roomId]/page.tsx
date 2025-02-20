@@ -135,16 +135,18 @@ export default function RoomDetailPage() {
   const currentTenant = room.tenants.length > 0 ? room.tenants[0] : null;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="container mx-auto min-h-screen px-2 py-4 sm:px-4 sm:py-8">
+      <div className="mb-4 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('title')}</h1>
-          <p className="mt-2 text-muted-foreground">{room.property.name}</p>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
+            {t('title')}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:mt-2">{room.property.name}</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:gap-4">
           <Link
             href={`/properties/${propertyId}/rooms/${roomId}/edit`}
-            className="inline-flex items-center gap-2 rounded-lg bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-background px-3 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent sm:w-auto sm:px-4"
           >
             <PencilIcon className="h-4 w-4" />
             {t('edit.title')}
@@ -152,7 +154,7 @@ export default function RoomDetailPage() {
           <Button
             onClick={handleMaintenanceToggle}
             disabled={isUpdating}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm transition-colors ${
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow-sm transition-colors sm:w-auto sm:px-4 ${
               room.status === RoomStatus.MAINTENANCE
                 ? 'bg-yellow-500 text-white hover:bg-yellow-600'
                 : 'bg-primary text-primary-foreground hover:bg-primary/90'
@@ -164,43 +166,43 @@ export default function RoomDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-lg bg-card p-6 shadow-sm">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
+        <div className="rounded-lg bg-card p-3 shadow-sm sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Building2 className="h-5 w-5 text-primary" />
+            <div className="rounded-full bg-primary/10 p-2 sm:p-3">
+              <Building2 className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('form.status.status')}</p>
-              <p className="mt-1 font-medium text-foreground">
+              <p className="text-xs text-muted-foreground sm:text-sm">{t('form.status.status')}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground sm:mt-1 sm:text-base">
                 {t(`form.status.${room.status.toLowerCase()}`)}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-card p-6 shadow-sm">
+        <div className="rounded-lg bg-card p-3 shadow-sm sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-3">
-              <DollarSign className="h-5 w-5 text-primary" />
+            <div className="rounded-full bg-primary/10 p-2 sm:p-3">
+              <DollarSign className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('form.price')}</p>
-              <p className="mt-1 font-medium text-foreground">
+              <p className="text-xs text-muted-foreground sm:text-sm">{t('form.price')}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground sm:mt-1 sm:text-base">
                 {t('form.priceValue', { value: room.price })}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg bg-card p-6 shadow-sm">
+        <div className="rounded-lg bg-card p-3 shadow-sm sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Users className="h-5 w-5 text-primary" />
+            <div className="rounded-full bg-primary/10 p-2 sm:p-3">
+              <Users className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('currentTenant')}</p>
-              <p className="mt-1 font-medium text-foreground">
+              <p className="text-xs text-muted-foreground sm:text-sm">{t('currentTenant')}</p>
+              <p className="mt-0.5 text-sm font-medium text-foreground sm:mt-1 sm:text-base">
                 {currentTenant ? currentTenant.name : t('noTenant')}
               </p>
             </div>
@@ -208,19 +210,21 @@ export default function RoomDetailPage() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg bg-card p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">{t('tenantHistory')}</h2>
-          <div className="space-y-4">
+      <div className="mt-4 grid gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-2">
+        <div className="rounded-lg bg-card p-3 shadow-sm sm:p-6">
+          <h2 className="mb-3 text-base font-semibold sm:mb-4 sm:text-lg">{t('tenantHistory')}</h2>
+          <div className="space-y-3 sm:space-y-4">
             {room.tenants && room.tenants.length > 0 ? (
               (room.tenants as Tenant[]).map(tenant => (
                 <div
                   key={tenant.id}
-                  className="flex items-center justify-between rounded-lg border border-border p-4"
+                  className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
                 >
                   <div>
-                    <p className="font-medium text-foreground">{tenant.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm font-medium text-foreground sm:text-base">
+                      {tenant.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground sm:text-sm">
                       {new Date(tenant.startDate!).toLocaleDateString()} -{' '}
                       {tenant.endDate
                         ? new Date(tenant.endDate).toLocaleDateString()
@@ -229,14 +233,14 @@ export default function RoomDetailPage() {
                   </div>
                   <Link
                     href={`/tenants/${tenant.id}`}
-                    className="text-sm text-primary hover:underline"
+                    className="inline-flex w-full items-center justify-center rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 sm:w-auto sm:text-sm"
                   >
                     {t('viewDetails')}
                   </Link>
                 </div>
               ))
             ) : (
-              <p className="text-center text-muted-foreground">{t('noTenantHistory')}</p>
+              <p className="text-center text-sm text-muted-foreground">{t('noTenantHistory')}</p>
             )}
           </div>
         </div>
@@ -245,11 +249,11 @@ export default function RoomDetailPage() {
       {showMaintenanceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
-            className="fixed inset-0 bg-black/50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowMaintenanceModal(false)}
           />
-          <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <h3 className="mb-4 text-lg font-medium">
+          <div className="relative z-50 w-[95%] max-w-md rounded-lg bg-card p-4 shadow-lg sm:p-6">
+            <h3 className="mb-3 text-base font-medium text-card-foreground sm:mb-4 sm:text-lg">
               {room.status === RoomStatus.MAINTENANCE
                 ? t('maintenance.endTitle')
                 : t('maintenance.startTitle')}
@@ -259,16 +263,16 @@ export default function RoomDetailPage() {
                 ? t('maintenance.endMessage')
                 : t('maintenance.startMessage')}
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
               <button
                 onClick={() => setShowMaintenanceModal(false)}
-                className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
               >
                 {t('maintenance.cancel')}
               </button>
               <button
                 onClick={confirmMaintenanceToggle}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
               >
                 {t('maintenance.confirm')}
               </button>
@@ -279,10 +283,15 @@ export default function RoomDetailPage() {
 
       {showExpenseForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setShowExpenseForm(false)} />
-          <div className="relative z-50 w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-card-foreground">{t('expense.title')}</h3>
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowExpenseForm(false)}
+          />
+          <div className="relative z-50 w-[95%] max-w-md rounded-lg bg-card p-4 shadow-lg sm:p-6">
+            <div className="mb-3 flex items-center justify-between sm:mb-4">
+              <h3 className="text-base font-medium text-card-foreground sm:text-lg">
+                {t('expense.title')}
+              </h3>
               <button
                 onClick={() => setShowExpenseForm(false)}
                 className="rounded-full p-1 text-muted-foreground hover:bg-accent"
@@ -313,7 +322,7 @@ export default function RoomDetailPage() {
                     setMaintenanceExpense({ ...maintenanceExpense, amount: e.target.value })
                   }
                   placeholder={t('expense.amountPlaceholder')}
-                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="mt-1.5 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
@@ -328,7 +337,7 @@ export default function RoomDetailPage() {
                     setMaintenanceExpense({ ...maintenanceExpense, description: e.target.value })
                   }
                   placeholder={t('expense.descriptionPlaceholder')}
-                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="mt-1.5 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
@@ -343,26 +352,26 @@ export default function RoomDetailPage() {
                   onChange={e =>
                     setMaintenanceExpense({ ...maintenanceExpense, date: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="mt-1.5 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowExpenseForm(false);
                     setIsUpdating(false);
                   }}
-                  className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent sm:w-auto"
                 >
                   {t('expense.skip')}
                 </button>
                 <button
                   type="submit"
                   disabled={createExpense.isLoading}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
                 >
                   {createExpense.isLoading ? t('expense.adding') : t('expense.add')}
                 </button>

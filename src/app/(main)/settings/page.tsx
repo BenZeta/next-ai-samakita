@@ -68,27 +68,31 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-foreground">{t('settings.title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('settings.subtitle')}</p>
+    <div className="container mx-auto min-h-[calc(100vh-4rem)] px-3 py-4 sm:px-4 sm:py-6 md:py-8">
+      <div className="mb-4 sm:mb-6 md:mb-8">
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl md:text-3xl">
+          {t('settings.title')}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground sm:text-base">
+          {t('settings.subtitle')}
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Profile Information - Left Column */}
-        <div className="h-fit rounded-lg bg-card p-6 shadow">
-          <div className="mb-6 flex items-center justify-between">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
+        {/* Profile Information */}
+        <div className="h-fit rounded-lg bg-card p-4 shadow sm:p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">
+              <h2 className="text-base font-semibold text-card-foreground sm:text-lg">
                 {t('settings.profile.title')}
               </h2>
             </div>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-4"
               disabled={updateProfile.isLoading}
             >
               {isEditing ? t('settings.profile.cancelButton') : t('settings.profile.editButton')}
@@ -97,7 +101,7 @@ export default function SettingsPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="name" className="mb-2 block text-sm font-medium text-foreground">
+              <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-foreground">
                 {t('settings.profile.name')}
               </label>
               <input
@@ -106,12 +110,12 @@ export default function SettingsPage() {
                 value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
                 disabled={!isEditing || updateProfile.isLoading}
-                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-foreground">
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-foreground">
                 {t('settings.profile.email')}
               </label>
               <input
@@ -120,7 +124,7 @@ export default function SettingsPage() {
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                 disabled={true}
-                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 {t('settings.profile.emailHint')}
@@ -128,7 +132,7 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label htmlFor="phone" className="mb-2 block text-sm font-medium text-foreground">
+              <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-foreground">
                 {t('settings.profile.phone')}
               </label>
               <input
@@ -137,7 +141,7 @@ export default function SettingsPage() {
                 value={formData.phone}
                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 disabled={!isEditing || updateProfile.isLoading}
-                className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm transition-colors hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
@@ -145,7 +149,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={updateProfile.isLoading}
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {updateProfile.isLoading ? (
                   <div className="flex items-center justify-center">
@@ -161,11 +165,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Right Column - Application Settings and Change Password */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Language Settings */}
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-medium text-foreground">{t('settings.language')}</h2>
-            <div className="mt-4">
+          <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+            <h2 className="text-base font-medium text-foreground sm:text-lg">
+              {t('settings.language')}
+            </h2>
+            <div className="mt-3 sm:mt-4">
               <select
                 value={locale}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -180,27 +186,27 @@ export default function SettingsPage() {
           </div>
 
           {/* Application Settings */}
-          <div className="rounded-lg bg-card p-6 shadow">
-            <div className="mb-6 flex items-center gap-2">
+          <div className="rounded-lg bg-card p-4 shadow sm:p-6">
+            <div className="mb-4 flex items-center gap-2 sm:mb-6">
               <div className="rounded-lg bg-primary/10 p-2">
                 <User className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">
+              <h2 className="text-base font-semibold text-card-foreground sm:text-lg">
                 {t('settings.application.title')}
               </h2>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-medium text-foreground">
+                  <p className="text-sm font-medium text-foreground sm:text-base">
                     {t('settings.application.darkMode')}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
                     {t('settings.application.darkModeHint')}
                   </p>
                 </div>
-                <label className="relative inline-flex cursor-pointer items-center">
+                <label className="relative inline-flex cursor-pointer items-center self-start sm:self-center">
                   <input
                     type="checkbox"
                     checked={theme === 'dark'}
@@ -215,12 +221,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Change Password */}
-          <div className="rounded-lg bg-card p-6 shadow">
-            <div className="mb-6 flex items-center gap-2">
+          <div className="rounded-lg bg-card p-4 shadow sm:p-6">
+            <div className="mb-4 flex items-center gap-2 sm:mb-6">
               <div className="rounded-lg bg-primary/10 p-2">
                 <Lock className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-lg font-semibold text-card-foreground">
+              <h2 className="text-base font-semibold text-card-foreground sm:text-lg">
                 {t('settings.password.title')}
               </h2>
             </div>
@@ -229,42 +235,42 @@ export default function SettingsPage() {
               <div>
                 <label
                   htmlFor="current-password"
-                  className="mb-2 block text-sm font-medium text-foreground"
+                  className="mb-1.5 block text-sm font-medium text-foreground"
                 >
                   {t('settings.password.current')}
                 </label>
                 <input
                   type="password"
                   id="current-password"
-                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="new-password"
-                  className="mb-2 block text-sm font-medium text-foreground"
+                  className="mb-1.5 block text-sm font-medium text-foreground"
                 >
                   {t('settings.password.new')}
                 </label>
                 <input
                   type="password"
                   id="new-password"
-                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="confirm-password"
-                  className="mb-2 block text-sm font-medium text-foreground"
+                  className="mb-1.5 block text-sm font-medium text-foreground"
                 >
                   {t('settings.password.confirm')}
                 </label>
                 <input
                   type="password"
                   id="confirm-password"
-                  className="block w-full rounded-md border border-input bg-background px-4 py-2 text-foreground shadow-sm"
+                  className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm"
                 />
               </div>
               <button
