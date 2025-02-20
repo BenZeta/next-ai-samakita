@@ -47,7 +47,7 @@ async function main() {
         type: 'STANDARD',
         size: 20,
         price: 1000000,
-        status: RoomStatus.OCCUPIED,
+        status: RoomStatus.AVAILABLE,
         propertyId: property.id,
       },
     }),
@@ -58,47 +58,67 @@ async function main() {
         type: 'DELUXE',
         size: 25,
         price: 1500000,
-        status: RoomStatus.OCCUPIED,
+        status: RoomStatus.AVAILABLE,
         propertyId: property.id,
       },
     }),
   ]);
 
-  // Create test tenants
+  // Create test tenants and update room status in a transaction
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 20); // 20th of previous month
   const endDate = new Date(now.getFullYear(), now.getMonth(), 20); // 20th of current month
 
   const tenants = await Promise.all([
-    prisma.tenant.create({
-      data: {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '1234567890',
-        ktpNumber: '1234567890123456',
-        ktpFile: 'ktp1.jpg',
-        status: TenantStatus.ACTIVE,
-        roomId: rooms[0].id,
-        startDate,
-        endDate,
-        rentAmount: 1000000,
-        depositAmount: 2000000,
-      },
+    prisma.$transaction(async tx => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: 'John Doe',
+          email: 'john@example.com',
+          phone: '1234567890',
+          ktpNumber: '1234567890123456',
+          ktpFile: 'ktp1.jpg',
+          status: TenantStatus.ACTIVE,
+          roomId: rooms[0].id,
+          startDate,
+          endDate,
+          rentAmount: 1000000,
+          depositAmount: 2000000,
+        },
+      });
+
+      // Update room status to OCCUPIED
+      await tx.room.update({
+        where: { id: rooms[0].id },
+        data: { status: RoomStatus.OCCUPIED },
+      });
+
+      return tenant;
     }),
-    prisma.tenant.create({
-      data: {
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        phone: '0987654321',
-        ktpNumber: '6543210987654321',
-        ktpFile: 'ktp2.jpg',
-        status: TenantStatus.ACTIVE,
-        roomId: rooms[1].id,
-        startDate,
-        endDate,
-        rentAmount: 1500000,
-        depositAmount: 3000000,
-      },
+    prisma.$transaction(async tx => {
+      const tenant = await tx.tenant.create({
+        data: {
+          name: 'Jane Smith',
+          email: 'jane@example.com',
+          phone: '0987654321',
+          ktpNumber: '6543210987654321',
+          ktpFile: 'ktp2.jpg',
+          status: TenantStatus.ACTIVE,
+          roomId: rooms[1].id,
+          startDate,
+          endDate,
+          rentAmount: 1500000,
+          depositAmount: 3000000,
+        },
+      });
+
+      // Update room status to OCCUPIED
+      await tx.room.update({
+        where: { id: rooms[1].id },
+        data: { status: RoomStatus.OCCUPIED },
+      });
+
+      return tenant;
     }),
   ]);
 
@@ -183,7 +203,7 @@ async function main() {
   await prisma.expense.create({
     data: {
       amount: 500000,
-      category: ExpenseCategory.UTILITY,
+      category: ExpenseCategory.ELECTRICITY,
       description: 'Electricity bill',
       date: new Date(),
       propertyId: property.id,
@@ -195,7 +215,7 @@ async function main() {
   await prisma.expense.create({
     data: {
       amount: 250000,
-      category: ExpenseCategory.OTHER,
+      category: ExpenseCategory.OFFICE_SUPPLIES,
       description: 'Office supplies',
       date: new Date(),
       userId: user.id,

@@ -4,7 +4,7 @@ import { api } from '@/lib/trpc/react';
 import { Building2, ChevronRight, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 
 export default function NewTenantPage() {
   const t = useTranslations();
@@ -25,8 +25,10 @@ export default function NewTenantPage() {
 
   // Filter properties based on search
   const filteredProperties = properties?.properties.filter(property =>
-    search ? property.name.toLowerCase().includes(search.toLowerCase()) || 
-             property.address.toLowerCase().includes(search.toLowerCase()) : true
+    search
+      ? property.name.toLowerCase().includes(search.toLowerCase()) ||
+        property.address.toLowerCase().includes(search.toLowerCase())
+      : true
   );
 
   // Fetch rooms when property is selected
@@ -222,7 +224,9 @@ export default function NewTenantPage() {
                 }}
                 className="mt-4 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
-                {roomSearch ? t('tenants.new.buttons.clearSearch') : t('tenants.new.buttons.selectAnother')}
+                {roomSearch
+                  ? t('tenants.new.buttons.clearSearch')
+                  : t('tenants.new.buttons.selectAnother')}
               </button>
             </div>
           )}

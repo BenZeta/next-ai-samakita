@@ -215,6 +215,10 @@ model Expense {
   receipt     String?
   property    Property?       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isRecurring Boolean        @default(false)
+  recurringInterval String?   // 'MONTHLY', 'QUARTERLY', 'YEARLY'
+  nextDueDate DateTime?
+  lastProcessedDate DateTime?
 }
 
 model MaintenanceRequest {
@@ -263,6 +267,7 @@ model Billing {
   amount      Float
   dueDate     DateTime
   status      BillingStatus @default(DRAFT)
+  type        PaymentType   @default(RENT)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   tenantId    String?
@@ -323,11 +328,36 @@ enum PaymentStatus {
 }
 
 enum ExpenseCategory {
-  MAINTENANCE
-  UTILITY
-  TAX
-  INSURANCE
+  // Operational Expenses
   SALARY
+  STAFF_BENEFITS
+  STAFF_TRAINING
+  ELECTRICITY
+  WATER
+  INTERNET
+  GAS
+  CLEANING
+  REPAIRS
+  GARDENING
+  PEST_CONTROL
+  OFFICE_SUPPLIES
+  MARKETING
+  INSURANCE
+  TAX
+  LICENSE_PERMIT
+  SECURITY
+  WASTE_MANAGEMENT
+
+  // Non-Operational Expenses
+  RENOVATION
+  FURNITURE
+  EQUIPMENT
+  EMERGENCY
+  LEGAL
+  CONSULTING
+  MISC_NON_OPERATIONAL
+
+  // Legacy - will be removed after migration
   OTHER
 }
 

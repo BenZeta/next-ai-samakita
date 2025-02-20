@@ -36,6 +36,7 @@ const billingSchema = z.object({
   amount: z.number().min(0),
   dueDate: z.date(),
   tenantId: z.string().optional(),
+  type: z.nativeEnum(PaymentType),
 });
 
 const notificationMethodSchema = z.enum(['email', 'whatsapp']);

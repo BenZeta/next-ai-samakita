@@ -5,8 +5,7 @@ import { AlertTriangle, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import Link from 'next/link';
+import { useTranslations } from 'use-intl';
 
 // Constants for fixed dimensions to prevent layout shifts
 const DIMENSIONS = {
@@ -86,9 +85,7 @@ const DashboardHeader = memo(function DashboardHeader({
           <AlertTriangle className="h-5 w-5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium">{t('dashboard.businessNotVerified')}</p>
-            <p className="text-xs">
-              {t('dashboard.completeVerification')}
-            </p>
+            <p className="text-xs">{t('dashboard.completeVerification')}</p>
           </div>
         </div>
       )}
@@ -108,9 +105,7 @@ const DashboardHeader = memo(function DashboardHeader({
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {t('dashboard.title')}
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            {t('dashboard.subtitle')}
-          </p>
+          <p className="mt-2 text-muted-foreground">{t('dashboard.subtitle')}</p>
         </div>
         {properties.length > 0 && (
           <div className="relative w-full sm:w-[200px]">

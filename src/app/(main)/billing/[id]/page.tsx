@@ -11,10 +11,10 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { useTranslations } from 'use-intl';
 
 export default function BillingDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -210,7 +210,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
         <div className="grid gap-8 md:grid-cols-2">
           <div className="space-y-6">
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.title')}</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">
+                {t('billing.details.title')}
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-primary/10 p-2">
@@ -252,7 +254,8 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                   <div>
                     <p className="text-sm text-muted-foreground">{t('billing.details.tenant')}</p>
                     <p className="font-medium text-foreground">
-                      {billing.tenant?.name} - {t('billing.details.room')} {billing.tenant?.room.number}
+                      {billing.tenant?.name} - {t('billing.details.room')}{' '}
+                      {billing.tenant?.room.number}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {billing.tenant?.room.property.name}
@@ -262,7 +265,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
                 {billing.description && (
                   <div className="mt-4">
-                    <p className="text-sm text-muted-foreground">{t('billing.details.description')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('billing.details.description')}
+                    </p>
                     <p className="mt-1 whitespace-pre-wrap text-foreground">
                       {billing.description}
                     </p>
@@ -272,7 +277,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
             </div>
 
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.status')}</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">
+                {t('billing.details.status')}
+              </h2>
               <div
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                   billing.status === 'DRAFT'
@@ -287,7 +294,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
 
           <div className="space-y-6">
             <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="mb-4 text-lg font-medium text-foreground">{t('billing.details.payments.title')}</h2>
+              <h2 className="mb-4 text-lg font-medium text-foreground">
+                {t('billing.details.payments.title')}
+              </h2>
               {billing.payments.length > 0 ? (
                 <div className="space-y-4">
                   {billing.payments.map(payment => (
@@ -295,7 +304,8 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                       <div className="mb-4 flex items-center justify-between">
                         <div>
                           <p className="font-medium text-foreground">
-                            {payment.tenant.name} - {t('billing.details.room')} {payment.tenant.room.number}
+                            {payment.tenant.name} - {t('billing.details.room')}{' '}
+                            {payment.tenant.room.number}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {payment.tenant.room.property.name}
@@ -342,7 +352,9 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">{t('billing.details.payments.noPayments')}</p>
+                <p className="text-center text-muted-foreground">
+                  {t('billing.details.payments.noPayments')}
+                </p>
               )}
             </div>
           </div>

@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { memo } from 'react';
 import {
   Area,
@@ -13,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useTranslations } from 'use-intl';
 
 interface MonthlyTrendItem {
   month: string;

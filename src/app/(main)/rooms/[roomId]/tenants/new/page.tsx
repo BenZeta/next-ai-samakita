@@ -2,7 +2,7 @@
 
 import { TenantForm } from '@/components/tenant/TenantForm';
 import { useParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 
 export default function NewTenantPage() {
   const t = useTranslations();
