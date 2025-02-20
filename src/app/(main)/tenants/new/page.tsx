@@ -2,6 +2,7 @@
 
 import { api } from '@/lib/trpc/react';
 import { Building2, ChevronRight, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
@@ -131,33 +132,63 @@ export default function NewTenantPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredProperties?.map(property => (
-              <div
-                key={property.id}
-                onClick={() => {
-                  setSelectedPropertyId(property.id);
-                  setStep(2);
-                }}
-                className={`cursor-pointer rounded-lg border p-4 transition-all hover:border-primary hover:shadow-lg ${
-                  selectedPropertyId === property.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-input bg-card'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="rounded-full bg-primary/10 p-2">
-                      <Building2 className="h-5 w-5 text-primary" />
+            {filteredProperties && filteredProperties.length > 0 ? (
+              filteredProperties.map(property => (
+                <div
+                  key={property.id}
+                  onClick={() => {
+                    setSelectedPropertyId(property.id);
+                    setStep(2);
+                  }}
+                  className={`cursor-pointer rounded-lg border p-4 transition-all hover:border-primary hover:shadow-lg ${
+                    selectedPropertyId === property.id
+                      ? 'border-primary bg-primary/5'
+                      : 'border-input bg-card'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="rounded-full bg-primary/10 p-2">
+                        <Building2 className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-foreground">{property.name}</h3>
+                        <p className="text-sm text-muted-foreground">{property.address}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium text-foreground">{property.name}</h3>
-                      <p className="text-sm text-muted-foreground">{property.address}</p>
-                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
+              ))
+            ) : (
+              <div className="col-span-full rounded-lg border border-input bg-card p-8 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Building2 className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="mt-4 text-lg font-medium text-foreground">
+                  {t('properties.noProperties')}
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {search ? t('tenants.noResults.withFilters') : t('tenants.noResults.noFilters')}
+                </p>
+                {!search && (
+                  <Link
+                    href="/properties/new"
+                    className="mt-4 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {t('properties.addProperty')}
+                  </Link>
+                )}
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    className="mt-4 rounded-md bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm ring-1 ring-input hover:bg-accent focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {t('tenants.new.buttons.clearSearch')}
+                  </button>
+                )}
               </div>
-            ))}
+            )}
           </div>
         </>
       ) : (

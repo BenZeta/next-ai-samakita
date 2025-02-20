@@ -1,6 +1,7 @@
 'use client';
 
-import { memo } from 'react';
+import { useTheme } from '@/components/providers/ThemeProvider';
+import { memo, useEffect, useState } from 'react';
 import {
   Area,
   CartesianGrid,
@@ -74,7 +75,24 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   data = [],
   timeRange = 'month',
 }) => {
-  const t = useTranslations();
+  const t = useTranslations('dashboard.widgets.monthlyTrend');
+  const { theme } = useTheme();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Ensure data is not empty to prevent layout shifts
   const chartData =
@@ -87,45 +105,107 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   // Round up to nearest million and add 10% padding
   const yAxisMax = Math.max(1000000, Math.ceil((maxValue * 1.2) / 1000000) * 1000000);
 
+  const formatCurrency = (value: number) => {
+    if (isMobile && value > 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    }
+    return `Rp ${value.toLocaleString()}`;
+  };
+
+  const formatMonth = (month: string) => {
+    if (isMobile) {
+      // For mobile, show shorter month names
+      const parts = month.split(' ');
+      if (parts.length === 2) {
+        // If format is "January 2024", return "Jan"
+        return parts[0].slice(0, 3);
+      }
+    }
+    return month;
+  };
+
+  // Calculate appropriate interval based on data length and screen size
+  const getInterval = () => {
+    if (isMobile) {
+      if (chartData.length > 6) return Math.ceil(chartData.length / 6);
+      return 0;
+    }
+    return 'preserveStartEnd';
+  };
+
   return (
-    <div className="h-[400px] w-full" style={{ minHeight: '400px' }}>
-      <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+    <div className="h-[300px] w-full sm:h-[400px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart
+          data={chartData}
+          margin={{
+            top: 20,
+            right: isMobile ? 5 : 30,
+            left: isMobile ? -15 : 0,
+            bottom: isMobile ? 0 : 20,
+          }}
+        >
           <ChartGradients />
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
           <XAxis
             dataKey="month"
-            tick={{ fontSize: 12 }}
+            tickFormatter={formatMonth}
+            tick={{
+              fontSize: isMobile ? 10 : 12,
+              fill: theme === 'dark' ? '#94a3b8' : '#64748b',
+            }}
             tickLine={false}
             axisLine={false}
             className="text-muted-foreground"
-            height={40}
-            interval="preserveStartEnd"
-            tickMargin={10}
+            height={isMobile ? 30 : 40}
+            interval={getInterval()}
+            tickMargin={isMobile ? 5 : 10}
+            angle={isMobile ? -45 : 0}
+            textAnchor={isMobile ? 'end' : 'middle'}
+            dy={isMobile ? 10 : 0}
           />
           <YAxis
-            tickFormatter={value => formatToRupiah(Number(value))}
-            tick={{ fontSize: 12 }}
+            tickFormatter={formatCurrency}
+            tick={{
+              fontSize: isMobile ? 10 : 12,
+              fill: theme === 'dark' ? '#94a3b8' : '#64748b',
+            }}
             tickLine={false}
             axisLine={false}
             className="text-muted-foreground"
-            width={120}
+            width={isMobile ? 50 : 120}
             domain={[0, yAxisMax]}
-            tickMargin={10}
+            tickMargin={isMobile ? 2 : 10}
             scale="linear"
             allowDataOverflow={false}
-            minTickGap={20}
+            minTickGap={isMobile ? 15 : 20}
           />
           <Tooltip
-            content={props => <ChartTooltip {...props} />}
-            cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+            contentStyle={{
+              backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+              border: 'none',
+              borderRadius: '0.5rem',
+              fontSize: isMobile ? '12px' : '14px',
+              padding: isMobile ? '8px' : '12px',
+            }}
+            itemStyle={{
+              padding: isMobile ? '2px 0' : '4px 0',
+            }}
+            formatter={(value: number) => [formatCurrency(value)]}
+            labelStyle={{
+              color: theme === 'dark' ? '#94a3b8' : '#64748b',
+              marginBottom: isMobile ? '4px' : '8px',
+            }}
           />
           <Legend
             verticalAlign="top"
-            height={36}
+            height={isMobile ? 24 : 36}
             iconType="circle"
-            iconSize={8}
-            wrapperStyle={{ paddingTop: '4px' }}
+            iconSize={isMobile ? 6 : 8}
+            wrapperStyle={{
+              paddingTop: isMobile ? '2px' : '4px',
+              fontSize: isMobile ? '10px' : '12px',
+            }}
             formatter={(value: string) => t(value.toLowerCase())}
           />
           <Area
@@ -133,33 +213,33 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             dataKey="revenue"
             name="Revenue"
             stroke="#6366f1"
-            strokeWidth={2}
+            strokeWidth={isMobile ? 1.5 : 2}
             fillOpacity={1}
             fill="url(#colorRevenue)"
             isAnimationActive={false}
-            dot={{ r: 4, strokeWidth: 2 }}
-            activeDot={{ r: 6, strokeWidth: 2 }}
+            dot={false}
+            activeDot={{ r: isMobile ? 4 : 6, strokeWidth: isMobile ? 1 : 2 }}
           />
           <Area
             type="monotone"
             dataKey="expenses"
             name="Expenses"
             stroke="#f43f5e"
-            strokeWidth={2}
+            strokeWidth={isMobile ? 1.5 : 2}
             fillOpacity={1}
             fill="url(#colorExpenses)"
             isAnimationActive={false}
-            dot={{ r: 4, strokeWidth: 2 }}
-            activeDot={{ r: 6, strokeWidth: 2 }}
+            dot={false}
+            activeDot={{ r: isMobile ? 4 : 6, strokeWidth: isMobile ? 1 : 2 }}
           />
           <Line
             type="monotone"
             dataKey="profit"
             name="Profit"
             stroke="#10b981"
-            strokeWidth={2}
-            dot={{ r: 4, strokeWidth: 2 }}
-            activeDot={{ r: 6, strokeWidth: 2 }}
+            strokeWidth={isMobile ? 1.5 : 2}
+            dot={false}
+            activeDot={{ r: isMobile ? 4 : 6, strokeWidth: isMobile ? 1 : 2 }}
             isAnimationActive={false}
           />
         </ComposedChart>

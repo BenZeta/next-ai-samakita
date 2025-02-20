@@ -3,7 +3,7 @@
 import { api } from '@/lib/trpc/react';
 import { DollarSign } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
 // Dynamically import heavy chart component
@@ -25,7 +25,7 @@ interface MonthlyTrendItem {
 
 // Loading skeleton for chart
 function ChartSkeleton() {
-  return <div className="h-[400px] w-full animate-pulse rounded-lg bg-muted" />;
+  return <div className="h-[300px] w-full animate-pulse rounded-lg bg-muted sm:h-[400px]" />;
 }
 
 // Stats display component to reduce re-renders
@@ -41,30 +41,38 @@ const StatsDisplay = memo(function StatsDisplay({
 }) {
   const t = useTranslations();
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+      <div className="rounded-lg bg-accent/50 p-3 sm:p-4">
+        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
           {t('dashboard.widgets.monthlyTrend.stats.revenue')}
         </p>
-        <p className="mt-1 text-xl font-bold">Rp {summary.totalRevenue.toLocaleString()}</p>
+        <p className="mt-0.5 text-sm font-bold sm:mt-1 sm:text-xl">
+          Rp {summary.totalRevenue.toLocaleString()}
+        </p>
       </div>
-      <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">
+      <div className="rounded-lg bg-accent/50 p-3 sm:p-4">
+        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
           {t('dashboard.widgets.monthlyTrend.stats.expenses')}
         </p>
-        <p className="mt-1 text-xl font-bold">Rp {summary.totalExpenses.toLocaleString()}</p>
+        <p className="mt-0.5 text-sm font-bold sm:mt-1 sm:text-xl">
+          Rp {summary.totalExpenses.toLocaleString()}
+        </p>
       </div>
-      <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">
+      <div className="rounded-lg bg-accent/50 p-3 sm:p-4">
+        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
           {t('dashboard.widgets.monthlyTrend.stats.netProfit')}
         </p>
-        <p className="mt-1 text-xl font-bold">Rp {summary.netProfit.toLocaleString()}</p>
+        <p className="mt-0.5 text-sm font-bold sm:mt-1 sm:text-xl">
+          Rp {summary.netProfit.toLocaleString()}
+        </p>
       </div>
-      <div className="rounded-lg bg-accent/50 p-4">
-        <p className="text-sm font-medium text-muted-foreground">
+      <div className="rounded-lg bg-accent/50 p-3 sm:p-4">
+        <p className="text-xs font-medium text-muted-foreground sm:text-sm">
           {t('dashboard.widgets.monthlyTrend.stats.profitMargin')}
         </p>
-        <p className="mt-1 text-xl font-bold">{summary.profitMargin.toFixed(2)}%</p>
+        <p className="mt-0.5 text-sm font-bold sm:mt-1 sm:text-xl">
+          {summary.profitMargin.toFixed(2)}%
+        </p>
       </div>
     </div>
   );
@@ -72,7 +80,28 @@ const StatsDisplay = memo(function StatsDisplay({
 
 function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
   const t = useTranslations();
-  const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('month');
+  const [timeRange, setTimeRange] = useState<'month' | 'quarter' | 'year'>('quarter');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 640;
+      setIsMobile(mobile);
+      // If switching to mobile and timeRange is month, change to quarter
+      if (mobile && timeRange === 'month') {
+        setTimeRange('quarter');
+      }
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [timeRange]);
 
   const { data: financeData, isLoading } = api.finance.getStats.useQuery(
     {
@@ -104,17 +133,17 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-6">
+      <div className="space-y-3 p-3 sm:space-y-4 sm:p-6">
         <div className="flex items-center gap-2">
-          <div className="h-10 w-10 animate-pulse rounded-lg bg-muted"></div>
-          <div className="h-7 w-48 animate-pulse rounded bg-muted"></div>
+          <div className="h-8 w-8 animate-pulse rounded-lg bg-muted sm:h-10 sm:w-10"></div>
+          <div className="h-6 w-36 animate-pulse rounded bg-muted sm:h-7 sm:w-48"></div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-lg bg-muted"></div>
+            <div key={i} className="h-16 animate-pulse rounded-lg bg-muted sm:h-24"></div>
           ))}
         </div>
-        <div className="h-[400px] animate-pulse rounded-lg bg-muted"></div>
+        <div className="h-[300px] animate-pulse rounded-lg bg-muted sm:h-[400px]"></div>
       </div>
     );
   }
@@ -133,20 +162,24 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
   }
 
   return (
-    <div className="space-y-4 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3 p-3 sm:space-y-4 sm:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-primary/10 p-2">
-            <DollarSign className="h-5 w-5 text-primary" />
+            <DollarSign className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
           </div>
-          <h2 className="text-lg font-semibold">{t('dashboard.widgets.monthlyTrend.title')}</h2>
+          <h2 className="text-base font-semibold sm:text-lg">
+            {t('dashboard.widgets.monthlyTrend.title')}
+          </h2>
         </div>
         <select
           value={timeRange}
           onChange={e => setTimeRange(e.target.value as 'month' | 'quarter' | 'year')}
-          className="rounded-lg border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full rounded-lg border border-input bg-background px-2 py-1.5 text-xs shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring sm:w-auto sm:px-3 sm:text-sm"
         >
-          <option value="month">{t('dashboard.widgets.monthlyTrend.timeRange.thisMonth')}</option>
+          {!isMobile && (
+            <option value="month">{t('dashboard.widgets.monthlyTrend.timeRange.thisMonth')}</option>
+          )}
           <option value="quarter">
             {t('dashboard.widgets.monthlyTrend.timeRange.thisQuarter')}
           </option>
@@ -156,7 +189,7 @@ function MonthlyTrendChart({ propertyId }: MonthlyTrendChartProps) {
 
       <StatsDisplay summary={summary} />
 
-      <div className="mt-6">
+      <div className="mt-3 sm:mt-6">
         <Chart data={financeData.monthlyTrend} />
       </div>
     </div>

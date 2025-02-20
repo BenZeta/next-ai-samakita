@@ -32,7 +32,6 @@ export default function SignIn() {
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userPassword');
       } else {
-        toast.success('Signed in successfully!');
         router.push('/dashboard');
       }
     } catch (error) {
