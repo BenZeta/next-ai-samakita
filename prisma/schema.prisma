@@ -25,6 +25,7 @@ model User {
   ktpFile        String?
   accounts       Account[]
   properties     Property[]
+  propertyGroups PropertyGroup[]
   sessions       Session[]
   transactions   Transaction[]
   expenses       Expense[]
@@ -88,6 +89,19 @@ model BusinessProfile {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model PropertyGroup {
+  id          String     @id @default(cuid())
+  name        String
+  description String     @default("")
+  userId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  properties  Property[]
+
+  @@index([userId])
+}
+
 model Property {
   id                  String               @id @default(cuid())
   name                String
@@ -99,6 +113,7 @@ model Property {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   userId              String
+  propertyGroupId     String?
   city                String?
   postalCode          String?
   province            String?
@@ -109,10 +124,12 @@ model Property {
   maintenanceRequests MaintenanceRequest[]
   payments            Payment[]
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyGroup       PropertyGroup?       @relation(fields: [propertyGroupId], references: [id])
   rooms               Room[]
   transactions        Transaction[]
 
   @@index([userId])
+  @@index([propertyGroupId])
 }
 
 model Room {
@@ -320,6 +337,7 @@ enum RoomStatus {
   AVAILABLE
   OCCUPIED
   MAINTENANCE
+  RESERVED
 }
 
 enum RoomType {
@@ -357,10 +375,10 @@ enum PaymentStatus {
   PENDING
   PAID
   OVERDUE
-  CANCELLED
   FAILED
   REFUNDED
   PARTIAL
+  CANCELLED
 }
 
 enum ExpenseCategory {
@@ -401,12 +419,15 @@ enum MaintenanceStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+  CANCELLED
+  SCHEDULED
 }
 
 enum MaintenancePriority {
   LOW
   MEDIUM
   HIGH
+  EMERGENCY
 }
 
 enum TransactionStatus {
@@ -433,4 +454,7 @@ enum PaymentFrequency {
   SEMI_ANNUAL
   ANNUAL
   CUSTOM
+  BIWEEKLY
+  BIANNUALLY
+  ANNUALLY
 }
