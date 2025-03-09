@@ -38,11 +38,12 @@ export const propertyRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(10),
         search: z.string().optional(),
+        propertyGroupId: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
       try {
-        const { page, limit, search } = input;
+        const { page, limit, search, propertyGroupId } = input;
         const skip = (page - 1) * limit;
 
         const where: Prisma.PropertyWhereInput = {
@@ -63,6 +64,11 @@ export const propertyRouter = createTRPCRouter({
                     },
                   },
                 ],
+              }
+            : {}),
+          ...(propertyGroupId
+            ? {
+                propertyGroupId,
               }
             : {}),
         };
@@ -117,6 +123,30 @@ export const propertyRouter = createTRPCRouter({
         });
       }
     }),
+
+  listAll: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const properties = await ctx.db.property.findMany({
+        where: {
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return { properties };
+    } catch (error) {
+      console.error('Property listAll query error:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch properties',
+        cause: error,
+      });
+    }
+  }),
 
   get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
     const property = await db.property.findUnique({
@@ -183,188 +213,4 @@ export const propertyRouter = createTRPCRouter({
 
       return { success: true };
     }),
-
-  // Commented out until Configuration model is implemented
-  /*
-  getConfigurations: protectedProcedure
-    .input(
-      z.object({
-        propertyId: z.string(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      try {
-        // Check if the property exists and belongs to the user
-        const property = await db.property.findUnique({
-          where: { id: input.propertyId },
-        });
-
-        if (!property) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Property not found',
-          });
-        }
-
-        if (property.userId !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to view configurations for this property',
-          });
-        }
-
-        const configurations = await db.configuration.findMany({
-          where: { propertyId: input.propertyId },
-          orderBy: { createdAt: 'desc' },
-        });
-
-        return configurations;
-      } catch (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to get configurations',
-          cause: error,
-        });
-      }
-    }),
-  */
-
-  // Commented out until Configuration model is implemented
-  /*
-  createConfiguration: protectedProcedure
-    .input(
-      z.object({
-        propertyId: z.string(),
-        name: z.string().min(1, 'Name is required'),
-        description: z.string().optional(),
-        settings: z.record(z.any()),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      try {
-        const property = await db.property.findUnique({
-          where: {
-            id: input.propertyId,
-            userId: ctx.session.user.id,
-          },
-        });
-
-        if (!property) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to create configurations for this property',
-          });
-        }
-
-        const configuration = await db.configuration.create({
-          data: {
-            ...input,
-            userId: ctx.session.user.id,
-          },
-        });
-
-        return configuration;
-      } catch (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to create configuration',
-          cause: error,
-        });
-      }
-    }),
-  */
-
-  // Commented out until Configuration model is implemented
-  /*
-  updateConfiguration: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string().min(1, 'Name is required').optional(),
-        description: z.string().optional(),
-        settings: z.record(z.any()).optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      try {
-        const configuration = await db.configuration.findUnique({
-          where: { id: input.id },
-          include: { property: true },
-        });
-
-        if (!configuration) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Configuration not found',
-          });
-        }
-
-        if (configuration.property.userId !== ctx.session.user.id) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to update this configuration',
-          });
-        }
-
-        const updatedConfiguration = await db.configuration.update({
-          where: { id: input.id },
-          data: {
-            name: input.name,
-            description: input.description,
-            settings: input.settings,
-          },
-        });
-
-        return updatedConfiguration;
-      } catch (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to update configuration',
-          cause: error,
-        });
-      }
-    }),
-
-  // Commented out until Configuration model is implemented
-  /*
-  deleteConfiguration: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx: { db, user }, input }) => {
-      try {
-        const configuration = await db.configuration.findUnique({
-          where: { id: input.id },
-        });
-
-        if (!configuration) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Configuration not found',
-          });
-        }
-
-        if (configuration.userId !== user.id) {
-          throw new TRPCError({
-            code: 'FORBIDDEN',
-            message: 'You do not have permission to delete this configuration',
-          });
-        }
-
-        await db.configuration.delete({
-          where: { id: input.id },
-        });
-
-        return { success: true };
-      } catch (error) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to delete configuration',
-          cause: error,
-        });
-      }
-    }),
-  */
 });

@@ -1,5 +1,5 @@
 import { api } from '@/lib/trpc/react';
-import { Building2, Calendar, Home, Users } from 'lucide-react';
+import { Building2, Calendar, Home, Tag, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'use-intl';
@@ -15,6 +15,7 @@ interface PropertyCardProps {
       id: string;
       tenants: any[];
     }[];
+    propertyGroupId?: string | null;
   };
 }
 
@@ -23,6 +24,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const totalRooms = property.rooms.length;
   const occupiedRooms = property.rooms.filter(room => room.tenants.length > 0).length;
   const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
+  // Fetch property group if available
+  const { data: propertyGroup } = api.propertyGroup.get.useQuery(
+    { id: property.propertyGroupId || '' },
+    { enabled: !!property.propertyGroupId }
+  );
 
   // Fetch billings for this property
   const { data: billings } = api.billing.list.useQuery({
@@ -77,6 +84,15 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Calendar className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
             <span className="text-xs font-medium text-foreground sm:text-sm">
               {formatDueDate(nextDueDate.dueDate)}
+            </span>
+          </div>
+        )}
+
+        {propertyGroup && (
+          <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-background/95 px-2.5 py-1 shadow backdrop-blur-sm sm:left-3 sm:top-3 sm:gap-2 sm:px-3 sm:py-1.5">
+            <Tag className="h-3.5 w-3.5 text-primary sm:h-4 sm:w-4" />
+            <span className="text-xs font-medium text-foreground sm:text-sm">
+              {propertyGroup.name}
             </span>
           </div>
         )}

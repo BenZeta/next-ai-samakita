@@ -5,6 +5,7 @@ import {
   Building2,
   CreditCard,
   FileCheck,
+  FolderKanban,
   Home,
   LogOut,
   Menu,
@@ -24,6 +25,7 @@ import { useTranslations } from 'use-intl';
 const navigation = [
   { name: 'sidebar.dashboard', href: '/dashboard', icon: Home },
   { name: 'sidebar.properties', href: '/properties', icon: Building2 },
+  { name: 'sidebar.propertyGroups', href: '/property-groups', icon: FolderKanban },
   { name: 'sidebar.tenants', href: '/tenants', icon: Users },
   { name: 'sidebar.expenses', href: '/expenses', icon: Receipt },
   { name: 'sidebar.billing', href: '/billing', icon: CreditCard },

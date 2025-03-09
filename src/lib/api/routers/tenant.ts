@@ -85,7 +85,6 @@ export const tenantRouter = createTRPCRouter({
               id: true,
               userId: true,
               name: true,
-              dueDate: true,
               dueDateOffset: true,
               paymentFrequency: true,
               customPaymentDays: true,
@@ -136,7 +135,7 @@ export const tenantRouter = createTRPCRouter({
         const firstRentDueDate = new Date(
           now.getFullYear(),
           now.getMonth() + 1,
-          room.property.dueDate
+          room.property.dueDateOffset
         );
 
         // Create initial rent payment with next month's due date
@@ -815,7 +814,11 @@ export const tenantRouter = createTRPCRouter({
 
       // Calculate due date based on property's dueDate setting
       const now = new Date();
-      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
+      const dueDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        tenant.room.property.dueDateOffset
+      );
       if (dueDate < now) {
         dueDate.setMonth(dueDate.getMonth() + 1);
       }

@@ -34,7 +34,11 @@ async function main() {
       description: 'A test property',
       location: 'Test Location',
       userId: user.id,
-      dueDate: 5, // Default due date is 5th of each month
+      dueDateOffset: 5, // Payment is due 5 days after billing cycle start
+      paymentFrequency: 'MONTHLY',
+      customPaymentDays: [],
+      facilities: [],
+      images: [],
     },
   });
 
