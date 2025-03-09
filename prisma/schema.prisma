@@ -117,7 +117,7 @@ model Property {
   city                String?
   postalCode          String?
   province            String?
-  dueDate             Int                  @default(5)
+  dueDateOffset       Int                  @default(5)
   paymentFrequency    PaymentFrequency     @default(MONTHLY)
   customPaymentDays   Int[]                @default([])
   expenses            Expense[]
@@ -205,33 +205,37 @@ model ServiceRequest {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  amount          Float
-  type            PaymentType
-  status          PaymentStatus @default(PENDING)
-  method          PaymentMethod @default(MANUAL)
-  dueDate         DateTime
-  paidAt          DateTime?
-  description     String?
-  notes           String?
-  proofOfPayment  String?
-  isRefunded      Boolean       @default(false)
-  stripePaymentId String?
+  id                String        @id @default(cuid())
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  amount            Float
+  type              PaymentType
+  status            PaymentStatus @default(PENDING)
+  method            PaymentMethod @default(MANUAL)
+  dueDate           DateTime
+  paidAt            DateTime?
+  description       String?
+  notes             String?
+  proofOfPayment    String?
+  isRefunded        Boolean       @default(false)
+  stripePaymentId   String?
   stripeClientSecret String?
-  stripeCustomerId String?
-  tenantId        String
-  propertyId      String
-  billingId       String?
-  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  billing         Billing?      @relation(fields: [billingId], references: [id])
+  stripeCustomerId  String?
+  tenantId          String
+  propertyId        String
+  billingId         String?
+  billingCycleStart DateTime?
+  billingCycleEnd   DateTime?
+  tenant            Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property          Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  billing           Billing?      @relation(fields: [billingId], references: [id])
 
   @@index([tenantId])
   @@index([propertyId])
   @@index([status])
   @@index([dueDate])
+  @@index([billingCycleStart])
+  @@index([billingCycleEnd])
 }
 
 model Expense {
