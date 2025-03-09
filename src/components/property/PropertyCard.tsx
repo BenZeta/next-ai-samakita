@@ -19,6 +19,8 @@ interface PropertyCardProps {
   };
 }
 
+//test
+
 export function PropertyCard({ property }: PropertyCardProps) {
   const t = useTranslations();
   const totalRooms = property.rooms.length;
