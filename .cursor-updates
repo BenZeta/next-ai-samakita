@@ -3,3 +3,6 @@
 - Implemented recurring expense processing to automatically create new expense entries based on the configured interval.
 - Added daily background job using Inngest to automatically process recurring expenses and create new expense entries.
 - Fixed toast notifications by consolidating ToastContainer components and ensuring consistent configuration across the app, with proper theme support and auto-close timing.
+- Updated tenant router to support new tenant statuses (BLACKLISTED, PENDING) in list and update endpoints
+- Updated tenant list page to include new status options in the dropdown filter
+- Fixed type errors by updating Inngest route and expense router to use recurringFrequency instead of recurringInterval

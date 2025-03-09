@@ -10,6 +10,7 @@ import { cancelPaymentIntent, createPaymentIntent, retrievePaymentIntent } from 
 import { sendPaymentReminder } from '@/lib/whatsapp';
 import {
   BillingStatus,
+  PaymentFrequency,
   PaymentMethod,
   PaymentStatus,
   PaymentType,
@@ -1133,4 +1134,210 @@ export const billingRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  generateFromContract: protectedProcedure
+    .input(
+      z.object({
+        contractId: z.string(),
+        count: z.number().min(1).max(12).default(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Get the contract and payment schedules
+        const contract = await db.contract.findUnique({
+          where: { id: input.contractId },
+          include: {
+            property: true,
+            tenant: true,
+            paymentSchedules: {
+              orderBy: { nextDueDate: 'asc' },
+            },
+          },
+        });
+
+        if (!contract) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Contract not found',
+          });
+        }
+
+        // Check if the user has permission
+        if (contract.property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to generate billings for this contract',
+          });
+        }
+
+        // Check if there are payment schedules
+        if (contract.paymentSchedules.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No payment schedules found for this contract',
+          });
+        }
+
+        const schedule = contract.paymentSchedules[0];
+
+        // Check if there are enough remaining payments
+        if (schedule.remainingPayments < input.count) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Cannot generate ${input.count} billings. Only ${schedule.remainingPayments} payments remaining.`,
+          });
+        }
+
+        // Generate the billings
+        const billings = [];
+        let currentDueDate = new Date(schedule.nextDueDate);
+
+        for (let i = 0; i < input.count; i++) {
+          const billing = await db.billing.create({
+            data: {
+              title: `Rent for ${currentDueDate.toLocaleDateString()}`,
+              description: `Scheduled rent payment for ${contract.tenant.name}`,
+              amount: schedule.amount,
+              dueDate: currentDueDate,
+              status: 'DRAFT',
+              type: 'RENT',
+              tenantId: contract.tenantId,
+              contractId: contract.id,
+            },
+          });
+
+          billings.push(billing);
+
+          // Calculate the next due date
+          currentDueDate = calculateNextDueDate(currentDueDate, schedule.frequency);
+        }
+
+        // Update the payment schedule
+        await db.paymentSchedule.update({
+          where: { id: schedule.id },
+          data: {
+            nextDueDate: currentDueDate,
+          },
+        });
+
+        return billings;
+      } catch (error) {
+        console.error('Billing generation error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate billings',
+          cause: error,
+        });
+      }
+    }),
+
+  getByContract: protectedProcedure
+    .input(
+      z.object({
+        contractId: z.string(),
+        status: z
+          .enum(['DRAFT', 'SENT', 'PAID', 'PARTIALLY_PAID', 'OVERDUE', 'CANCELLED'])
+          .optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(10),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      try {
+        const { contractId, status, page, limit } = input;
+        const skip = (page - 1) * limit;
+
+        // Check if the contract exists and belongs to the user
+        const contract = await db.contract.findUnique({
+          where: { id: contractId },
+          include: { property: true },
+        });
+
+        if (!contract) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Contract not found',
+          });
+        }
+
+        if (contract.property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to view billings for this contract',
+          });
+        }
+
+        // Build the where clause
+        const where = {
+          contractId,
+          ...(status ? { status } : {}),
+        };
+
+        // Get billings and total count
+        const [billings, total] = await Promise.all([
+          db.billing.findMany({
+            where,
+            include: {
+              tenant: true,
+              payments: true,
+            },
+            orderBy: { dueDate: 'desc' },
+            skip,
+            take: limit,
+          }),
+          db.billing.count({ where }),
+        ]);
+
+        return {
+          billings,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+          },
+        };
+      } catch (error) {
+        console.error('Contract billings fetch error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch contract billings',
+          cause: error,
+        });
+      }
+    }),
 });
+
+// Helper function to calculate the next due date based on frequency
+function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): Date {
+  const nextDate = new Date(currentDate);
+
+  switch (frequency) {
+    case PaymentFrequency.DAILY:
+      nextDate.setDate(nextDate.getDate() + 1);
+      break;
+    case PaymentFrequency.WEEKLY:
+      nextDate.setDate(nextDate.getDate() + 7);
+      break;
+    case PaymentFrequency.BIWEEKLY:
+      nextDate.setDate(nextDate.getDate() + 14);
+      break;
+    case PaymentFrequency.MONTHLY:
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      break;
+    case PaymentFrequency.QUARTERLY:
+      nextDate.setMonth(nextDate.getMonth() + 3);
+      break;
+    case PaymentFrequency.BIANNUALLY:
+      nextDate.setMonth(nextDate.getMonth() + 6);
+      break;
+    case PaymentFrequency.ANNUALLY:
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      break;
+    default:
+      nextDate.setMonth(nextDate.getMonth() + 1); // Default to monthly
+  }
+
+  return nextDate;
+}

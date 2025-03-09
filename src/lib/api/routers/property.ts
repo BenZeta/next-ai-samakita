@@ -183,4 +183,165 @@ export const propertyRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  getConfigurations: protectedProcedure
+    .input(z.object({ propertyId: z.string() }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const property = await db.property.findUnique({
+          where: {
+            id: input.propertyId,
+            userId: ctx.session.user.id,
+          },
+        });
+
+        if (!property) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to view configurations for this property',
+          });
+        }
+
+        const configurations = await db.configuration.findMany({
+          where: { propertyId: input.propertyId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        return configurations;
+      } catch (error) {
+        console.error('Property configurations fetch error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch property configurations',
+          cause: error,
+        });
+      }
+    }),
+
+  createConfiguration: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string(),
+        name: z.string().min(1, 'Name is required'),
+        description: z.string().optional(),
+        settings: z.record(z.any()),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const property = await db.property.findUnique({
+          where: {
+            id: input.propertyId,
+            userId: ctx.session.user.id,
+          },
+        });
+
+        if (!property) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to create configurations for this property',
+          });
+        }
+
+        const configuration = await db.configuration.create({
+          data: {
+            ...input,
+            userId: ctx.session.user.id,
+          },
+        });
+
+        return configuration;
+      } catch (error) {
+        console.error('Configuration creation error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create configuration',
+          cause: error,
+        });
+      }
+    }),
+
+  updateConfiguration: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1, 'Name is required').optional(),
+        description: z.string().optional(),
+        settings: z.record(z.any()).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const configuration = await db.configuration.findUnique({
+          where: { id: input.id },
+          include: { property: true },
+        });
+
+        if (!configuration) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Configuration not found',
+          });
+        }
+
+        if (configuration.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to update this configuration',
+          });
+        }
+
+        const { id, ...data } = input;
+        const updatedConfiguration = await db.configuration.update({
+          where: { id },
+          data,
+        });
+
+        return updatedConfiguration;
+      } catch (error) {
+        console.error('Configuration update error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update configuration',
+          cause: error,
+        });
+      }
+    }),
+
+  deleteConfiguration: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const configuration = await db.configuration.findUnique({
+          where: { id: input.id },
+        });
+
+        if (!configuration) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Configuration not found',
+          });
+        }
+
+        if (configuration.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to delete this configuration',
+          });
+        }
+
+        await db.configuration.delete({
+          where: { id: input.id },
+        });
+
+        return { success: true };
+      } catch (error) {
+        console.error('Configuration delete error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete configuration',
+          cause: error,
+        });
+      }
+    }),
 });

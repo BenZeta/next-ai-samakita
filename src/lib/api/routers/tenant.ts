@@ -156,7 +156,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         search: z.string().optional(),
-        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED', 'PENDING']).optional(),
         propertyId: z.string().optional(),
         roomId: z.string().optional(),
       })
@@ -246,7 +246,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        status: z.enum(['ACTIVE', 'INACTIVE']),
+        status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED', 'PENDING']),
       })
     )
     .mutation(async ({ ctx, input }) => {

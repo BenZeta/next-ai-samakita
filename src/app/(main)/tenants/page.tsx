@@ -79,6 +79,8 @@ export default function TenantsPage() {
           <option value="ALL">{t('tenants.status.all')}</option>
           <option value="ACTIVE">{t('tenants.status.active')}</option>
           <option value="INACTIVE">{t('tenants.status.inactive')}</option>
+          <option value="BLACKLISTED">{t('tenants.status.blacklisted')}</option>
+          <option value="PENDING">{t('tenants.status.pending')}</option>
         </select>
       </div>
 

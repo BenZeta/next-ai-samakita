@@ -11,7 +11,7 @@ import { z } from 'zod';
 
 const roomSchema = z.object({
   number: z.string().min(1, 'validation.numberRequired'),
-  type: z.enum(['SUITE', 'STUDIO', 'STANDARD', 'DELUXE'], {
+  type: z.enum(['SUITE', 'STUDIO', 'STANDARD', 'DELUXE', 'CUSTOM'], {
     errorMap: () => ({ message: 'validation.typeRequired' }),
   }),
   size: z.coerce.number().min(1, 'validation.sizeRequired'),
@@ -183,6 +183,7 @@ export function RoomForm({ propertyId, initialData }: RoomFormProps) {
           <option value="DELUXE">{t('types.deluxe')}</option>
           <option value="SUITE">{t('types.suite')}</option>
           <option value="STUDIO">{t('types.studio')}</option>
+          <option value="CUSTOM">{t('types.custom')}</option>
         </select>
         {errors.type && <p className="mt-1 text-sm text-red-600">{t('validation.typeRequired')}</p>}
       </div>
