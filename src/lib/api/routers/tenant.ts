@@ -3,10 +3,7 @@ import { db } from '@/lib/db';
 import { sendContractEmail, sendInvoiceEmail } from '@/lib/email';
 import { createPaymentIntent } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
-import {
-  adjustAmountForFrequency,
-  calculateNextPaymentDate,
-} from '@/lib/utils/payment-calculations';
+import { generatePayment } from '@/lib/utils/payment-generation';
 import {
   PaymentMethod,
   PaymentStatus,
@@ -83,7 +80,17 @@ export const tenantRouter = createTRPCRouter({
       const room = await db.room.findUnique({
         where: { id: roomId },
         include: {
-          property: true,
+          property: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              dueDate: true,
+              dueDateOffset: true,
+              paymentFrequency: true,
+              customPaymentDays: true,
+            },
+          },
         },
       });
 
@@ -418,6 +425,9 @@ export const tenantRouter = createTRPCRouter({
       z.object({
         tenantId: z.string(),
         paymentMethod: z.nativeEnum(PaymentMethod),
+        isProRated: z.boolean().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -446,80 +456,13 @@ export const tenantRouter = createTRPCRouter({
         });
       }
 
-      const property = tenant.room.property;
-      const now = new Date();
-
-      // Calculate the base amount
-      const baseAmount = tenant.rentAmount || tenant.room.price;
-
-      // Calculate the adjusted amount based on payment frequency
-      const adjustedAmount = adjustAmountForFrequency(baseAmount, property.paymentFrequency);
-
-      // Calculate the next due date based on payment frequency
-      const dueDate = calculateNextPaymentDate(
-        now,
-        property.paymentFrequency,
-        property.customPaymentDays
-      );
-
-      // Create payment
-      const payment = await ctx.db.payment.create({
-        data: {
-          amount: adjustedAmount,
-          type: PaymentType.RENT,
-          status: PaymentStatus.PENDING,
-          method: input.paymentMethod,
-          dueDate,
-          tenantId: tenant.id,
-          propertyId: property.id,
-        },
+      return generatePayment({
+        tenant,
+        paymentMethod: input.paymentMethod,
+        isProRated: input.isProRated,
+        startDate: input.startDate,
+        endDate: input.endDate,
       });
-
-      // Generate Stripe payment link if needed
-      let paymentLink: string | undefined;
-      if (input.paymentMethod === PaymentMethod.STRIPE) {
-        if (!tenant.email) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'Tenant email is required for Stripe payments',
-          });
-        }
-
-        const stripeResponse = await createPaymentIntent({
-          orderId: payment.id,
-          amount: payment.amount,
-          customerEmail: tenant.email,
-          customerName: tenant.name,
-          description: `${payment.type} payment for ${property.name} - Room ${tenant.room.number}`,
-        });
-
-        await ctx.db.payment.update({
-          where: { id: payment.id },
-          data: {
-            stripePaymentId: stripeResponse.paymentIntentId,
-            stripeClientSecret: stripeResponse.clientSecret || undefined,
-          },
-        });
-
-        // Create the Stripe Checkout URL
-        const checkoutUrl = `https://checkout.stripe.com/pay/${stripeResponse.paymentIntentId}`;
-        paymentLink = checkoutUrl;
-      }
-
-      // Send invoice email
-      await sendInvoiceEmail({
-        email: tenant.email,
-        tenantName: tenant.name,
-        propertyName: property.name,
-        roomNumber: tenant.room.number,
-        amount: payment.amount,
-        dueDate: payment.dueDate,
-        paymentLink,
-        paymentType: payment.type,
-        invoiceNumber: `INV-${payment.id}`,
-      });
-
-      return payment;
     }),
 
   updatePayment: protectedProcedure

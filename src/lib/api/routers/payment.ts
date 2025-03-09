@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+import { generateBatchPayments } from '@/lib/utils/payment-generation';
+import { PaymentMethod, Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -46,7 +47,6 @@ export const paymentRouter = createTRPCRouter({
         data: input,
       });
 
-      /* Commented out until Contract and PaymentSchedule models are implemented
       // If this is a contract payment and it's marked as paid, update the payment schedule
       if (input.contractId && input.status === 'PAID') {
         const paymentSchedules = await db.paymentSchedule.findMany({
@@ -73,7 +73,6 @@ export const paymentRouter = createTRPCRouter({
           }
         }
       }
-      */
 
       return payment;
     } catch (error) {
@@ -94,7 +93,7 @@ export const paymentRouter = createTRPCRouter({
           tenant: true,
           property: true,
           billing: true,
-          // contract: true, // Removed until Contract model is implemented
+          contract: true,
         },
       });
 
@@ -191,7 +190,7 @@ export const paymentRouter = createTRPCRouter({
               tenant: true,
               property: true,
               billing: true,
-              // contract: true, // Removed until Contract model is implemented
+              contract: true,
             },
             orderBy: { dueDate: 'desc' },
             skip,
@@ -253,6 +252,37 @@ export const paymentRouter = createTRPCRouter({
           where: { id: input.id },
           data: input.data,
         });
+
+        // If this is a contract payment and it's being marked as paid, update the payment schedule
+        if (
+          updatedPayment.contractId &&
+          input.data.status === 'PAID' &&
+          existingPayment.status !== 'PAID'
+        ) {
+          const paymentSchedules = await db.paymentSchedule.findMany({
+            where: { contractId: updatedPayment.contractId },
+            orderBy: { nextDueDate: 'asc' },
+          });
+
+          if (paymentSchedules.length > 0) {
+            const currentSchedule = paymentSchedules[0];
+
+            // Update the payment schedule with one less remaining payment
+            if (currentSchedule.remainingPayments > 0) {
+              await db.paymentSchedule.update({
+                where: { id: currentSchedule.id },
+                data: {
+                  remainingPayments: currentSchedule.remainingPayments - 1,
+                  // Calculate the next due date based on frequency
+                  nextDueDate: calculateNextDueDate(
+                    currentSchedule.nextDueDate,
+                    currentSchedule.frequency
+                  ),
+                },
+              });
+            }
+          }
+        }
 
         return updatedPayment;
       } catch (error) {
@@ -346,7 +376,7 @@ export const paymentRouter = createTRPCRouter({
           },
           include: {
             tenant: true,
-            // contract: true, // Removed until Contract model is implemented
+            contract: true,
           },
           orderBy: { dueDate: 'asc' },
         });
@@ -396,7 +426,7 @@ export const paymentRouter = createTRPCRouter({
           },
           include: {
             tenant: true,
-            // contract: true, // Removed until Contract model is implemented
+            contract: true,
           },
           orderBy: { dueDate: 'asc' },
         });
@@ -412,12 +442,11 @@ export const paymentRouter = createTRPCRouter({
       }
     }),
 
-  // Commented out until PaymentSchedule model is implemented
-  /*
   generateFromSchedule: protectedProcedure
     .input(
       z.object({
         scheduleId: z.string(),
+        count: z.number().min(1).max(12).default(1),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -450,41 +479,73 @@ export const paymentRouter = createTRPCRouter({
           });
         }
 
-        // Create the payment
-        const payment = await db.payment.create({
-          data: {
-            amount: schedule.amount,
-            type: schedule.type as PaymentType,
-            status: 'PENDING',
-            method: 'MANUAL',
-            dueDate: schedule.nextDueDate,
-            description: `Payment for ${schedule.contract.tenant.name}`,
-            tenantId: schedule.contract.tenant.id,
-            propertyId: schedule.contract.property.id,
-            contractId: schedule.contract.id,
-          },
-        });
+        // Check if there are enough remaining payments
+        if (schedule.remainingPayments < input.count) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Cannot generate ${input.count} payments. Only ${schedule.remainingPayments} payments remaining.`,
+          });
+        }
+
+        // Generate the payments
+        const payments = [];
+        let currentDueDate = new Date(schedule.nextDueDate);
+
+        for (let i = 0; i < input.count; i++) {
+          const payment = await db.payment.create({
+            data: {
+              amount: schedule.amount,
+              type: 'RENT',
+              status: 'PENDING',
+              method: 'MANUAL',
+              dueDate: currentDueDate,
+              description: `Scheduled payment for ${currentDueDate.toLocaleDateString()}`,
+              tenantId: schedule.contract.tenantId,
+              propertyId: schedule.contract.propertyId,
+              contractId: schedule.contractId,
+            },
+          });
+
+          payments.push(payment);
+
+          // Calculate the next due date
+          currentDueDate = calculateNextDueDate(currentDueDate, schedule.frequency);
+        }
 
         // Update the payment schedule
         await db.paymentSchedule.update({
           where: { id: schedule.id },
           data: {
-            remainingPayments: schedule.remainingPayments - 1,
-            // Calculate the next due date based on frequency
-            nextDueDate: calculateNextDueDate(schedule.nextDueDate, schedule.frequency),
+            remainingPayments: schedule.remainingPayments - input.count,
+            nextDueDate: currentDueDate,
           },
         });
 
-        return payment;
+        return payments;
       } catch (error) {
+        console.error('Payment generation error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to generate payment',
+          message: 'Failed to generate payments',
           cause: error,
         });
       }
     }),
-  */
+
+  generateBatch: protectedProcedure
+    .input(
+      z.object({
+        propertyGroupId: z.string().optional(),
+        propertyId: z.string().optional(),
+        paymentMethod: z.nativeEnum(PaymentMethod),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return generateBatchPayments({
+        ...input,
+        userId: ctx.session.user.id,
+      });
+    }),
 });
 
 // Helper function to calculate the next due date based on frequency
