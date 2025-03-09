@@ -1,7 +1,6 @@
 import { authRouter } from './routers/auth';
 import { billingRouter } from './routers/billing';
 import { businessRouter } from './routers/business';
-import { contractRouter } from './routers/contract';
 import { expenseRouter } from './routers/expense';
 import { financeRouter } from './routers/finance';
 import { maintenanceRouter } from './routers/maintenance';
@@ -28,7 +27,6 @@ export const appRouter = createTRPCRouter({
   maintenance: maintenanceRouter,
   business: businessRouter,
   user: userRouter,
-  contract: contractRouter,
   // add routers here
 });
 

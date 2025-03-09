@@ -6,3 +6,4 @@
 - Updated tenant router to support new tenant statuses (BLACKLISTED, PENDING) in list and update endpoints
 - Updated tenant list page to include new status options in the dropdown filter
 - Fixed type errors by updating Inngest route and expense router to use recurringFrequency instead of recurringInterval
+- Created comprehensive task list in .cursor-tasks.md with phased approach for making the property management system more scalable and flexible with support for various payment frequencies and property grouping.

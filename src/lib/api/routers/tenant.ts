@@ -4,6 +4,10 @@ import { sendContractEmail, sendInvoiceEmail } from '@/lib/email';
 import { createPaymentIntent } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import {
+  adjustAmountForFrequency,
+  calculateNextPaymentDate,
+} from '@/lib/utils/payment-calculations';
+import {
   PaymentMethod,
   PaymentStatus,
   PaymentType,
@@ -442,23 +446,32 @@ export const tenantRouter = createTRPCRouter({
         });
       }
 
-      // Calculate due date based on property's dueDate setting
+      const property = tenant.room.property;
       const now = new Date();
-      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
-      if (dueDate < now) {
-        dueDate.setMonth(dueDate.getMonth() + 1);
-      }
+
+      // Calculate the base amount
+      const baseAmount = tenant.rentAmount || tenant.room.price;
+
+      // Calculate the adjusted amount based on payment frequency
+      const adjustedAmount = adjustAmountForFrequency(baseAmount, property.paymentFrequency);
+
+      // Calculate the next due date based on payment frequency
+      const dueDate = calculateNextPaymentDate(
+        now,
+        property.paymentFrequency,
+        property.customPaymentDays
+      );
 
       // Create payment
       const payment = await ctx.db.payment.create({
         data: {
-          amount: tenant.rentAmount || tenant.room.price,
+          amount: adjustedAmount,
           type: PaymentType.RENT,
           status: PaymentStatus.PENDING,
           method: input.paymentMethod,
           dueDate,
           tenantId: tenant.id,
-          propertyId: tenant.room.propertyId,
+          propertyId: property.id,
         },
       });
 
@@ -472,34 +485,12 @@ export const tenantRouter = createTRPCRouter({
           });
         }
 
-        const property = await db.property.findUnique({
-          where: { id: payment.propertyId },
-        });
-
-        if (!property) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Property not found',
-          });
-        }
-
-        const room = await db.room.findUnique({
-          where: { id: tenant.roomId },
-        });
-
-        if (!room) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Room not found',
-          });
-        }
-
         const stripeResponse = await createPaymentIntent({
           orderId: payment.id,
           amount: payment.amount,
           customerEmail: tenant.email,
           customerName: tenant.name,
-          description: `${payment.type} payment for ${property.name} - Room ${room.number}`,
+          description: `${payment.type} payment for ${property.name} - Room ${tenant.room.number}`,
         });
 
         await ctx.db.payment.update({
@@ -519,7 +510,7 @@ export const tenantRouter = createTRPCRouter({
       await sendInvoiceEmail({
         email: tenant.email,
         tenantName: tenant.name,
-        propertyName: tenant.room.property.name,
+        propertyName: property.name,
         roomNumber: tenant.room.number,
         amount: payment.amount,
         dueDate: payment.dueDate,

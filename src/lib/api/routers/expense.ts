@@ -411,14 +411,14 @@ export const expenseRouter = createTRPCRouter({
 
         // Update next due date for original recurring expense
         let nextDueDate = new Date(expense.nextDueDate!);
-        switch (expense.recurringFrequency) {
+        switch (expense.recurringInterval) {
           case 'DAILY':
             nextDueDate.setDate(nextDueDate.getDate() + 1);
             break;
           case 'WEEKLY':
             nextDueDate.setDate(nextDueDate.getDate() + 7);
             break;
-          case 'BIWEEKLY':
+          case 'BI_WEEKLY':
             nextDueDate.setDate(nextDueDate.getDate() + 14);
             break;
           case 'MONTHLY':
@@ -427,10 +427,10 @@ export const expenseRouter = createTRPCRouter({
           case 'QUARTERLY':
             nextDueDate.setMonth(nextDueDate.getMonth() + 3);
             break;
-          case 'BIANNUALLY':
+          case 'SEMI_ANNUAL':
             nextDueDate.setMonth(nextDueDate.getMonth() + 6);
             break;
-          case 'ANNUALLY':
+          case 'ANNUAL':
             nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
             break;
           default:

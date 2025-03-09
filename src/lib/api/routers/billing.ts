@@ -1135,6 +1135,8 @@ export const billingRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  // Commented out until Contract model is implemented
+  /*
   generateFromContract: protectedProcedure
     .input(
       z.object({
@@ -1231,14 +1233,15 @@ export const billingRouter = createTRPCRouter({
         });
       }
     }),
+  */
 
+  // Commented out until Contract model is implemented
+  /*
   getByContract: protectedProcedure
     .input(
       z.object({
         contractId: z.string(),
-        status: z
-          .enum(['DRAFT', 'SENT', 'PAID', 'PARTIALLY_PAID', 'OVERDUE', 'CANCELLED'])
-          .optional(),
+        status: z.nativeEnum(BillingStatus).optional(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(10),
       })
@@ -1307,6 +1310,7 @@ export const billingRouter = createTRPCRouter({
         });
       }
     }),
+  */
 });
 
 // Helper function to calculate the next due date based on frequency
@@ -1320,7 +1324,7 @@ function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): D
     case PaymentFrequency.WEEKLY:
       nextDate.setDate(nextDate.getDate() + 7);
       break;
-    case PaymentFrequency.BIWEEKLY:
+    case PaymentFrequency.BI_WEEKLY:
       nextDate.setDate(nextDate.getDate() + 14);
       break;
     case PaymentFrequency.MONTHLY:
@@ -1329,10 +1333,10 @@ function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): D
     case PaymentFrequency.QUARTERLY:
       nextDate.setMonth(nextDate.getMonth() + 3);
       break;
-    case PaymentFrequency.BIANNUALLY:
+    case PaymentFrequency.SEMI_ANNUAL:
       nextDate.setMonth(nextDate.getMonth() + 6);
       break;
-    case PaymentFrequency.ANNUALLY:
+    case PaymentFrequency.ANNUAL:
       nextDate.setFullYear(nextDate.getFullYear() + 1);
       break;
     default:

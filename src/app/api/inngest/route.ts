@@ -34,7 +34,7 @@ const processRecurringExpenses = inngest.createFunction(
 
         // Update next due date for original recurring expense
         let nextDueDate = new Date(expense.nextDueDate!);
-        switch (expense.recurringFrequency) {
+        switch (expense.recurringInterval) {
           case 'DAILY':
             nextDueDate.setDate(nextDueDate.getDate() + 1);
             break;

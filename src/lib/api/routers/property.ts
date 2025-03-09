@@ -184,18 +184,29 @@ export const propertyRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  // Commented out until Configuration model is implemented
+  /*
   getConfigurations: protectedProcedure
-    .input(z.object({ propertyId: z.string() }))
+    .input(
+      z.object({
+        propertyId: z.string(),
+      })
+    )
     .query(async ({ input, ctx }) => {
       try {
+        // Check if the property exists and belongs to the user
         const property = await db.property.findUnique({
-          where: {
-            id: input.propertyId,
-            userId: ctx.session.user.id,
-          },
+          where: { id: input.propertyId },
         });
 
         if (!property) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Property not found',
+          });
+        }
+
+        if (property.userId !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'You do not have permission to view configurations for this property',
@@ -209,15 +220,17 @@ export const propertyRouter = createTRPCRouter({
 
         return configurations;
       } catch (error) {
-        console.error('Property configurations fetch error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Failed to fetch property configurations',
+          message: 'Failed to get configurations',
           cause: error,
         });
       }
     }),
+  */
 
+  // Commented out until Configuration model is implemented
+  /*
   createConfiguration: protectedProcedure
     .input(
       z.object({
@@ -252,7 +265,6 @@ export const propertyRouter = createTRPCRouter({
 
         return configuration;
       } catch (error) {
-        console.error('Configuration creation error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to create configuration',
@@ -260,7 +272,10 @@ export const propertyRouter = createTRPCRouter({
         });
       }
     }),
+  */
 
+  // Commented out until Configuration model is implemented
+  /*
   updateConfiguration: protectedProcedure
     .input(
       z.object({
@@ -284,22 +299,24 @@ export const propertyRouter = createTRPCRouter({
           });
         }
 
-        if (configuration.userId !== ctx.session.user.id) {
+        if (configuration.property.userId !== ctx.session.user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'You do not have permission to update this configuration',
           });
         }
 
-        const { id, ...data } = input;
         const updatedConfiguration = await db.configuration.update({
-          where: { id },
-          data,
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            description: input.description,
+            settings: input.settings,
+          },
         });
 
         return updatedConfiguration;
       } catch (error) {
-        console.error('Configuration update error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to update configuration',
@@ -308,9 +325,15 @@ export const propertyRouter = createTRPCRouter({
       }
     }),
 
+  // Commented out until Configuration model is implemented
+  /*
   deleteConfiguration: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ input, ctx }) => {
+    .input(
+      z.object({
+        id: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx: { db, user }, input }) => {
       try {
         const configuration = await db.configuration.findUnique({
           where: { id: input.id },
@@ -323,7 +346,7 @@ export const propertyRouter = createTRPCRouter({
           });
         }
 
-        if (configuration.userId !== ctx.session.user.id) {
+        if (configuration.userId !== user.id) {
           throw new TRPCError({
             code: 'FORBIDDEN',
             message: 'You do not have permission to delete this configuration',
@@ -336,7 +359,6 @@ export const propertyRouter = createTRPCRouter({
 
         return { success: true };
       } catch (error) {
-        console.error('Configuration delete error:', error);
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to delete configuration',
@@ -344,4 +366,5 @@ export const propertyRouter = createTRPCRouter({
         });
       }
     }),
+  */
 });
