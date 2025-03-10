@@ -22,7 +22,9 @@
     "tenants": "Penyewa",
     "expenses": "Pengeluaran",
     "billing": "Tagihan",
-    "settings": "Pengaturan"
+    "settings": "Pengaturan",
+    "propertyGroups": "Grup Properti",
+    "batchOperations": "Operasi Massal"
   },
   "dashboard": {
     "title": "Dasbor",
@@ -810,9 +812,9 @@
     "expenses": "Pengeluaran",
     "billing": "Tagihan",
     "settings": "Pengaturan",
-    "signOut": "Keluar",
-    "verifyBusiness": "Verifikasi Bisnis",
-    "propertyGroups": "Grup Properti"
+    "propertyGroups": "Grup Properti",
+    "batchOperations": "Operasi Massal",
+    "logout": "Keluar"
   },
   "propertyGroups": {
     "title": "Grup Properti",
@@ -885,5 +887,51 @@
     "useExplanation": "Buat grup, tambahkan properti ke dalamnya, dan gunakan dasbor untuk melihat statistik dan mengelola properti dalam setiap grup.",
     "noGroupsYet": "Belum ada grup properti",
     "createGroupDescription": "Buat grup properti untuk mengatur properti Anda dan mengelolanya dengan lebih efisien."
+  },
+  "batchOperations": {
+    "title": "Operasi Massal",
+    "description": "Lakukan operasi pada beberapa properti sekaligus",
+    "payments": {
+      "title": "Pembuatan Pembayaran Massal",
+      "description": "Buat pembayaran untuk beberapa properti atau grup properti sekaligus",
+      "selectTarget": "Pilih Target",
+      "property": "Properti Tunggal",
+      "propertyGroup": "Grup Properti",
+      "allProperties": "Semua Properti",
+      "selectProperty": "Pilih properti",
+      "selectPropertyGroup": "Pilih grup properti",
+      "paymentMethod": "Metode Pembayaran",
+      "manual": "Manual",
+      "stripe": "Stripe",
+      "bank": "Transfer Bank",
+      "cash": "Tunai",
+      "generate": "Buat Pembayaran",
+      "generating": "Membuat Pembayaran...",
+      "success": "Pembayaran berhasil dibuat",
+      "error": "Gagal membuat pembayaran",
+      "summary": {
+        "title": "Ringkasan Pembuatan",
+        "totalGenerated": "Total Pembayaran Dibuat",
+        "totalFailed": "Pembuatan Gagal",
+        "viewPayments": "Lihat Pembayaran yang Dibuat",
+        "viewErrors": "Lihat Error",
+        "noErrors": "Tidak ada error selama pembuatan"
+      }
+    },
+    "billing": {
+      "title": "Pembuatan Penagihan Massal",
+      "description": "Buat entri penagihan untuk beberapa properti sekaligus",
+      "comingSoon": "Segera Hadir"
+    },
+    "maintenance": {
+      "title": "Permintaan Pemeliharaan Massal",
+      "description": "Tangani permintaan pemeliharaan di beberapa properti",
+      "comingSoon": "Segera Hadir"
+    },
+    "communication": {
+      "title": "Komunikasi Penyewa Massal",
+      "description": "Kirim komunikasi ke beberapa penyewa sekaligus",
+      "comingSoon": "Segera Hadir"
+    }
   }
 }

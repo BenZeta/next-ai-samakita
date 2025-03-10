@@ -4,6 +4,7 @@ import { businessRouter } from './routers/business';
 import { expenseRouter } from './routers/expense';
 import { financeRouter } from './routers/finance';
 import { maintenanceRouter } from './routers/maintenance';
+import { paymentRouter } from './routers/payment';
 import { propertyRouter } from './routers/property';
 import { propertyGroupRouter } from './routers/property-group';
 import { roomRouter } from './routers/room';
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter({
   business: businessRouter,
   user: userRouter,
   propertyGroup: propertyGroupRouter,
+  payment: paymentRouter,
   // add routers here
 });
 
