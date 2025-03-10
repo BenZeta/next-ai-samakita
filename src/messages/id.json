@@ -14,7 +14,13 @@
     "creating": "Membuat...",
     "back": "Kembali",
     "next": "Lanjut",
-    "saving": "Menyimpan..."
+    "saving": "Menyimpan...",
+    "target": "Target",
+    "property": "Properti",
+    "propertyGroup": "Grup Properti",
+    "selectProperty": "Pilih properti",
+    "selectPropertyGroup": "Pilih grup properti",
+    "noTenantsFound": "Tidak ada penyewa ditemukan"
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -647,7 +653,8 @@
       "overdue": "Terlambat",
       "all": "Semua Status",
       "sent": "Terkirim",
-      "draft": "Draft"
+      "draft": "Draft",
+      "markAsPaid": "Tandai Lunas"
     },
     "method": {
       "MANUAL": "Manual",
@@ -661,7 +668,8 @@
       "OTHER": "Lainnya",
       "all": "Semua Jenis",
       "other": "Jenis Lainnya",
-      "MAINTENANCE": "Pemeliharaan"
+      "MAINTENANCE": "Pemeliharaan",
+      "CUSTOM": "Kustom"
     },
     "filters": {
       "property": {
@@ -891,6 +899,7 @@
   "batchOperations": {
     "title": "Operasi Massal",
     "description": "Lakukan operasi pada beberapa item sekaligus",
+    "preview": "Pratinjau",
     "payments": {
       "title": "Buat Pembayaran Massal",
       "description": "Buat pembayaran untuk beberapa penyewa sekaligus",
@@ -927,16 +936,46 @@
         "specialArrangement": "Pengaturan Khusus",
         "lastPayment": "Pembayaran terakhir: {date}"
       },
-      "preview": "Pratinjau Pembayaran",
       "generating": "Membuat Pembayaran...",
       "generate": "Buat Pembayaran",
       "success": "Berhasil membuat pembayaran",
-      "error": "Gagal membuat pembayaran"
+      "error": "Gagal membuat pembayaran",
+      "summary": {
+        "title": "Ringkasan Pembuatan",
+        "totalGenerated": "Total Dibuat",
+        "totalFailed": "Total Gagal",
+        "viewErrors": "Pembayaran Gagal",
+        "noErrors": "Semua pembayaran berhasil dibuat",
+        "viewPayments": "Lihat Pembayaran"
+      }
     },
     "billing": {
-      "title": "Pembuatan Penagihan Massal",
-      "description": "Buat entri penagihan untuk beberapa properti sekaligus",
-      "comingSoon": "Segera Hadir"
+      "title": "Pembuatan Tagihan Massal",
+      "description": "Buat beberapa tagihan untuk properti atau grup properti yang dipilih",
+      "comingSoon": "Segera Hadir",
+      "settings": {
+        "title": "Pengaturan Tagihan",
+        "billingType": "Jenis Tagihan",
+        "dueDate": "Tanggal Jatuh Tempo",
+        "isAdvanceBilling": "Buat Tagihan di Muka",
+        "billingMonths": "Jumlah Bulan",
+        "adjustmentPercentage": "Persentase Penyesuaian"
+      },
+      "preview": {
+        "title": "Pratinjau Penyewa Terpilih",
+        "noTenantsSelected": "Tidak ada penyewa yang dipilih",
+        "selectedCount": "{count} penyewa dipilih",
+        "generateBillings": "Buat Tagihan",
+        "generating": "Membuat tagihan..."
+      },
+      "summary": {
+        "title": "Ringkasan Pembuatan Tagihan",
+        "totalGenerated": "{count} tagihan berhasil dibuat",
+        "totalFailed": "{count} tagihan gagal dibuat",
+        "viewErrors": "Lihat Error",
+        "noErrors": "Tidak ada error",
+        "viewBillings": "Lihat Tagihan yang Dibuat"
+      }
     },
     "maintenance": {
       "title": "Permintaan Pemeliharaan Massal",

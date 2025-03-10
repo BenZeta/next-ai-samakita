@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { api } from '@/lib/trpc/react';
 import {
   Building2,
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 import { useTranslations } from 'use-intl';
 
 export default function BillingDetailsPage({ params }: { params: { id: string } }) {
@@ -49,6 +50,16 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
   const sendPaymentNotificationMutation = api.billing.sendPaymentNotification.useMutation({
     onSuccess: () => {
       toast.success(t('billing.details.messages.reminderSent'));
+    },
+    onError: error => {
+      toast.error(error.message);
+    },
+  });
+
+  const markAsPaidMutation = api.billing.markAsPaid.useMutation({
+    onSuccess: () => {
+      toast.success(t('billing.status.paid'));
+      utils.billing.get.invalidate({ id: params.id });
     },
     onError: error => {
       toast.error(error.message);
@@ -280,14 +291,27 @@ export default function BillingDetailsPage({ params }: { params: { id: string } 
               <h2 className="mb-4 text-lg font-medium text-foreground">
                 {t('billing.details.status')}
               </h2>
-              <div
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                  billing.status === 'DRAFT'
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500'
-                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500'
-                }`}
-              >
-                {t(`billing.status.${billing.status.toLowerCase()}`)}
+              <div className="flex items-center justify-between">
+                <div
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                    billing.status === 'DRAFT'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500'
+                      : billing.status === 'PAID'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500'
+                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500'
+                  }`}
+                >
+                  {t(`billing.status.${billing.status.toLowerCase()}`)}
+                </div>
+                {billing.status !== 'PAID' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => markAsPaidMutation.mutate({ billingId: billing.id })}
+                  >
+                    {t('billing.status.markAsPaid')}
+                  </Button>
+                )}
               </div>
             </div>
           </div>

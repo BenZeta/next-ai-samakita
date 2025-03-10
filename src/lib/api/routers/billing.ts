@@ -18,6 +18,7 @@ import {
   TenantStatus,
 } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
+import { format } from 'date-fns';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -41,6 +42,15 @@ const billingSchema = z.object({
 });
 
 const notificationMethodSchema = z.enum(['email', 'whatsapp']);
+
+const billingTypeTranslations = {
+  RENT: 'Rent',
+  DEPOSIT: 'Deposit',
+  UTILITY: 'Utility',
+  MAINTENANCE: 'Maintenance',
+  OTHER: 'Other',
+  CUSTOM: 'Custom',
+} as const;
 
 export const billingRouter = createTRPCRouter({
   createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
@@ -917,6 +927,7 @@ export const billingRouter = createTRPCRouter({
             },
           },
         },
+        payments: true,
       },
     });
 
@@ -938,6 +949,14 @@ export const billingRouter = createTRPCRouter({
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Billing has already been sent',
+      });
+    }
+
+    // Check if payment already exists for this billing
+    if (billing.payments.length > 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Payment already exists for this billing',
       });
     }
 
@@ -1311,6 +1330,236 @@ export const billingRouter = createTRPCRouter({
       }
     }),
   */
+
+  getPreviewTenants: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { propertyId, propertyGroupId } = input;
+
+      const where = {
+        status: TenantStatus.ACTIVE,
+        room: {
+          property: propertyId
+            ? { id: propertyId, userId: ctx.session.user.id }
+            : propertyGroupId
+              ? { propertyGroupId, userId: ctx.session.user.id }
+              : { userId: ctx.session.user.id },
+        },
+      };
+
+      const tenants = await db.tenant.findMany({
+        where,
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+          payments: {
+            take: 1,
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+        orderBy: {
+          room: {
+            property: {
+              name: 'asc',
+            },
+          },
+        },
+      });
+
+      return tenants;
+    }),
+
+  generateBulk: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
+        billingType: z.nativeEnum(PaymentType),
+        dueDate: z.date(),
+        selectedTenantIds: z.array(z.string()),
+        isAdvanceBilling: z.boolean(),
+        billingMonths: z.number().min(1).max(12),
+        adjustmentPercentage: z.number().min(-100).max(100),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const {
+        propertyId,
+        propertyGroupId,
+        billingType,
+        dueDate,
+        selectedTenantIds,
+        isAdvanceBilling,
+        billingMonths,
+        adjustmentPercentage,
+      } = input;
+
+      // Get selected tenants
+      const tenants = await db.tenant.findMany({
+        where: {
+          id: { in: selectedTenantIds },
+          status: TenantStatus.ACTIVE,
+          room: {
+            property: propertyId
+              ? { id: propertyId, userId: ctx.session.user.id }
+              : propertyGroupId
+                ? { propertyGroupId, userId: ctx.session.user.id }
+                : { userId: ctx.session.user.id },
+          },
+        },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      if (tenants.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No active tenants found',
+        });
+      }
+
+      const errors: Array<{
+        tenantId: string;
+        tenantName: string;
+        error: string;
+      }> = [];
+      const billings: Array<any> = [];
+
+      // Generate billings for each tenant
+      for (const tenant of tenants) {
+        try {
+          const baseAmount = tenant.rentAmount || tenant.room.price;
+          const adjustedAmount = baseAmount + (baseAmount * adjustmentPercentage) / 100;
+
+          // Generate billings for each month if advance billing
+          const monthsToGenerate = isAdvanceBilling ? billingMonths : 1;
+          for (let i = 0; i < monthsToGenerate; i++) {
+            const currentDueDate = new Date(dueDate);
+            currentDueDate.setMonth(currentDueDate.getMonth() + i);
+
+            const billing = await db.billing.create({
+              data: {
+                title: `${billingTypeTranslations[billingType]} - ${format(
+                  currentDueDate,
+                  'MMMM yyyy'
+                )}`,
+                description: `${billingTypeTranslations[billingType]} for Room ${
+                  tenant.room.number
+                } at ${tenant.room.property.name}`,
+                amount: adjustedAmount,
+                dueDate: currentDueDate,
+                type: billingType,
+                status: BillingStatus.DRAFT,
+                tenantId: tenant.id,
+              },
+            });
+
+            billings.push(billing);
+          }
+        } catch (error) {
+          console.error(`Failed to generate billing for tenant ${tenant.name}:`, error);
+          errors.push({
+            tenantId: tenant.id,
+            tenantName: tenant.name,
+            error: error instanceof Error ? error.message : 'Failed to generate billing',
+          });
+        }
+      }
+
+      return {
+        billings,
+        errors,
+        totalGenerated: billings.length,
+        totalFailed: errors.length,
+      };
+    }),
+
+  markAsPaid: protectedProcedure
+    .input(
+      z.object({
+        billingId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const billing = await db.billing.findFirst({
+        where: {
+          id: input.billingId,
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          tenant: {
+            include: {
+              room: {
+                include: {
+                  property: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!billing || !billing.tenant || !billing.tenantId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      // Create payment data
+      const paymentData: Prisma.PaymentCreateInput = {
+        amount: billing.amount,
+        type: billing.type,
+        method: PaymentMethod.MANUAL,
+        status: PaymentStatus.PAID,
+        dueDate: billing.dueDate,
+        billing: { connect: { id: billing.id } },
+        tenant: { connect: { id: billing.tenantId } },
+        property: { connect: { id: billing.tenant.room.propertyId } },
+        paidAt: new Date(),
+      };
+
+      // Add description only if it exists
+      if (billing.description) {
+        paymentData.description = billing.description;
+      }
+
+      // Create a payment record for this billing
+      const payment = await db.payment.create({
+        data: paymentData,
+      });
+
+      // Update billing status
+      await db.billing.update({
+        where: { id: input.billingId },
+        data: {
+          status: BillingStatus.PAID,
+        },
+      });
+
+      return { success: true, payment };
+    }),
 });
 
 // Helper function to calculate the next due date based on frequency

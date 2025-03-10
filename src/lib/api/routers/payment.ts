@@ -476,6 +476,23 @@ export const paymentRouter = createTRPCRouter({
             periodEnd.setMonth(periodEnd.getMonth() + 1);
             periodEnd.setDate(periodEnd.getDate() - 1);
 
+            // Create billing first
+            const billing = await ctx.db.billing.create({
+              data: {
+                title: `Rent for ${tenant.room.property.name} - Room ${tenant.room.number} (${format(
+                  periodStart,
+                  'MMM yyyy'
+                )})`,
+                description: `Monthly rent payment for ${format(periodStart, 'MMMM yyyy')}`,
+                amount: adjustedAmount,
+                dueDate: new Date(dueDate),
+                status: 'DRAFT',
+                type: PaymentType.RENT,
+                tenantId: tenant.id,
+              },
+            });
+
+            // Then create payment linked to the billing
             const payment = await ctx.db.payment.create({
               data: {
                 amount: adjustedAmount,
@@ -487,6 +504,7 @@ export const paymentRouter = createTRPCRouter({
                 billingCycleEnd: periodEnd,
                 tenantId: tenant.id,
                 propertyId: tenant.room.propertyId,
+                billingId: billing.id,
                 description: `Rent payment for ${tenant.room.property.name} - Room ${
                   tenant.room.number
                 } (${format(periodStart, 'MMM yyyy')})`,
@@ -511,5 +529,55 @@ export const paymentRouter = createTRPCRouter({
         totalGenerated: payments.length,
         totalFailed: errors.length,
       };
+    }),
+
+  getPreviewTenants: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { propertyId, propertyGroupId } = input;
+
+      // Get tenants based on selection criteria
+      const where: Prisma.TenantWhereInput = {
+        AND: [
+          propertyId
+            ? { room: { propertyId } }
+            : propertyGroupId
+              ? {
+                  room: {
+                    property: {
+                      propertyGroup: {
+                        id: propertyGroupId,
+                      },
+                    },
+                  },
+                }
+              : undefined,
+          { status: TenantStatus.ACTIVE },
+        ].filter((condition): condition is NonNullable<typeof condition> => Boolean(condition)),
+      };
+
+      const tenants = await ctx.db.tenant.findMany({
+        where,
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+          payments: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+
+      return tenants;
     }),
 });

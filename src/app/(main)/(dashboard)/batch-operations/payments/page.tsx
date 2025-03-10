@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { api } from '@/lib/trpc/react';
 import { PaymentMethod } from '@prisma/client';
+import { TRPCClientError } from '@trpc/client';
 import { format } from 'date-fns';
 import { AlertTriangle, ArrowLeft, CheckCircle, CreditCard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -37,7 +38,39 @@ interface PaymentPreviewItem {
   isSelected: boolean;
   hasSpecialArrangement: boolean;
   lastPaymentDate?: Date;
-  notes?: string;
+}
+
+type PreviewTenant = {
+  id: string;
+  name: string;
+  rentAmount: number | null;
+  room: {
+    number: string;
+    price: number;
+    property: {
+      name: string;
+    };
+  };
+  payments: Array<{
+    createdAt: Date;
+  }>;
+};
+
+interface Tenant {
+  id: string;
+  name: string;
+  rentAmount: number | null;
+  notes: string | null;
+  room: {
+    number: string;
+    price: number;
+    property: {
+      name: string;
+    };
+  };
+  payments: Array<{
+    createdAt: Date;
+  }>;
 }
 
 export default function BatchPaymentGenerationPage() {
@@ -93,35 +126,95 @@ export default function BatchPaymentGenerationPage() {
   );
   const selectedCount = previewItems.filter(item => item.isSelected).length;
 
+  // Mutations
+  const previewTenantsMutation = api.payment.getPreviewTenants.useMutation();
+  const generateBatchMutation = api.payment.generateBatch.useMutation({
+    onSuccess: data => {
+      setGenerationResult(data);
+      toast.success(t('batchOperations.payments.success'));
+      setIsGenerating(false);
+    },
+    onError: error => {
+      toast.error(error.message || t('batchOperations.payments.error'));
+      setIsGenerating(false);
+    },
+  });
+
   // Preview generation handler
   const handlePreviewGenerate = async () => {
-    // This would fetch the preview data from the API
-    // For now using mock data
-    const mockPreviewItems: PaymentPreviewItem[] = [
-      {
-        tenantId: '1',
-        tenantName: 'John Doe',
-        propertyName: 'Property A',
-        roomNumber: '101',
-        baseAmount: 1000000,
-        adjustedAmount: 1000000,
+    try {
+      // Get tenants based on property selection
+      const tenants = await previewTenantsMutation.mutateAsync({
+        propertyId: targetType === 'property' ? propertyId : undefined,
+        propertyGroupId: targetType === 'propertyGroup' ? propertyGroupId : undefined,
+      });
+
+      if (!tenants || tenants.length === 0) {
+        toast.error(t('batchOperations.payments.noTenantsFound'));
+        return;
+      }
+
+      const items: PaymentPreviewItem[] = tenants.map(tenant => ({
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        propertyName: tenant.room.property.name,
+        roomNumber: tenant.room.number,
+        baseAmount: tenant.rentAmount || tenant.room.price,
+        adjustedAmount: calculateAdjustedAmount(
+          tenant.rentAmount || tenant.room.price,
+          includeLateFee ? lateFeePercentage : 0,
+          applyAdjustment ? bulkAdjustmentPercentage : 0
+        ),
         isSelected: true,
-        hasSpecialArrangement: false,
-        lastPaymentDate: new Date('2024-02-15'),
-      },
-      // Add more mock items...
-    ];
-    setPreviewItems(mockPreviewItems);
-    setIsPreviewMode(true);
+        hasSpecialArrangement: Boolean(tenant.rentAmount),
+        lastPaymentDate: tenant.payments[0]?.createdAt,
+      }));
+
+      setPreviewItems(items);
+      setSelectedTenants(new Set(items.map(item => item.tenantId)));
+      setIsPreviewMode(true);
+    } catch (err: unknown) {
+      console.error('Failed to fetch preview data:', err);
+      if (err instanceof TRPCClientError) {
+        toast.error(err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t('common.error'));
+      }
+    }
+  };
+
+  // Calculate adjusted amount helper
+  const calculateAdjustedAmount = (
+    baseAmount: number,
+    lateFeePercentage: number,
+    adjustmentPercentage: number
+  ) => {
+    let amount = baseAmount;
+
+    // Apply late fee if enabled
+    if (lateFeePercentage > 0) {
+      amount += (baseAmount * lateFeePercentage) / 100;
+    }
+
+    // Apply bulk adjustment if any
+    if (adjustmentPercentage !== 0) {
+      amount += (amount * adjustmentPercentage) / 100;
+    }
+
+    return amount;
   };
 
   // Handle final generation
   const handleGenerate = async () => {
+    if (selectedTenants.size === 0) return;
+
     setIsGenerating(true);
     setGenerationResult(null);
 
     try {
-      await generateBatchMutation.mutateAsync({
+      const result = await generateBatchMutation.mutateAsync({
         propertyId: targetType === 'property' ? propertyId : undefined,
         propertyGroupId: targetType === 'propertyGroup' ? propertyGroupId : undefined,
         paymentMethod,
@@ -134,23 +227,20 @@ export default function BatchPaymentGenerationPage() {
         lateFeePercentage,
         adjustmentPercentage: applyAdjustment ? bulkAdjustmentPercentage : 0,
       });
-    } catch (error) {
-      console.error('Failed to generate payments:', error);
+
+      setGenerationResult(result);
+      toast.success(t('batchOperations.payments.success'));
+    } catch (err: unknown) {
+      console.error('Failed to generate payments:', err);
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error(t('batchOperations.payments.error'));
+      }
+    } finally {
+      setIsGenerating(false);
     }
   };
-
-  // Mutation for batch payment generation
-  const generateBatchMutation = api.payment.generateBatch.useMutation({
-    onSuccess: data => {
-      setGenerationResult(data);
-      toast.success(t('batchOperations.payments.success'));
-      setIsGenerating(false);
-    },
-    onError: error => {
-      toast.error(error.message || t('batchOperations.payments.error'));
-      setIsGenerating(false);
-    },
-  });
 
   if (generationResult) {
     return (
@@ -374,7 +464,7 @@ export default function BatchPaymentGenerationPage() {
                     <Label>{t('batchOperations.payments.periodStartDate')}</Label>
                     <DatePicker
                       date={periodStartDate}
-                      setDate={setPeriodStartDate}
+                      onSelect={date => date && setPeriodStartDate(date)}
                       className="h-9 text-xs sm:h-10 sm:text-sm"
                     />
                   </div>
@@ -382,7 +472,7 @@ export default function BatchPaymentGenerationPage() {
                     <Label>{t('batchOperations.payments.dueDate')}</Label>
                     <DatePicker
                       date={dueDate}
-                      setDate={setDueDate}
+                      onSelect={date => date && setDueDate(date)}
                       className="h-9 text-xs sm:h-10 sm:text-sm"
                     />
                   </div>
@@ -525,7 +615,7 @@ export default function BatchPaymentGenerationPage() {
                     (targetType === 'propertyGroup' && !propertyGroupId)
                   }
                 >
-                  {t('batchOperations.payments.preview')}
+                  {t('batchOperations.preview')}
                 </Button>
               </div>
             </CardContent>
