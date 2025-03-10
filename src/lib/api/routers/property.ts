@@ -38,11 +38,12 @@ export const propertyRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(10),
         search: z.string().optional(),
+        propertyGroupId: z.string().optional(),
       })
     )
     .query(async ({ input, ctx }) => {
       try {
-        const { page, limit, search } = input;
+        const { page, limit, search, propertyGroupId } = input;
         const skip = (page - 1) * limit;
 
         const where: Prisma.PropertyWhereInput = {
@@ -63,6 +64,11 @@ export const propertyRouter = createTRPCRouter({
                     },
                   },
                 ],
+              }
+            : {}),
+          ...(propertyGroupId
+            ? {
+                propertyGroupId,
               }
             : {}),
         };
@@ -117,6 +123,30 @@ export const propertyRouter = createTRPCRouter({
         });
       }
     }),
+
+  listAll: protectedProcedure.query(async ({ ctx }) => {
+    try {
+      const properties = await ctx.db.property.findMany({
+        where: {
+          userId: ctx.session.user.id,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      return { properties };
+    } catch (error) {
+      console.error('Property listAll query error:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to fetch properties',
+        cause: error,
+      });
+    }
+  }),
 
   get: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
     const property = await db.property.findUnique({

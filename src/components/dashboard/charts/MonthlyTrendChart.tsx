@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from '@/components/providers/ThemeProvider';
+import { useTheme } from 'next-themes';
 import { memo, useEffect, useState } from 'react';
 import {
   Area,
@@ -28,20 +28,18 @@ const formatToRupiah = (value: number) => {
 };
 
 // Gradient definitions component to prevent re-renders
-const ChartGradients = memo(function ChartGradients() {
-  return (
-    <defs>
-      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-      </linearGradient>
-      <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
-        <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-      </linearGradient>
-    </defs>
-  );
-});
+const ChartGradients = () => (
+  <defs>
+    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+    </linearGradient>
+    <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.1} />
+      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+    </linearGradient>
+  </defs>
+);
 
 // Memoized tooltip to prevent re-renders
 const ChartTooltip = memo(function ChartTooltip({
@@ -76,7 +74,7 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   timeRange = 'month',
 }) => {
   const t = useTranslations('dashboard.widgets.monthlyTrend');
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -152,7 +150,7 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             tickFormatter={formatMonth}
             tick={{
               fontSize: isMobile ? 10 : 12,
-              fill: theme === 'dark' ? '#94a3b8' : '#64748b',
+              fill: resolvedTheme === 'dark' ? '#94a3b8' : '#64748b',
             }}
             tickLine={false}
             axisLine={false}
@@ -168,7 +166,7 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             tickFormatter={formatCurrency}
             tick={{
               fontSize: isMobile ? 10 : 12,
-              fill: theme === 'dark' ? '#94a3b8' : '#64748b',
+              fill: resolvedTheme === 'dark' ? '#94a3b8' : '#64748b',
             }}
             tickLine={false}
             axisLine={false}
@@ -182,7 +180,7 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: theme === 'dark' ? '#1e293b' : '#ffffff',
+              backgroundColor: resolvedTheme === 'dark' ? '#1e293b' : '#ffffff',
               border: 'none',
               borderRadius: '0.5rem',
               fontSize: isMobile ? '12px' : '14px',
@@ -193,7 +191,7 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             }}
             formatter={(value: number) => [formatCurrency(value)]}
             labelStyle={{
-              color: theme === 'dark' ? '#94a3b8' : '#64748b',
+              color: resolvedTheme === 'dark' ? '#94a3b8' : '#64748b',
               marginBottom: isMobile ? '4px' : '8px',
             }}
           />

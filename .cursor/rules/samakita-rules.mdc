@@ -1,3 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
 # .cursorrules
 
 Components & Naming
@@ -55,11 +65,6 @@ Inngest / Background Jobs
 - Use `inngest.config.ts` for Inngest configuration.
 - Use `src/app/api/inngest/route.ts` for Inngest API route.
 - Use polling to update the UI when Inngest events are received, not trpc success response.
-
-AI
-
-- Use `generateChatCompletion` in `src/lib/aiClient.ts` for all AI calls.
-- Prefer `O1` model with high reasoning effort for all AI calls.
 
 Pages
 

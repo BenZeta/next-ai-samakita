@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { sendContractEmail, sendInvoiceEmail } from '@/lib/email';
 import { createPaymentIntent } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
+import { generatePayment } from '@/lib/utils/payment-generation';
 import {
   PaymentMethod,
   PaymentStatus,
@@ -79,7 +80,16 @@ export const tenantRouter = createTRPCRouter({
       const room = await db.room.findUnique({
         where: { id: roomId },
         include: {
-          property: true,
+          property: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              dueDateOffset: true,
+              paymentFrequency: true,
+              customPaymentDays: true,
+            },
+          },
         },
       });
 
@@ -125,7 +135,7 @@ export const tenantRouter = createTRPCRouter({
         const firstRentDueDate = new Date(
           now.getFullYear(),
           now.getMonth() + 1,
-          room.property.dueDate
+          room.property.dueDateOffset
         );
 
         // Create initial rent payment with next month's due date
@@ -156,7 +166,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         search: z.string().optional(),
-        status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
+        status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED', 'PENDING']).optional(),
         propertyId: z.string().optional(),
         roomId: z.string().optional(),
       })
@@ -246,7 +256,7 @@ export const tenantRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        status: z.enum(['ACTIVE', 'INACTIVE']),
+        status: z.enum(['ACTIVE', 'INACTIVE', 'BLACKLISTED', 'PENDING']),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -414,6 +424,9 @@ export const tenantRouter = createTRPCRouter({
       z.object({
         tenantId: z.string(),
         paymentMethod: z.nativeEnum(PaymentMethod),
+        isProRated: z.boolean().optional(),
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -442,93 +455,13 @@ export const tenantRouter = createTRPCRouter({
         });
       }
 
-      // Calculate due date based on property's dueDate setting
-      const now = new Date();
-      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
-      if (dueDate < now) {
-        dueDate.setMonth(dueDate.getMonth() + 1);
-      }
-
-      // Create payment
-      const payment = await ctx.db.payment.create({
-        data: {
-          amount: tenant.rentAmount || tenant.room.price,
-          type: PaymentType.RENT,
-          status: PaymentStatus.PENDING,
-          method: input.paymentMethod,
-          dueDate,
-          tenantId: tenant.id,
-          propertyId: tenant.room.propertyId,
-        },
+      return generatePayment({
+        tenant,
+        paymentMethod: input.paymentMethod,
+        isProRated: input.isProRated,
+        startDate: input.startDate,
+        endDate: input.endDate,
       });
-
-      // Generate Stripe payment link if needed
-      let paymentLink: string | undefined;
-      if (input.paymentMethod === PaymentMethod.STRIPE) {
-        if (!tenant.email) {
-          throw new TRPCError({
-            code: 'BAD_REQUEST',
-            message: 'Tenant email is required for Stripe payments',
-          });
-        }
-
-        const property = await db.property.findUnique({
-          where: { id: payment.propertyId },
-        });
-
-        if (!property) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Property not found',
-          });
-        }
-
-        const room = await db.room.findUnique({
-          where: { id: tenant.roomId },
-        });
-
-        if (!room) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'Room not found',
-          });
-        }
-
-        const stripeResponse = await createPaymentIntent({
-          orderId: payment.id,
-          amount: payment.amount,
-          customerEmail: tenant.email,
-          customerName: tenant.name,
-          description: `${payment.type} payment for ${property.name} - Room ${room.number}`,
-        });
-
-        await ctx.db.payment.update({
-          where: { id: payment.id },
-          data: {
-            stripePaymentId: stripeResponse.paymentIntentId,
-            stripeClientSecret: stripeResponse.clientSecret || undefined,
-          },
-        });
-
-        // Create the Stripe Checkout URL
-        const checkoutUrl = `https://checkout.stripe.com/pay/${stripeResponse.paymentIntentId}`;
-        paymentLink = checkoutUrl;
-      }
-
-      // Send invoice email
-      await sendInvoiceEmail({
-        email: tenant.email,
-        tenantName: tenant.name,
-        propertyName: tenant.room.property.name,
-        roomNumber: tenant.room.number,
-        amount: payment.amount,
-        dueDate: payment.dueDate,
-        paymentLink,
-        paymentType: payment.type,
-        invoiceNumber: `INV-${payment.id}`,
-      });
-
-      return payment;
     }),
 
   updatePayment: protectedProcedure
@@ -881,7 +814,11 @@ export const tenantRouter = createTRPCRouter({
 
       // Calculate due date based on property's dueDate setting
       const now = new Date();
-      const dueDate = new Date(now.getFullYear(), now.getMonth(), tenant.room.property.dueDate);
+      const dueDate = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        tenant.room.property.dueDateOffset
+      );
       if (dueDate < now) {
         dueDate.setMonth(dueDate.getMonth() + 1);
       }

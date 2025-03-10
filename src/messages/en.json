@@ -14,7 +14,13 @@
     "creating": "Creating...",
     "back": "Back",
     "next": "Next",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "target": "Target",
+    "property": "Property",
+    "propertyGroup": "Property Group",
+    "selectProperty": "Select a property",
+    "selectPropertyGroup": "Select a property group",
+    "noTenantsFound": "No tenants found"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -22,7 +28,9 @@
     "tenants": "Tenants",
     "expenses": "Expenses",
     "billing": "Billing",
-    "settings": "Settings"
+    "settings": "Settings",
+    "propertyGroups": "Property Groups",
+    "batchOperations": "Batch Operations"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -738,7 +746,8 @@
       "overdue": "Overdue",
       "all": "All Status",
       "sent": "Sent",
-      "draft": "Draft"
+      "draft": "Draft",
+      "markAsPaid": "Mark as Paid"
     },
     "method": {
       "MANUAL": "Manual",
@@ -749,10 +758,9 @@
       "RENT": "Rent",
       "DEPOSIT": "Deposit",
       "UTILITY": "Utility",
+      "MAINTENANCE": "Maintenance",
       "OTHER": "Other",
-      "all": "All Types",
-      "other": "Other Types",
-      "MAINTENANCE": "Maintenance"
+      "CUSTOM": "Custom"
     },
     "filters": {
       "property": {
@@ -899,7 +907,155 @@
     "expenses": "Expenses",
     "billing": "Billing",
     "settings": "Settings",
-    "signOut": "Sign Out",
-    "verifyBusiness": "Verify Business"
+    "propertyGroups": "Property Groups",
+    "batchOperations": "Batch Operations",
+    "logout": "Logout",
+    "signOut": "Sign Out"
+  },
+  "propertyGroups": {
+    "title": "Property Groups",
+    "description": "Manage your property groups",
+    "create": "Create Group",
+    "edit": "Edit Group",
+    "name": "Group Name",
+    "namePlaceholder": "Enter group name",
+    "descriptionPlaceholder": "Enter group description (optional)",
+    "properties": "Properties",
+    "noProperties": "No properties selected",
+    "selectProperty": "Select a property",
+    "availableProperties": "Available Properties:",
+    "selectedProperties": "Selected Properties:",
+    "allPropertiesSelected": "All properties have been selected",
+    "noPropertiesAvailable": "No properties available",
+    "unknownProperty": "Unknown property ({id})",
+    "cancel": "Cancel",
+    "save": "Save",
+    "deleteConfirm": "Are you sure you want to delete this group?",
+    "deleteDescription": "This action cannot be undone. All properties will be unassigned from this group.",
+    "deleteSuccess": "Group deleted successfully",
+    "createSuccess": "Group created successfully",
+    "updateSuccess": "Group updated successfully",
+    "loading": "Loading property groups...",
+    "filter": {
+      "title": "Filter by Group",
+      "all": "All Properties",
+      "clear": "Clear Filter"
+    },
+    "dashboard": {
+      "title": "Property Group Dashboard",
+      "selectGroup": "Select a property group",
+      "selectGroupPrompt": "Please select a property group to view details",
+      "totalProperties": "Total Properties",
+      "totalRooms": "Total Rooms",
+      "occupancyRate": "Occupancy Rate",
+      "properties": "Properties in this group",
+      "noProperties": "No properties in this group",
+      "addProperties": "Add Properties"
+    },
+    "totalGroups": "Total Groups",
+    "propertiesInGroups": "Properties in Groups",
+    "propertiesWithoutGroup": "Properties without Group",
+    "quickTips": "Quick Tips",
+    "whatAreGroups": "What are Property Groups?",
+    "groupsExplanation": "Property groups help you organize and manage multiple properties together. You can create groups based on location, type, or any other criteria.",
+    "howToUse": "How to Use Groups",
+    "useExplanation": "Create groups, add properties to them, and manage them collectively. This makes it easier to perform batch operations and track performance across related properties.",
+    "deleteWarning": "Warning: This action cannot be undone",
+    "delete": "Delete Group",
+    "editAriaLabel": "Edit group",
+    "deleteAriaLabel": "Delete group",
+    "propertySingular": "property"
+  },
+  "batchOperations": {
+    "title": "Batch Operations",
+    "description": "Perform operations on multiple items at once",
+    "preview": "Preview",
+    "payments": {
+      "title": "Generate Batch Payments",
+      "description": "Generate payments for multiple tenants at once",
+      "configuration": "Payment Configuration",
+      "configurationDescription": "Configure the payment details before generating",
+      "targetSelection": "Target Selection",
+      "selectTarget": "Select Target",
+      "property": "Single Property",
+      "propertyGroup": "Property Group",
+      "allProperties": "All Properties",
+      "selectProperty": "Select Property",
+      "selectPropertyGroup": "Select Property Group",
+      "periodSettings": "Payment Period",
+      "periodStartDate": "Period Start Date",
+      "dueDate": "Due Date",
+      "generateAdvancePayment": "Generate Advance Payment",
+      "numberOfMonths": "Number of Months",
+      "paymentSettings": "Payment Settings",
+      "includeLateFee": "Include Late Fee",
+      "lateFeePercentage": "Late Fee Percentage",
+      "applyBulkAdjustment": "Apply Bulk Adjustment",
+      "adjustmentPercentage": "Adjustment Percentage",
+      "paymentMethod": "Payment Method",
+      "manual": "Manual",
+      "stripe": "Stripe",
+      "bank": "Bank Transfer",
+      "cash": "Cash",
+      "preview": {
+        "title": "Payment Preview",
+        "description": "Review and confirm the payments to be generated",
+        "summary": "Payment Summary",
+        "selected": "{count, plural, =0 {No tenants selected} one {# tenant selected} other {# tenants selected}}",
+        "totalAmount": "Total Amount",
+        "specialArrangement": "Special Payment Arrangement",
+        "lastPayment": "Last Payment: {date}"
+      },
+      "generating": "Generating Payments...",
+      "generate": "Generate Payments",
+      "success": "Successfully generated payments",
+      "error": "Failed to generate payments",
+      "summary": {
+        "title": "Generation Summary",
+        "totalGenerated": "Total Generated",
+        "totalFailed": "Total Failed",
+        "viewErrors": "Failed Payments",
+        "noErrors": "All payments were generated successfully",
+        "viewPayments": "View Payments"
+      }
+    },
+    "billing": {
+      "title": "Bulk Billing Creation",
+      "description": "Generate multiple billings for selected properties or property groups",
+      "comingSoon": "Coming Soon",
+      "settings": {
+        "title": "Billing Settings",
+        "billingType": "Billing Type",
+        "dueDate": "Due Date",
+        "isAdvanceBilling": "Generate Advance Billings",
+        "billingMonths": "Number of Months",
+        "adjustmentPercentage": "Adjustment Percentage"
+      },
+      "preview": {
+        "title": "Preview Selected Tenants",
+        "noTenantsSelected": "No tenants selected",
+        "selectedCount": "{count} tenants selected",
+        "generateBillings": "Generate Billings",
+        "generating": "Generating billings..."
+      },
+      "summary": {
+        "title": "Billing Generation Summary",
+        "totalGenerated": "{count} billings generated successfully",
+        "totalFailed": "{count} billings failed to generate",
+        "viewErrors": "View Errors",
+        "noErrors": "No errors occurred",
+        "viewBillings": "View Generated Billings"
+      }
+    },
+    "maintenance": {
+      "title": "Batch Maintenance Requests",
+      "description": "Handle maintenance requests across multiple properties",
+      "comingSoon": "Coming Soon"
+    },
+    "communication": {
+      "title": "Bulk Tenant Communications",
+      "description": "Send communications to multiple tenants at once",
+      "comingSoon": "Coming Soon"
+    }
   }
 }

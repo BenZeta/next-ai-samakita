@@ -14,7 +14,13 @@
     "creating": "Membuat...",
     "back": "Kembali",
     "next": "Lanjut",
-    "saving": "Menyimpan..."
+    "saving": "Menyimpan...",
+    "target": "Target",
+    "property": "Properti",
+    "propertyGroup": "Grup Properti",
+    "selectProperty": "Pilih properti",
+    "selectPropertyGroup": "Pilih grup properti",
+    "noTenantsFound": "Tidak ada penyewa ditemukan"
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -22,7 +28,9 @@
     "tenants": "Penyewa",
     "expenses": "Pengeluaran",
     "billing": "Tagihan",
-    "settings": "Pengaturan"
+    "settings": "Pengaturan",
+    "propertyGroups": "Grup Properti",
+    "batchOperations": "Operasi Massal"
   },
   "dashboard": {
     "title": "Dasbor",
@@ -645,7 +653,8 @@
       "overdue": "Terlambat",
       "all": "Semua Status",
       "sent": "Terkirim",
-      "draft": "Draft"
+      "draft": "Draft",
+      "markAsPaid": "Tandai Lunas"
     },
     "method": {
       "MANUAL": "Manual",
@@ -659,7 +668,8 @@
       "OTHER": "Lainnya",
       "all": "Semua Jenis",
       "other": "Jenis Lainnya",
-      "MAINTENANCE": "Pemeliharaan"
+      "MAINTENANCE": "Pemeliharaan",
+      "CUSTOM": "Kustom"
     },
     "filters": {
       "property": {
@@ -810,7 +820,172 @@
     "expenses": "Pengeluaran",
     "billing": "Tagihan",
     "settings": "Pengaturan",
-    "signOut": "Keluar",
-    "verifyBusiness": "Verifikasi Bisnis"
+    "propertyGroups": "Grup Properti",
+    "batchOperations": "Operasi Massal",
+    "logout": "Keluar"
+  },
+  "propertyGroups": {
+    "title": "Grup Properti",
+    "subtitle": "Kelola dan atur properti Anda dalam grup",
+    "create": "Buat Grup",
+    "edit": "Edit Grup",
+    "delete": "Hapus Grup",
+    "deleteConfirm": "Apakah Anda yakin ingin menghapus grup ini?",
+    "deleteWarning": "Tindakan ini tidak dapat dibatalkan. Ini akan menghapus grup properti secara permanen dan menghapus semua asosiasi dengan properti.",
+    "noProperties": "Tidak ada properti yang dipilih",
+    "selectProperty": "Pilih properti",
+    "addProperty": "Tambah Properti",
+    "removeProperty": "Hapus Properti",
+    "name": "Nama",
+    "description": "Deskripsi",
+    "properties": "Properti",
+    "cancel": "Batal",
+    "save": "Simpan Perubahan",
+    "createSuccess": "Grup properti berhasil dibuat",
+    "createError": "Gagal membuat grup properti",
+    "updateSuccess": "Grup properti berhasil diperbarui",
+    "updateError": "Gagal memperbarui grup properti",
+    "deleteSuccess": "Grup properti berhasil dihapus",
+    "deleteError": "Gagal menghapus grup properti",
+    "loading": "Memuat...",
+    "back": "Kembali",
+    "dashboard": {
+      "title": "Dasbor Grup Properti",
+      "selectGroup": "Pilih grup properti",
+      "selectGroupPrompt": "Silakan pilih grup properti untuk melihat detailnya",
+      "totalProperties": "Total Properti",
+      "totalRooms": "Total Kamar",
+      "occupancyRate": "Tingkat Hunian",
+      "properties": "Properti",
+      "noProperties": "Tidak ada properti dalam grup ini",
+      "addProperties": "Tambah Properti"
+    },
+    "filters": "Filter",
+    "clearFilters": "Hapus Filter",
+    "filterByGroup": "Filter berdasarkan Grup Properti",
+    "selectGroup": "Pilih grup",
+    "allGroups": "Semua Grup",
+    "namePlaceholder": "Masukkan nama grup",
+    "descriptionPlaceholder": "Masukkan deskripsi grup (opsional)",
+    "availableProperties": "Properti yang Tersedia:",
+    "selectedProperties": "Properti yang Dipilih:",
+    "noPropertiesAvailable": "Tidak ada properti yang tersedia",
+    "allPropertiesSelected": "Semua properti telah dipilih",
+    "createPropertiesFirst": "Anda perlu membuat properti sebelum dapat menambahkannya ke grup.",
+    "createProperty": "Buat properti",
+    "availablePropertiesCount": "{count} properti tersedia untuk ditambahkan ke grup",
+    "editDescription": "Edit detail grup properti Anda.",
+    "createDescription": "Buat grup properti baru untuk mengatur properti Anda.",
+    "editAriaLabel": "Edit grup properti",
+    "deleteAriaLabel": "Hapus grup properti",
+    "propertySingular": "properti",
+    "propertyPlural": "properti",
+    "unknownProperty": "Properti tidak dikenal ({id})",
+    "errorLoadingProperties": "Gagal memuat properti",
+    "errorLoadingGroups": "Gagal memuat grup",
+    "statistics": "Statistik",
+    "statisticsDescription": "Ikhtisar grup properti Anda",
+    "totalGroups": "Total Grup",
+    "propertiesInGroups": "Properti dalam Grup",
+    "propertiesWithoutGroup": "Properti tanpa Grup",
+    "quickTips": "Tips Cepat",
+    "whatAreGroups": "Apa itu grup properti?",
+    "groupsExplanation": "Grup properti membantu Anda mengatur properti berdasarkan lokasi, tipe, atau kriteria lain yang sesuai untuk bisnis Anda.",
+    "howToUse": "Bagaimana cara menggunakan grup properti?",
+    "useExplanation": "Buat grup, tambahkan properti ke dalamnya, dan gunakan dasbor untuk melihat statistik dan mengelola properti dalam setiap grup.",
+    "noGroupsYet": "Belum ada grup properti",
+    "createGroupDescription": "Buat grup properti untuk mengatur properti Anda dan mengelolanya dengan lebih efisien."
+  },
+  "batchOperations": {
+    "title": "Operasi Massal",
+    "description": "Lakukan operasi pada beberapa item sekaligus",
+    "preview": "Pratinjau",
+    "payments": {
+      "title": "Buat Pembayaran Massal",
+      "description": "Buat pembayaran untuk beberapa penyewa sekaligus",
+      "configuration": "Konfigurasi Pembayaran",
+      "configurationDescription": "Atur detail pembayaran sebelum membuat",
+      "targetSelection": "Pilih Target",
+      "selectTarget": "Pilih Target",
+      "property": "Properti Tunggal",
+      "propertyGroup": "Grup Properti",
+      "allProperties": "Semua Properti",
+      "selectProperty": "Pilih Properti",
+      "selectPropertyGroup": "Pilih Grup Properti",
+      "periodSettings": "Periode Pembayaran",
+      "periodStartDate": "Tanggal Mulai Periode",
+      "dueDate": "Tanggal Jatuh Tempo",
+      "generateAdvancePayment": "Buat Pembayaran di Muka",
+      "numberOfMonths": "Jumlah Bulan",
+      "paymentSettings": "Pengaturan Pembayaran",
+      "includeLateFee": "Tambahkan Denda Keterlambatan",
+      "lateFeePercentage": "Persentase Denda",
+      "applyBulkAdjustment": "Terapkan Penyesuaian Massal",
+      "adjustmentPercentage": "Persentase Penyesuaian",
+      "paymentMethod": "Metode Pembayaran",
+      "manual": "Manual",
+      "stripe": "Stripe",
+      "bank": "Transfer Bank",
+      "cash": "Tunai",
+      "preview": {
+        "title": "Pratinjau Pembayaran",
+        "description": "Tinjau dan konfirmasi pembayaran yang akan dibuat",
+        "summary": "Ringkasan",
+        "selected": "{count, plural, =0 {Tidak ada penyewa dipilih} one {# penyewa dipilih} other {# penyewa dipilih}}",
+        "totalAmount": "Total Jumlah",
+        "specialArrangement": "Pengaturan Khusus",
+        "lastPayment": "Pembayaran terakhir: {date}"
+      },
+      "generating": "Membuat Pembayaran...",
+      "generate": "Buat Pembayaran",
+      "success": "Berhasil membuat pembayaran",
+      "error": "Gagal membuat pembayaran",
+      "summary": {
+        "title": "Ringkasan Pembuatan",
+        "totalGenerated": "Total Dibuat",
+        "totalFailed": "Total Gagal",
+        "viewErrors": "Pembayaran Gagal",
+        "noErrors": "Semua pembayaran berhasil dibuat",
+        "viewPayments": "Lihat Pembayaran"
+      }
+    },
+    "billing": {
+      "title": "Pembuatan Tagihan Massal",
+      "description": "Buat beberapa tagihan untuk properti atau grup properti yang dipilih",
+      "comingSoon": "Segera Hadir",
+      "settings": {
+        "title": "Pengaturan Tagihan",
+        "billingType": "Jenis Tagihan",
+        "dueDate": "Tanggal Jatuh Tempo",
+        "isAdvanceBilling": "Buat Tagihan di Muka",
+        "billingMonths": "Jumlah Bulan",
+        "adjustmentPercentage": "Persentase Penyesuaian"
+      },
+      "preview": {
+        "title": "Pratinjau Penyewa Terpilih",
+        "noTenantsSelected": "Tidak ada penyewa yang dipilih",
+        "selectedCount": "{count} penyewa dipilih",
+        "generateBillings": "Buat Tagihan",
+        "generating": "Membuat tagihan..."
+      },
+      "summary": {
+        "title": "Ringkasan Pembuatan Tagihan",
+        "totalGenerated": "{count} tagihan berhasil dibuat",
+        "totalFailed": "{count} tagihan gagal dibuat",
+        "viewErrors": "Lihat Error",
+        "noErrors": "Tidak ada error",
+        "viewBillings": "Lihat Tagihan yang Dibuat"
+      }
+    },
+    "maintenance": {
+      "title": "Permintaan Pemeliharaan Massal",
+      "description": "Tangani permintaan pemeliharaan di beberapa properti",
+      "comingSoon": "Segera Hadir"
+    },
+    "communication": {
+      "title": "Komunikasi Penyewa Massal",
+      "description": "Kirim komunikasi ke beberapa penyewa sekaligus",
+      "comingSoon": "Segera Hadir"
+    }
   }
 }

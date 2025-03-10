@@ -9,26 +9,27 @@ datasource db {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String?
-  email          String?       @unique
-  emailVerified  DateTime?
-  image          String?
-  hashedPassword String?
-  phone          String?
-  address        String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  login          String?
-  role           UserRole      @default(user)
-  isAdmin        Boolean       @default(false)
-  ktpFile        String?
-  accounts       Account[]
-  properties     Property[]
-  sessions       Session[]
-  transactions   Transaction[]
-  expenses       Expense[]
+  id              String           @id @default(cuid())
+  name            String?
+  email           String?          @unique
+  emailVerified   DateTime?
+  image           String?
+  hashedPassword  String?
+  phone           String?
+  address         String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  login           String?
+  role            UserRole         @default(user)
+  isAdmin         Boolean          @default(false)
+  ktpFile         String?
+  accounts        Account[]
   businessProfile BusinessProfile?
+  expenses        Expense[]
+  properties      Property[]
+  propertyGroups  PropertyGroup[]
+  sessions        Session[]
+  transactions    Transaction[]
 }
 
 model Account {
@@ -72,20 +73,33 @@ model VerificationToken {
 }
 
 model BusinessProfile {
-  id                String   @id @default(cuid())
-  userId           String   @unique
-  name             String
-  type             String
-  taxId            String?
-  phoneNumber      String
-  address          String
-  businessLicense  String?
-  taxDocument      String?
-  propertyDocument String?
-  verificationStatus String @default("PENDING")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  name               String
+  type               String
+  taxId              String?
+  phoneNumber        String
+  address            String
+  businessLicense    String?
+  taxDocument        String?
+  propertyDocument   String?
+  verificationStatus String   @default("PENDING")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PropertyGroup {
+  id          String     @id @default(cuid())
+  name        String
+  description String     @default("")
+  userId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  properties  Property[]
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Property {
@@ -102,15 +116,20 @@ model Property {
   city                String?
   postalCode          String?
   province            String?
-  dueDate             Int                  @default(5)
+  customPaymentDays   Int[]                @default([])
+  paymentFrequency    PaymentFrequency     @default(MONTHLY)
+  propertyGroupId     String?
+  dueDateOffset       Int                  @default(5)
   expenses            Expense[]
   maintenanceRequests MaintenanceRequest[]
   payments            Payment[]
+  propertyGroup       PropertyGroup?       @relation(fields: [propertyGroupId], references: [id])
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   rooms               Room[]
   transactions        Transaction[]
 
   @@index([userId])
+  @@index([propertyGroupId])
 }
 
 model Room {
@@ -151,12 +170,12 @@ model Tenant {
   contractFile    String?
   depositAmount   Float?
   rentAmount      Float?
+  billings        Billing[]
   checkInItems    CheckInItem[]
   leases          Lease[]
   payments        Payment[]
   serviceRequests ServiceRequest[]
   room            Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  billings        Billing[]
 
   @@index([roomId])
   @@index([status])
@@ -186,52 +205,56 @@ model ServiceRequest {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  amount          Float
-  type            PaymentType
-  status          PaymentStatus @default(PENDING)
-  method          PaymentMethod @default(MANUAL)
-  dueDate         DateTime
-  paidAt          DateTime?
-  description     String?
-  notes           String?
-  proofOfPayment  String?
-  isRefunded      Boolean       @default(false)
-  stripePaymentId String?
+  id                 String        @id @default(cuid())
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  amount             Float
+  type               PaymentType
+  status             PaymentStatus @default(PENDING)
+  method             PaymentMethod @default(MANUAL)
+  dueDate            DateTime
+  paidAt             DateTime?
+  description        String?
+  notes              String?
+  proofOfPayment     String?
+  isRefunded         Boolean       @default(false)
+  stripePaymentId    String?
   stripeClientSecret String?
-  stripeCustomerId String?
-  tenantId        String
-  propertyId      String
-  billingId       String?
-  tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  property        Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  billing         Billing?      @relation(fields: [billingId], references: [id])
+  stripeCustomerId   String?
+  tenantId           String
+  propertyId         String
+  billingId          String?
+  billingCycleEnd    DateTime?
+  billingCycleStart  DateTime?
+  billing            Billing?      @relation(fields: [billingId], references: [id])
+  property           Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant             Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([propertyId])
   @@index([status])
   @@index([dueDate])
+  @@index([billingCycleStart])
+  @@index([billingCycleEnd])
 }
 
 model Expense {
-  id          String          @id @default(cuid())
-  userId      String
-  propertyId  String?
-  category    ExpenseCategory
-  amount      Float
-  date        DateTime
-  description String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  receipt     String?
-  property    Property?       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isRecurring Boolean        @default(false)
-  recurringInterval String?   // 'MONTHLY', 'QUARTERLY', 'YEARLY'
-  nextDueDate DateTime?
+  id                String          @id @default(cuid())
+  propertyId        String?
+  category          ExpenseCategory
+  amount            Float
+  date              DateTime
+  description       String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  receipt           String?
+  userId            String
+  isRecurring       Boolean         @default(false)
   lastProcessedDate DateTime?
+  nextDueDate       DateTime?
+  recurringInterval String?
+  property          Property?       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([propertyId])
@@ -258,15 +281,19 @@ model MaintenanceRequest {
 }
 
 model Lease {
-  id         String   @id @default(cuid())
-  startDate  DateTime
-  endDate    DateTime
-  rentAmount Float
-  deposit    Float
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id                String           @id @default(cuid())
+  startDate         DateTime
+  endDate           DateTime
+  rentAmount        Float
+  deposit           Float
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  tenantId          String
+  billingCycleEnd   DateTime?
+  billingCycleStart DateTime
+  nextBillingDate   DateTime
+  paymentFrequency  PaymentFrequency @default(MONTHLY)
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
@@ -289,10 +316,10 @@ model Billing {
   amount      Float
   dueDate     DateTime
   status      BillingStatus @default(DRAFT)
-  type        PaymentType   @default(RENT)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   tenantId    String?
+  type        PaymentType   @default(RENT)
   tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payments    Payment[]
 }
@@ -305,12 +332,16 @@ enum UserRole {
 enum PaymentMethod {
   MANUAL
   STRIPE
+  BANK_TRANSFER
+  CASH
+  OTHER
 }
 
 enum RoomStatus {
   AVAILABLE
   OCCUPIED
   MAINTENANCE
+  RESERVED
 }
 
 enum RoomType {
@@ -318,11 +349,14 @@ enum RoomType {
   DELUXE
   SUITE
   STUDIO
+  CUSTOM
 }
 
 enum TenantStatus {
   ACTIVE
   INACTIVE
+  BLACKLISTED
+  PENDING
 }
 
 enum ServiceRequestStatus {
@@ -338,6 +372,7 @@ enum PaymentType {
   UTILITY
   MAINTENANCE
   OTHER
+  CUSTOM
 }
 
 enum PaymentStatus {
@@ -347,10 +382,10 @@ enum PaymentStatus {
   CANCELLED
   FAILED
   REFUNDED
+  PARTIAL
 }
 
 enum ExpenseCategory {
-  // Operational Expenses
   SALARY
   STAFF_BENEFITS
   STAFF_TRAINING
@@ -369,8 +404,6 @@ enum ExpenseCategory {
   LICENSE_PERMIT
   SECURITY
   WASTE_MANAGEMENT
-
-  // Non-Operational Expenses
   RENOVATION
   FURNITURE
   EQUIPMENT
@@ -378,8 +411,6 @@ enum ExpenseCategory {
   LEGAL
   CONSULTING
   MISC_NON_OPERATIONAL
-
-  // Legacy - will be removed after migration
   OTHER
 }
 
@@ -387,12 +418,15 @@ enum MaintenanceStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+  CANCELLED
+  SCHEDULED
 }
 
 enum MaintenancePriority {
   LOW
   MEDIUM
   HIGH
+  EMERGENCY
 }
 
 enum TransactionStatus {
@@ -404,4 +438,22 @@ enum TransactionStatus {
 enum BillingStatus {
   DRAFT
   SENT
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  BIANNUALLY
+  ANNUALLY
+  CUSTOM
+  BI_WEEKLY
+  SEMI_ANNUAL
+  ANNUAL
 }

@@ -10,6 +10,7 @@ import { cancelPaymentIntent, createPaymentIntent, retrievePaymentIntent } from 
 import { sendPaymentReminder } from '@/lib/whatsapp';
 import {
   BillingStatus,
+  PaymentFrequency,
   PaymentMethod,
   PaymentStatus,
   PaymentType,
@@ -17,6 +18,7 @@ import {
   TenantStatus,
 } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
+import { format } from 'date-fns';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -40,6 +42,15 @@ const billingSchema = z.object({
 });
 
 const notificationMethodSchema = z.enum(['email', 'whatsapp']);
+
+const billingTypeTranslations = {
+  RENT: 'Rent',
+  DEPOSIT: 'Deposit',
+  UTILITY: 'Utility',
+  MAINTENANCE: 'Maintenance',
+  OTHER: 'Other',
+  CUSTOM: 'Custom',
+} as const;
 
 export const billingRouter = createTRPCRouter({
   createPayment: protectedProcedure.input(paymentSchema).mutation(async ({ input, ctx }) => {
@@ -916,6 +927,7 @@ export const billingRouter = createTRPCRouter({
             },
           },
         },
+        payments: true,
       },
     });
 
@@ -937,6 +949,14 @@ export const billingRouter = createTRPCRouter({
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'Billing has already been sent',
+      });
+    }
+
+    // Check if payment already exists for this billing
+    if (billing.payments.length > 0) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Payment already exists for this billing',
       });
     }
 
@@ -1133,4 +1153,444 @@ export const billingRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  // Commented out until Contract model is implemented
+  /*
+  generateFromContract: protectedProcedure
+    .input(
+      z.object({
+        contractId: z.string(),
+        count: z.number().min(1).max(12).default(1),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        // Get the contract and payment schedules
+        const contract = await db.contract.findUnique({
+          where: { id: input.contractId },
+          include: {
+            property: true,
+            tenant: true,
+            paymentSchedules: {
+              orderBy: { nextDueDate: 'asc' },
+            },
+          },
+        });
+
+        if (!contract) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Contract not found',
+          });
+        }
+
+        // Check if the user has permission
+        if (contract.property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to generate billings for this contract',
+          });
+        }
+
+        // Check if there are payment schedules
+        if (contract.paymentSchedules.length === 0) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'No payment schedules found for this contract',
+          });
+        }
+
+        const schedule = contract.paymentSchedules[0];
+
+        // Check if there are enough remaining payments
+        if (schedule.remainingPayments < input.count) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Cannot generate ${input.count} billings. Only ${schedule.remainingPayments} payments remaining.`,
+          });
+        }
+
+        // Generate the billings
+        const billings = [];
+        let currentDueDate = new Date(schedule.nextDueDate);
+
+        for (let i = 0; i < input.count; i++) {
+          const billing = await db.billing.create({
+            data: {
+              title: `Rent for ${currentDueDate.toLocaleDateString()}`,
+              description: `Scheduled rent payment for ${contract.tenant.name}`,
+              amount: schedule.amount,
+              dueDate: currentDueDate,
+              status: 'DRAFT',
+              type: 'RENT',
+              tenantId: contract.tenantId,
+              contractId: contract.id,
+            },
+          });
+
+          billings.push(billing);
+
+          // Calculate the next due date
+          currentDueDate = calculateNextDueDate(currentDueDate, schedule.frequency);
+        }
+
+        // Update the payment schedule
+        await db.paymentSchedule.update({
+          where: { id: schedule.id },
+          data: {
+            nextDueDate: currentDueDate,
+          },
+        });
+
+        return billings;
+      } catch (error) {
+        console.error('Billing generation error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate billings',
+          cause: error,
+        });
+      }
+    }),
+  */
+
+  // Commented out until Contract model is implemented
+  /*
+  getByContract: protectedProcedure
+    .input(
+      z.object({
+        contractId: z.string(),
+        status: z.nativeEnum(BillingStatus).optional(),
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(10),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      try {
+        const { contractId, status, page, limit } = input;
+        const skip = (page - 1) * limit;
+
+        // Check if the contract exists and belongs to the user
+        const contract = await db.contract.findUnique({
+          where: { id: contractId },
+          include: { property: true },
+        });
+
+        if (!contract) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Contract not found',
+          });
+        }
+
+        if (contract.property.userId !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'You do not have permission to view billings for this contract',
+          });
+        }
+
+        // Build the where clause
+        const where = {
+          contractId,
+          ...(status ? { status } : {}),
+        };
+
+        // Get billings and total count
+        const [billings, total] = await Promise.all([
+          db.billing.findMany({
+            where,
+            include: {
+              tenant: true,
+              payments: true,
+            },
+            orderBy: { dueDate: 'desc' },
+            skip,
+            take: limit,
+          }),
+          db.billing.count({ where }),
+        ]);
+
+        return {
+          billings,
+          pagination: {
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+          },
+        };
+      } catch (error) {
+        console.error('Contract billings fetch error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch contract billings',
+          cause: error,
+        });
+      }
+    }),
+  */
+
+  getPreviewTenants: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { propertyId, propertyGroupId } = input;
+
+      const where = {
+        status: TenantStatus.ACTIVE,
+        room: {
+          property: propertyId
+            ? { id: propertyId, userId: ctx.session.user.id }
+            : propertyGroupId
+              ? { propertyGroupId, userId: ctx.session.user.id }
+              : { userId: ctx.session.user.id },
+        },
+      };
+
+      const tenants = await db.tenant.findMany({
+        where,
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+          payments: {
+            take: 1,
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+        orderBy: {
+          room: {
+            property: {
+              name: 'asc',
+            },
+          },
+        },
+      });
+
+      return tenants;
+    }),
+
+  generateBulk: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
+        billingType: z.nativeEnum(PaymentType),
+        dueDate: z.date(),
+        selectedTenantIds: z.array(z.string()),
+        isAdvanceBilling: z.boolean(),
+        billingMonths: z.number().min(1).max(12),
+        adjustmentPercentage: z.number().min(-100).max(100),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const {
+        propertyId,
+        propertyGroupId,
+        billingType,
+        dueDate,
+        selectedTenantIds,
+        isAdvanceBilling,
+        billingMonths,
+        adjustmentPercentage,
+      } = input;
+
+      // Get selected tenants
+      const tenants = await db.tenant.findMany({
+        where: {
+          id: { in: selectedTenantIds },
+          status: TenantStatus.ACTIVE,
+          room: {
+            property: propertyId
+              ? { id: propertyId, userId: ctx.session.user.id }
+              : propertyGroupId
+                ? { propertyGroupId, userId: ctx.session.user.id }
+                : { userId: ctx.session.user.id },
+          },
+        },
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+        },
+      });
+
+      if (tenants.length === 0) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No active tenants found',
+        });
+      }
+
+      const errors: Array<{
+        tenantId: string;
+        tenantName: string;
+        error: string;
+      }> = [];
+      const billings: Array<any> = [];
+
+      // Generate billings for each tenant
+      for (const tenant of tenants) {
+        try {
+          const baseAmount = tenant.rentAmount || tenant.room.price;
+          const adjustedAmount = baseAmount + (baseAmount * adjustmentPercentage) / 100;
+
+          // Generate billings for each month if advance billing
+          const monthsToGenerate = isAdvanceBilling ? billingMonths : 1;
+          for (let i = 0; i < monthsToGenerate; i++) {
+            const currentDueDate = new Date(dueDate);
+            currentDueDate.setMonth(currentDueDate.getMonth() + i);
+
+            const billing = await db.billing.create({
+              data: {
+                title: `${billingTypeTranslations[billingType]} - ${format(
+                  currentDueDate,
+                  'MMMM yyyy'
+                )}`,
+                description: `${billingTypeTranslations[billingType]} for Room ${
+                  tenant.room.number
+                } at ${tenant.room.property.name}`,
+                amount: adjustedAmount,
+                dueDate: currentDueDate,
+                type: billingType,
+                status: BillingStatus.DRAFT,
+                tenantId: tenant.id,
+              },
+            });
+
+            billings.push(billing);
+          }
+        } catch (error) {
+          console.error(`Failed to generate billing for tenant ${tenant.name}:`, error);
+          errors.push({
+            tenantId: tenant.id,
+            tenantName: tenant.name,
+            error: error instanceof Error ? error.message : 'Failed to generate billing',
+          });
+        }
+      }
+
+      return {
+        billings,
+        errors,
+        totalGenerated: billings.length,
+        totalFailed: errors.length,
+      };
+    }),
+
+  markAsPaid: protectedProcedure
+    .input(
+      z.object({
+        billingId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const billing = await db.billing.findFirst({
+        where: {
+          id: input.billingId,
+          tenant: {
+            room: {
+              property: {
+                userId: ctx.session.user.id,
+              },
+            },
+          },
+        },
+        include: {
+          tenant: {
+            include: {
+              room: {
+                include: {
+                  property: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!billing || !billing.tenant || !billing.tenantId) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Billing not found',
+        });
+      }
+
+      // Create payment data
+      const paymentData: Prisma.PaymentCreateInput = {
+        amount: billing.amount,
+        type: billing.type,
+        method: PaymentMethod.MANUAL,
+        status: PaymentStatus.PAID,
+        dueDate: billing.dueDate,
+        billing: { connect: { id: billing.id } },
+        tenant: { connect: { id: billing.tenantId } },
+        property: { connect: { id: billing.tenant.room.propertyId } },
+        paidAt: new Date(),
+      };
+
+      // Add description only if it exists
+      if (billing.description) {
+        paymentData.description = billing.description;
+      }
+
+      // Create a payment record for this billing
+      const payment = await db.payment.create({
+        data: paymentData,
+      });
+
+      // Update billing status
+      await db.billing.update({
+        where: { id: input.billingId },
+        data: {
+          status: BillingStatus.PAID,
+        },
+      });
+
+      return { success: true, payment };
+    }),
 });
+
+// Helper function to calculate the next due date based on frequency
+function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): Date {
+  const nextDate = new Date(currentDate);
+
+  switch (frequency) {
+    case PaymentFrequency.DAILY:
+      nextDate.setDate(nextDate.getDate() + 1);
+      break;
+    case PaymentFrequency.WEEKLY:
+      nextDate.setDate(nextDate.getDate() + 7);
+      break;
+    case PaymentFrequency.BI_WEEKLY:
+      nextDate.setDate(nextDate.getDate() + 14);
+      break;
+    case PaymentFrequency.MONTHLY:
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      break;
+    case PaymentFrequency.QUARTERLY:
+      nextDate.setMonth(nextDate.getMonth() + 3);
+      break;
+    case PaymentFrequency.SEMI_ANNUAL:
+      nextDate.setMonth(nextDate.getMonth() + 6);
+      break;
+    case PaymentFrequency.ANNUAL:
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      break;
+    default:
+      nextDate.setMonth(nextDate.getMonth() + 1); // Default to monthly
+  }
+
+  return nextDate;
+}
