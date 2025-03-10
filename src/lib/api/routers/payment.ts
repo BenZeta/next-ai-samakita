@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
-import { generateBatchPayments } from '@/lib/utils/payment-generation';
-import { PaymentMethod, PaymentStatus, PaymentType, Prisma } from '@prisma/client';
+import { PaymentMethod, PaymentStatus, PaymentType, Prisma, TenantStatus } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
+import { format } from 'date-fns';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
@@ -375,15 +375,141 @@ export const paymentRouter = createTRPCRouter({
   generateBatch: protectedProcedure
     .input(
       z.object({
-        propertyGroupId: z.string().optional(),
         propertyId: z.string().optional(),
+        propertyGroupId: z.string().optional(),
         paymentMethod: z.nativeEnum(PaymentMethod),
+        periodStartDate: z.date(),
+        dueDate: z.date(),
+        selectedTenantIds: z.array(z.string()),
+        isAdvancePayment: z.boolean(),
+        generateForMonths: z.number().min(1).max(12),
+        includeLateFee: z.boolean(),
+        lateFeePercentage: z.number().min(0).max(100),
+        adjustmentPercentage: z.number().min(-100).max(100),
       })
     )
-    .mutation(async ({ input, ctx }) => {
-      return generateBatchPayments({
-        ...input,
-        userId: ctx.session.user.id,
+    .mutation(async ({ ctx, input }) => {
+      const {
+        propertyId,
+        propertyGroupId,
+        paymentMethod,
+        periodStartDate,
+        dueDate,
+        selectedTenantIds,
+        isAdvancePayment,
+        generateForMonths,
+        includeLateFee,
+        lateFeePercentage,
+        adjustmentPercentage,
+      } = input;
+
+      // Get tenants based on selection criteria
+      const where: Prisma.TenantWhereInput = {
+        AND: [
+          selectedTenantIds.length > 0 ? { id: { in: selectedTenantIds } } : undefined,
+          propertyId
+            ? { room: { propertyId } }
+            : propertyGroupId
+              ? {
+                  room: {
+                    property: {
+                      propertyGroup: {
+                        id: propertyGroupId,
+                      },
+                    },
+                  },
+                }
+              : undefined,
+          { status: TenantStatus.ACTIVE },
+        ].filter((condition): condition is NonNullable<typeof condition> => Boolean(condition)),
+      };
+
+      const tenants = await ctx.db.tenant.findMany({
+        where,
+        include: {
+          room: {
+            include: {
+              property: true,
+            },
+          },
+          payments: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
+          },
+        },
       });
+
+      const payments: Array<Prisma.PaymentGetPayload<{}>> = [];
+      const errors: Array<{
+        tenantId: string;
+        tenantName: string;
+        error: string;
+      }> = [];
+
+      // Generate payments for each tenant
+      for (const tenant of tenants) {
+        try {
+          const baseAmount = tenant.rentAmount || tenant.room.price;
+          let adjustedAmount = baseAmount;
+
+          // Apply late fee if enabled
+          if (includeLateFee) {
+            const lateFeeAmount = (baseAmount * lateFeePercentage) / 100;
+            adjustedAmount += lateFeeAmount;
+          }
+
+          // Apply bulk adjustment if any
+          if (adjustmentPercentage !== 0) {
+            const adjustmentAmount = (adjustedAmount * adjustmentPercentage) / 100;
+            adjustedAmount += adjustmentAmount;
+          }
+
+          // Generate payments for multiple months if advance payment
+          const monthsToGenerate = isAdvancePayment ? generateForMonths : 1;
+          for (let i = 0; i < monthsToGenerate; i++) {
+            const periodStart = new Date(periodStartDate);
+            periodStart.setMonth(periodStart.getMonth() + i);
+
+            const periodEnd = new Date(periodStart);
+            periodEnd.setMonth(periodEnd.getMonth() + 1);
+            periodEnd.setDate(periodEnd.getDate() - 1);
+
+            const payment = await ctx.db.payment.create({
+              data: {
+                amount: adjustedAmount,
+                type: PaymentType.RENT,
+                method: paymentMethod,
+                status: PaymentStatus.PENDING,
+                dueDate: new Date(dueDate),
+                billingCycleStart: periodStart,
+                billingCycleEnd: periodEnd,
+                tenantId: tenant.id,
+                propertyId: tenant.room.propertyId,
+                description: `Rent payment for ${tenant.room.property.name} - Room ${
+                  tenant.room.number
+                } (${format(periodStart, 'MMM yyyy')})`,
+              },
+            });
+
+            payments.push(payment);
+          }
+        } catch (error) {
+          console.error(`Failed to generate payment for tenant ${tenant.id}:`, error);
+          errors.push({
+            tenantId: tenant.id,
+            tenantName: tenant.name,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+
+      return {
+        payments,
+        errors,
+        totalGenerated: payments.length,
+        totalFailed: errors.length,
+      };
     }),
 });
