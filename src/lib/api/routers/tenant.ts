@@ -5,6 +5,7 @@ import { createPaymentIntent } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { generatePayment } from '@/lib/utils/payment-generation';
 import {
+  PaymentFrequency,
   PaymentMethod,
   PaymentStatus,
   PaymentType,
@@ -71,10 +72,21 @@ export const tenantRouter = createTRPCRouter({
         endDate: z.string().min(1, 'End date is required'),
         references: z.array(z.string()).optional(),
         roomId: z.string().min(1, 'Room ID is required'),
+        leaseDuration: z.number().optional(),
+        paymentFrequency: z.nativeEnum(PaymentFrequency).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { roomId, startDate, endDate, rentAmount, depositAmount, ...tenantData } = input;
+      const {
+        roomId,
+        startDate,
+        endDate,
+        rentAmount,
+        depositAmount,
+        leaseDuration,
+        paymentFrequency,
+        ...tenantData
+      } = input;
 
       // Get room details and verify ownership
       const room = await db.room.findUnique({
@@ -90,6 +102,7 @@ export const tenantRouter = createTRPCRouter({
               customPaymentDays: true,
             },
           },
+          priceTiers: true, // Include price tiers to validate the price
         },
       });
 
@@ -107,11 +120,73 @@ export const tenantRouter = createTRPCRouter({
         });
       }
 
-      // Verify that the provided rent amount matches the room price
-      if (rentAmount !== room.price) {
+      // Validate that the room is actually available
+      if (room.status !== 'AVAILABLE') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'Rent amount must match the room price',
+          message: 'This room is not available for new tenants',
+        });
+      }
+
+      // Check for any active tenants assigned to this room
+      const existingActiveTenants = await db.tenant.findFirst({
+        where: {
+          roomId: roomId,
+          status: 'ACTIVE',
+          endDate: {
+            gte: new Date(),
+          },
+        },
+      });
+
+      if (existingActiveTenants) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This room already has an active tenant assigned to it',
+        });
+      }
+
+      // Validate rent amount based on price tiers if available
+      let isValidRentAmount = false;
+
+      // Get the payment frequency to use for validation
+      const effectivePaymentFrequency = paymentFrequency || room.property.paymentFrequency;
+
+      if (room.priceTiers && room.priceTiers.length > 0 && leaseDuration) {
+        // Use the price tier calculation functions
+        const { findAppropriateRoomPriceTier, calculatePriceWithFrequency } = await import(
+          '@/lib/utils/price-tier-calculations'
+        );
+
+        // Find the appropriate price tier
+        const priceTier = findAppropriateRoomPriceTier(room.priceTiers, leaseDuration);
+
+        if (priceTier) {
+          // Calculate the expected price with the payment frequency adjustment
+          const expectedPrice = calculatePriceWithFrequency(
+            priceTier,
+            effectivePaymentFrequency,
+            leaseDuration
+          );
+
+          // Allow for a small difference due to rounding (0.5%)
+          const tolerance = expectedPrice * 0.005;
+          isValidRentAmount = Math.abs(rentAmount - expectedPrice) <= tolerance;
+        }
+      } else {
+        // If no tiers or no lease duration provided, adjust the base room price for frequency
+        const { adjustAmountForFrequency } = await import('@/lib/utils/payment-calculations');
+        const expectedPrice = adjustAmountForFrequency(room.price, effectivePaymentFrequency);
+
+        // Allow for a small difference due to rounding (0.5%)
+        const tolerance = expectedPrice * 0.005;
+        isValidRentAmount = Math.abs(rentAmount - expectedPrice) <= tolerance;
+      }
+
+      if (!isValidRentAmount) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Rent amount does not match the appropriate price for the lease duration',
         });
       }
 
@@ -138,15 +213,51 @@ export const tenantRouter = createTRPCRouter({
           room.property.dueDateOffset
         );
 
-        // Create initial rent payment with next month's due date
-        await tx.payment.create({
+        // Create lease with payment frequency
+        await tx.lease.create({
           data: {
             tenantId: tenant.id,
-            propertyId: room.property.id,
+            startDate: new Date(startDate),
+            endDate: new Date(endDate),
+            rentAmount,
+            deposit: depositAmount,
+            paymentFrequency: paymentFrequency || room.property.paymentFrequency,
+            billingCycleStart: new Date(startDate),
+            nextBillingDate: firstRentDueDate,
+          },
+        });
+
+        // Import the payment generation function
+        const { generateLeasePayments } = await import('@/lib/utils/payment-generation');
+
+        // Generate all payments for the lease period
+        await generateLeasePayments({
+          tenant: {
+            id: tenant.id,
+            name: tenantData.name,
+            email: tenantData.email,
+          },
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+          rentAmount,
+          paymentFrequency: paymentFrequency || room.property.paymentFrequency,
+          propertyId: room.property.id,
+          firstPaymentPaid: true, // Mark the first payment as paid
+          customPaymentDays: room.property.customPaymentDays,
+          dueDateOffset: room.property.dueDateOffset,
+          transaction: tx, // Pass the transaction object
+        });
+
+        // Create an initial billing record with PAID status for the first payment
+        await tx.billing.create({
+          data: {
+            title: `Initial rent payment - ${room.property.name}`,
+            description: `First payment for lease starting on ${new Date(startDate).toLocaleDateString()}`,
             amount: rentAmount,
+            dueDate: new Date(), // Due immediately (today)
+            status: 'PAID', // Mark as paid ("lunas")
             type: 'RENT',
-            status: 'PENDING',
-            dueDate: firstRentDueDate,
+            tenantId: tenant.id,
           },
         });
 
@@ -218,6 +329,12 @@ export const tenantRouter = createTRPCRouter({
             include: {
               property: true,
             },
+          },
+          leases: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+            take: 1,
           },
         },
         orderBy: {

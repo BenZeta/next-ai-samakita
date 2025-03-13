@@ -1,26 +1,29 @@
 {
   "common": {
     "loading": "Memuat...",
-    "noData": "Data tidak tersedia",
+    "noData": "Tidak ada data tersedia",
     "error": "Terjadi kesalahan",
     "save": "Simpan",
     "cancel": "Batal",
     "delete": "Hapus",
-    "edit": "Ubah",
+    "edit": "Edit",
     "add": "Tambah",
     "search": "Cari",
     "filter": "Filter",
-    "actions": "Aksi",
+    "actions": "Tindakan",
     "creating": "Membuat...",
     "back": "Kembali",
-    "next": "Lanjut",
+    "next": "Selanjutnya",
     "saving": "Menyimpan...",
     "target": "Target",
     "property": "Properti",
     "propertyGroup": "Grup Properti",
     "selectProperty": "Pilih properti",
     "selectPropertyGroup": "Pilih grup properti",
-    "noTenantsFound": "Tidak ada penyewa ditemukan"
+    "noTenantsFound": "Tidak ada penyewa ditemukan",
+    "month": "bulan",
+    "months": "bulan",
+    "syncing": "Menyinkronkan..."
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -34,35 +37,73 @@
   },
   "dashboard": {
     "title": "Dasbor",
-    "subtitle": "Pantau kinerja dan okupansi properti Anda secara real-time",
-    "occupancyRate": "Tingkat Okupansi",
-    "monthlyTrend": "Tren Bulanan",
-    "maintenanceTracker": "Pelacak Pemeliharaan",
-    "tenantOverview": "Ikhtisar Penyewa",
-    "businessNotVerified": "Bisnis Anda belum diverifikasi",
-    "completeVerification": "Silakan lengkapi verifikasi bisnis untuk mengakses semua fitur",
-    "loadDataError": "Gagal memuat data properti",
-    "refreshPage": "Silakan coba muat ulang halaman",
-    "noOccupancyData": "Tidak ada data okupansi",
-    "currentRate": "Tingkat Saat Ini",
+    "subtitle": "Gambaran metrik dan tren properti Anda",
+    "allProperties": "Semua Properti",
+    "businessNotVerified": "Verifikasi bisnis Anda sedang tertunda",
+    "completeVerification": "Harap selesaikan proses verifikasi untuk membuka semua fitur",
+    "loadDataError": "Gagal memuat data dasbor",
+    "refreshPage": "Silakan segarkan halaman dan coba lagi",
+    "currentRate": "Tingkat Hunian Saat Ini",
     "timeRange": {
       "thisWeek": "Minggu Ini",
       "thisMonth": "Bulan Ini",
       "thisYear": "Tahun Ini",
       "vsPrevious": "vs sebelumnya"
     },
-    "allProperties": "Semua Properti",
+    "noOccupancyData": "Tidak ada data hunian untuk properti yang dipilih",
+    "occupancyRate": "Tingkat Hunian",
+    "calendar": {
+      "title": "Kalender Pembayaran",
+      "today": "Hari Ini",
+      "filters": "Filter",
+      "filterByProperty": "Filter berdasarkan Properti",
+      "filterByFrequency": "Filter berdasarkan Frekuensi Pembayaran",
+      "allProperties": "Semua Properti",
+      "allFrequencies": "Semua Frekuensi",
+      "summary": "Ringkasan Pembayaran",
+      "totalPayments": "Total Pembayaran",
+      "pendingPayments": "Tertunda",
+      "paidPayments": "Terbayar",
+      "overduePayments": "Terlambat",
+      "daysUntilPayment": "{days} hari lagi",
+      "daysPastPayment": "{days} hari lalu",
+      "frequencies": {
+        "daily": "Harian",
+        "weekly": "Mingguan",
+        "biWeekly": "Dua Mingguan",
+        "monthly": "Bulanan",
+        "quarterly": "Triwulanan",
+        "semiAnnual": "Semesteran",
+        "annual": "Tahunan",
+        "custom": "Kustom",
+        "DAILY": "Harian",
+        "WEEKLY": "Mingguan",
+        "BIWEEKLY": "Dua Mingguan",
+        "MONTHLY": "Bulanan",
+        "QUARTERLY": "Triwulanan",
+        "SEMIANNUAL": "Semesteran",
+        "ANNUAL": "Tahunan",
+        "CUSTOM": "Kustom",
+        "biweekly": "Dua Mingguan",
+        "semiannual": "Semesteran"
+      }
+    },
+    "paymentSchedule": {
+      "title": "Jadwal Pembayaran",
+      "frequency": "Frekuensi Pembayaran",
+      "amount": "Jumlah Pembayaran",
+      "customSettings": "Pengaturan Kustom",
+      "paymentDays": "Hari Pembayaran",
+      "nextPayments": "Pembayaran Berikutnya",
+      "upcomingDates": "Tanggal Pembayaran Mendatang"
+    },
     "widgets": {
       "common": {
-        "viewAll": "Lihat Semua",
+        "name": "Nama",
         "room": "Kamar",
         "status": "Status",
-        "total": "Total",
-        "description": "Deskripsi",
-        "reported": "Dilaporkan",
-        "name": "Nama",
         "leasePeriod": "Periode Sewa",
-        "rent": "Sewa"
+        "rent": "Biaya Sewa"
       },
       "monthlyTrend": {
         "title": "Tren Bulanan",
@@ -84,7 +125,7 @@
       },
       "maintenanceTracker": {
         "title": "Pelacak Pemeliharaan",
-        "noData": "Tidak ada data pemeliharaan",
+        "noData": "Tidak ada data permintaan pemeliharaan",
         "status": {
           "pending": "Menunggu",
           "inProgress": "Dalam Proses",
@@ -110,11 +151,59 @@
           "activeTenants": "Penyewa Aktif",
           "inactiveTenants": "Penyewa Tidak Aktif",
           "upcomingMoveouts": "Akan Keluar"
-        },
-        "noTenantsYet": "Belum ada penyewa",
-        "getStarted": "Mulai dengan menambahkan penyewa pertama Anda",
-        "addTenant": "Tambah Penyewa"
+        }
       }
+    },
+    "monthlyTrend": {
+      "title": "Tren Bulanan",
+      "noData": "Tidak ada data tren tersedia",
+      "revenue": "Pendapatan",
+      "expenses": "Pengeluaran",
+      "profit": "Keuntungan",
+      "timeRange": {
+        "thisMonth": "Bulan Ini",
+        "thisQuarter": "Kuartal Ini",
+        "thisYear": "Tahun Ini"
+      },
+      "stats": {
+        "revenue": "Pendapatan",
+        "expenses": "Pengeluaran",
+        "netProfit": "Laba Bersih",
+        "profitMargin": "Margin Keuntungan"
+      }
+    },
+    "maintenanceTracker": {
+      "title": "Pelacak Pemeliharaan",
+      "noData": "Tidak ada data pemeliharaan",
+      "status": {
+        "pending": "Menunggu",
+        "inProgress": "Dalam Proses",
+        "completed": "Selesai"
+      },
+      "priority": {
+        "high": "Prioritas Tinggi",
+        "medium": "Prioritas Menengah",
+        "low": "Prioritas Rendah"
+      },
+      "viewAllRequests": "Lihat Semua Permintaan"
+    },
+    "tenantOverview": {
+      "title": "Ikhtisar Penyewa",
+      "noData": "Tidak ada data penyewa",
+      "totalTenants": "Total Penyewa",
+      "activeLeases": "Sewa Aktif",
+      "upcomingRenewals": "Perpanjangan Mendatang",
+      "vacantUnits": "Unit Kosong",
+      "viewAllTenants": "Lihat Semua Penyewa",
+      "stats": {
+        "totalTenants": "Total Penyewa",
+        "activeTenants": "Penyewa Aktif",
+        "inactiveTenants": "Penyewa Tidak Aktif",
+        "upcomingMoveouts": "Akan Keluar"
+      },
+      "noTenantsYet": "Belum ada penyewa",
+      "getStarted": "Mulai dengan menambahkan penyewa pertama Anda",
+      "addTenant": "Tambah Penyewa"
     }
   },
   "properties": {
@@ -133,6 +222,8 @@
       "province": "Provinsi",
       "postalCode": "Kode Pos",
       "dueDate": "Tanggal Jatuh Tempo",
+      "dueDatePlaceholder": "Masukkan tanggal jatuh tempo (1-31)",
+      "paymentFrequency": "Frekuensi Pembayaran",
       "step": "Langkah",
       "of": "dari",
       "complete": "selesai",
@@ -205,8 +296,21 @@
         "description": "Deskripsi",
         "facilities": "Fasilitas",
         "rooms": "Kamar",
+        "roomTypes": "Tipe Kamar",
+        "roomCount": "{count} kamar",
+        "occupancy": "Hunian",
         "roomNumber": "Kamar {number}",
         "roomDetails": "{size} m² • {type}",
+        "noRoomsYet": "Belum ada kamar untuk properti ini",
+        "noRoomsOfType": "Belum ada kamar dari tipe {type}",
+        "addRoomOfType": "Tambah Kamar {type}",
+        "types": {
+          "standard": "Standar",
+          "deluxe": "Deluxe",
+          "suite": "Suite",
+          "studio": "Studio",
+          "custom": "Kustom"
+        },
         "status": {
           "status": "Status",
           "available": "Tersedia",
@@ -226,55 +330,48 @@
       },
       "room": {
         "new": {
-          "title": "Tambah Kamar Baru"
+          "title": "Tambah Kamar Baru",
+          "titleWithType": "Tambah Kamar {type} Baru"
         },
         "edit": {
-          "title": "Ubah Kamar"
+          "title": "Ubah Kamar",
+          "loading": "Memuat detail kamar..."
+        },
+        "types": {
+          "standard": "Standar",
+          "deluxe": "Deluxe",
+          "suite": "Suite",
+          "studio": "Studio",
+          "custom": "Kustom"
         },
         "title": "Detail Kamar",
-        "loading": "Memuat detail kamar...",
         "notFound": "Kamar tidak ditemukan",
+        "setMaintenance": "Atur ke Pemeliharaan",
+        "endMaintenance": "Akhiri Pemeliharaan",
         "currentTenant": "Penyewa Saat Ini",
-        "noTenant": "Belum ada penyewa",
+        "noTenant": "Tidak ada penyewa",
         "tenantHistory": "Riwayat Penyewa",
         "noTenantHistory": "Belum ada riwayat penyewa",
-        "viewDetails": "Lihat Detail",
-        "present": "Saat Ini",
-        "setMaintenance": "Atur Pemeliharaan",
-        "endMaintenance": "Akhiri Pemeliharaan",
-        "maintenance": {
-          "startTitle": "Mulai Pemeliharaan",
-          "endTitle": "Akhiri Pemeliharaan",
-          "startMessage": "Apakah Anda yakin ingin mengatur kamar ini dalam mode pemeliharaan? Kamar akan ditandai sebagai tidak tersedia.",
-          "endMessage": "Apakah Anda yakin ingin mengakhiri mode pemeliharaan? Kamar akan ditandai sebagai tersedia.",
-          "cancel": "Batal",
-          "confirm": "Konfirmasi"
-        },
-        "expense": {
-          "title": "Tambah Biaya Pemeliharaan",
-          "amount": "Jumlah",
-          "amountPlaceholder": "Masukkan jumlah biaya",
-          "description": "Deskripsi",
-          "descriptionPlaceholder": "Masukkan deskripsi pemeliharaan",
-          "date": "Tanggal",
-          "skip": "Lewati",
-          "add": "Tambah Biaya",
-          "adding": "Menambahkan biaya...",
-          "toast": {
-            "fillRequired": "Harap isi semua kolom yang wajib",
-            "expenseAdded": "Biaya pemeliharaan berhasil ditambahkan",
-            "statusUpdated": "Status kamar berhasil diperbarui"
-          }
-        },
         "form": {
-          "price": "Harga per Bulan",
-          "priceValue": "Rp {value}",
           "status": {
             "status": "Status",
             "available": "Tersedia",
             "occupied": "Terisi",
-            "maintenance": "Pemeliharaan"
+            "maintenance": "Dalam Pemeliharaan"
+          },
+          "price": "Harga",
+          "priceWithFrequency": "Rp {value} {frequency}",
+          "frequency": {
+            "monthly": "per bulan",
+            "quarterly": "per triwulan",
+            "biannually": "per 6 bulan",
+            "annually": "per tahun"
           }
+        },
+        "toast": {
+          "statusUpdated": "Status kamar berhasil diperbarui",
+          "expenseAdded": "Pengeluaran pemeliharaan berhasil ditambahkan",
+          "fillRequired": "Harap isi semua field yang diperlukan"
         }
       }
     },
@@ -282,14 +379,46 @@
       "number": "Nomor Kamar",
       "type": "Tipe Kamar",
       "size": "Ukuran Kamar",
-      "price": "Harga per Bulan",
+      "price": "Harga Bulanan",
       "amenitiesLabel": "Fasilitas Kamar",
       "selectType": "Pilih tipe kamar",
       "types": {
         "standard": "Standar",
         "deluxe": "Deluxe",
         "suite": "Suite",
-        "studio": "Studio"
+        "studio": "Studio",
+        "custom": "Kustom"
+      },
+      "customTypeName": "Nama Tipe Kustom",
+      "form": {
+        "number": "Nomor Kamar",
+        "type": "Tipe Kamar",
+        "size": "Ukuran Kamar (m²)",
+        "price": "Harga",
+        "priceValue": "Rp {value}",
+        "priceWithFrequency": "Rp {value} {frequency}",
+        "priceDescription": "Harga akan ditampilkan sebagai {frequency}. Durasi lainnya akan dihitung secara otomatis.",
+        "customTypeName": "Nama Tipe Kustom",
+        "frequency": {
+          "monthly": "per bulan",
+          "quarterly": "per triwulan",
+          "biannually": "per 6 bulan",
+          "annually": "per tahun"
+        },
+        "amenities": "Fasilitas",
+        "status": {
+          "status": "Status",
+          "available": "Tersedia",
+          "occupied": "Terisi",
+          "maintenance": "Dalam Perawatan"
+        },
+        "types": {
+          "standard": "Standar",
+          "deluxe": "Deluxe",
+          "suite": "Suite",
+          "studio": "Studio",
+          "custom": "Kustom"
+        }
       },
       "amenities": {
         "bathroom": "Kamar Mandi Dalam",
@@ -307,6 +436,7 @@
       "validation": {
         "numberRequired": "Nomor kamar wajib diisi",
         "typeRequired": "Tipe kamar wajib diisi",
+        "customTypeNameRequired": "Nama tipe kustom wajib diisi",
         "sizeRequired": "Ukuran kamar wajib diisi",
         "priceRequired": "Harga per bulan wajib diisi",
         "amenitiesRequired": "Minimal satu fasilitas wajib dipilih"
@@ -327,6 +457,20 @@
         "priceValue": "Rp {value}",
         "status": {
           "status": "Status"
+        }
+      }
+    },
+    "dashboard": {
+      "calendar": {
+        "frequencies": {
+          "daily": "Harian",
+          "weekly": "Mingguan",
+          "biWeekly": "Dua Mingguan",
+          "monthly": "Bulanan",
+          "quarterly": "Triwulanan",
+          "semiAnnual": "Semesteran",
+          "annual": "Tahunan",
+          "custom": "Kustom"
         }
       }
     }
@@ -457,6 +601,9 @@
         "clearSearch": "Hapus pencarian",
         "selectAnother": "Pilih properti lain",
         "back": "← Kembali ke pemilihan properti"
+      },
+      "form": {
+        "paymentFrequency": "Frekuensi Pembayaran"
       }
     },
     "checkIn": {
@@ -808,9 +955,19 @@
           "submit": {
             "loading": "Membuat...",
             "create": "Buat Penyewa"
-          }
+          },
+          "paymentFrequency": "Frekuensi Pembayaran",
+          "priceSummary": "Ringkasan Harga",
+          "leaseDuration": "Durasi Sewa",
+          "basePrice": "Harga Dasar",
+          "adjustedPrice": "Harga Disesuaikan"
         }
       }
+    },
+    "list": {
+      "title": "Kamar",
+      "addRoom": "Tambah Kamar",
+      "syncStatuses": "Sinkronisasi Status Kamar"
     }
   },
   "sidebar": {
@@ -822,7 +979,8 @@
     "settings": "Pengaturan",
     "propertyGroups": "Grup Properti",
     "batchOperations": "Operasi Massal",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "signOut": "Keluar"
   },
   "propertyGroups": {
     "title": "Grup Properti",

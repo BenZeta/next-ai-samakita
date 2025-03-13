@@ -177,6 +177,7 @@ export default function SignUp() {
                 src="https://ik.imagekit.io/matguchi18/sk.png"
                 alt="SamaKita Logo"
                 fill
+                sizes="(max-width: 768px) 56px, 56px"
                 className="object-contain transition-all duration-300 group-hover:scale-110"
               />
             </div>

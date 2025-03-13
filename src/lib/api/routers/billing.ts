@@ -1573,7 +1573,7 @@ function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): D
     case PaymentFrequency.WEEKLY:
       nextDate.setDate(nextDate.getDate() + 7);
       break;
-    case PaymentFrequency.BI_WEEKLY:
+    case PaymentFrequency.BIWEEKLY:
       nextDate.setDate(nextDate.getDate() + 14);
       break;
     case PaymentFrequency.MONTHLY:
@@ -1582,7 +1582,7 @@ function calculateNextDueDate(currentDate: Date, frequency: PaymentFrequency): D
     case PaymentFrequency.QUARTERLY:
       nextDate.setMonth(nextDate.getMonth() + 3);
       break;
-    case PaymentFrequency.SEMI_ANNUAL:
+    case PaymentFrequency.SEMIANNUAL:
       nextDate.setMonth(nextDate.getMonth() + 6);
       break;
     case PaymentFrequency.ANNUAL:

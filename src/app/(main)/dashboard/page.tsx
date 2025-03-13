@@ -2,9 +2,10 @@
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { api } from '@/lib/trpc/react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Calendar, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { memo, Suspense, useCallback, useState } from 'react';
 import { useTranslations } from 'use-intl';
 
@@ -117,22 +118,31 @@ const DashboardHeader = memo(function DashboardHeader({
           </h1>
           <p className="mt-1 text-sm text-muted-foreground sm:mt-2">{t('dashboard.subtitle')}</p>
         </div>
-        {properties.length > 0 && (
-          <div className="w-full sm:w-[200px]">
-            <select
-              value={selectedPropertyId}
-              onChange={e => onPropertyChange(e.target.value)}
-              className="w-full appearance-none rounded-lg border border-input bg-card px-3 py-2 pr-8 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">{t('dashboard.allProperties')}</option>
-              {properties.map(property => (
-                <option key={property.id} value={property.id}>
-                  {property.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/calendar"
+            className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            <Calendar className="h-4 w-4" />
+            {t('dashboard.calendar.title')}
+          </Link>
+          {properties.length > 0 && (
+            <div className="w-full sm:w-[200px]">
+              <select
+                value={selectedPropertyId}
+                onChange={e => onPropertyChange(e.target.value)}
+                className="w-full appearance-none rounded-lg border border-input bg-card px-3 py-2 pr-8 text-sm shadow-sm transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">{t('dashboard.allProperties')}</option>
+                {properties.map(property => (
+                  <option key={property.id} value={property.id}>
+                    {property.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

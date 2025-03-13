@@ -92,6 +92,7 @@ const Sidebar = () => {
                       src="https://ik.imagekit.io/matguchi18/sk.png"
                       alt="Sama Kita Logo"
                       fill
+                      sizes="(max-width: 768px) 32px, 32px"
                       className="object-contain"
                     />
                   </div>

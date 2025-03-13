@@ -418,7 +418,7 @@ export const expenseRouter = createTRPCRouter({
           case 'WEEKLY':
             nextDueDate.setDate(nextDueDate.getDate() + 7);
             break;
-          case 'BI_WEEKLY':
+          case 'BIWEEKLY':
             nextDueDate.setDate(nextDueDate.getDate() + 14);
             break;
           case 'MONTHLY':
@@ -427,7 +427,7 @@ export const expenseRouter = createTRPCRouter({
           case 'QUARTERLY':
             nextDueDate.setMonth(nextDueDate.getMonth() + 3);
             break;
-          case 'SEMI_ANNUAL':
+          case 'SEMIANNUAL':
             nextDueDate.setMonth(nextDueDate.getMonth() + 6);
             break;
           case 'ANNUAL':
