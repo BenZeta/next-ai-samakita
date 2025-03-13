@@ -2,7 +2,8 @@
 
 import { api } from '@/lib/trpc/react';
 import { BillingStatus, PaymentType, Tenant } from '@prisma/client';
-import { AlertTriangle, ArrowLeft, CheckCircle, CreditCard } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle, Construction, CreditCard } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -585,6 +586,27 @@ export default function BulkBillingCreationPage() {
             </CardContent>
           </>
         )}
+      </Card>
+
+      <Card className="mx-auto max-w-3xl text-center py-16">
+        <CardContent>
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <Construction className="h-16 w-16 text-primary opacity-60" />
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold tracking-tight">{t('common.comingSoon')}</h2>
+              <p className="text-muted-foreground">
+                {t('batchOperations.billing.comingSoonDescription')}
+                <br />
+                {t('batchOperations.checkBackLater')}
+              </p>
+            </div>
+
+            <Link href="/batch-operations" className="text-primary hover:underline">
+              {t('common.returnToBatchOperations')}
+            </Link>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
