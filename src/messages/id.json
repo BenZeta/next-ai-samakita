@@ -23,7 +23,10 @@
     "noTenantsFound": "Tidak ada penyewa ditemukan",
     "month": "bulan",
     "months": "bulan",
-    "syncing": "Menyinkronkan..."
+    "syncing": "Menyinkronkan...",
+    "comingSoon": "Segera Hadir",
+    "returnToDashboard": "Kembali ke dasbor",
+    "returnToBatchOperations": "Kembali ke operasi massal"
   },
   "navigation": {
     "dashboard": "Dasbor",
@@ -1058,6 +1061,8 @@
     "title": "Operasi Massal",
     "description": "Lakukan operasi pada beberapa item sekaligus",
     "preview": "Pratinjau",
+    "comingSoonDescription": "Fitur ini akan segera hadir",
+    "checkBackLater": "Silakan periksa kembali nanti",
     "payments": {
       "title": "Buat Pembayaran Massal",
       "description": "Buat pembayaran untuk beberapa penyewa sekaligus",
