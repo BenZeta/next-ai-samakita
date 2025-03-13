@@ -50,10 +50,10 @@ const processRecurringExpenses = inngest.createFunction(
           case 'QUARTERLY':
             nextDueDate.setMonth(nextDueDate.getMonth() + 3);
             break;
-          case 'BIANNUALLY':
+          case 'SEMIANNUAL':
             nextDueDate.setMonth(nextDueDate.getMonth() + 6);
             break;
-          case 'ANNUALLY':
+          case 'ANNUAL':
             nextDueDate.setFullYear(nextDueDate.getFullYear() + 1);
             break;
           default:

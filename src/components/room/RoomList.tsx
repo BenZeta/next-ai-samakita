@@ -1,23 +1,47 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { api } from '@/lib/trpc/react';
-import { Building2, Users } from 'lucide-react';
+import { Building2, PlusIcon, RefreshCwIcon, Users } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface RoomListProps {
   propertyId: string;
+  showOnlyAvailable?: boolean;
 }
 
-export function RoomList({ propertyId }: RoomListProps) {
+export function RoomList({ propertyId, showOnlyAvailable }: RoomListProps) {
+  const t = useTranslations();
   const [selectedStatus, setSelectedStatus] = useState<
     'available' | 'occupied' | 'maintenance' | undefined
   >();
 
-  const { data: rooms, isLoading } = api.room.list.useQuery({
+  const {
+    data: rooms,
+    isLoading,
+    refetch,
+  } = api.room.list.useQuery({
     propertyId,
     status: selectedStatus,
+    showOnlyAvailable,
   });
+
+  const syncRoomStatusesMutation = api.room.syncRoomStatuses.useMutation({
+    onSuccess: () => {
+      toast.success('Room statuses synchronized successfully');
+      refetch();
+    },
+    onError: error => {
+      toast.error(`Error synchronizing room statuses: ${error.message}`);
+    },
+  });
+
+  const handleSyncRoomStatuses = () => {
+    syncRoomStatusesMutation.mutate();
+  };
 
   if (isLoading) {
     return (
@@ -38,7 +62,7 @@ export function RoomList({ propertyId }: RoomListProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Rooms</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{t('rooms.list.title')}</h2>
         <div className="flex items-center gap-4">
           <select
             value={selectedStatus || ''}
@@ -56,6 +80,30 @@ export function RoomList({ propertyId }: RoomListProps) {
             <option value="occupied">Occupied</option>
             <option value="maintenance">Under Maintenance</option>
           </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSyncRoomStatuses}
+            disabled={syncRoomStatusesMutation.isLoading}
+          >
+            {syncRoomStatusesMutation.isLoading ? (
+              <div className="flex items-center gap-2">
+                <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                {t('common.syncing')}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <RefreshCwIcon className="h-4 w-4" />
+                {t('rooms.list.syncStatuses')}
+              </div>
+            )}
+          </Button>
+          <Button variant="default" size="sm" asChild>
+            <Link href={`/properties/${propertyId}/rooms/new`}>
+              <PlusIcon className="mr-2 h-4 w-4" />
+              {t('rooms.list.addRoom')}
+            </Link>
+          </Button>
         </div>
       </div>
 

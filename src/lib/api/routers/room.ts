@@ -1,16 +1,26 @@
 import { db, prisma } from '@/lib/db';
-import { RoomStatus, RoomType, TenantStatus } from '@prisma/client';
+import { Prisma, RoomStatus, RoomType, TenantStatus } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 
+// Define price tier schema
+const priceTierSchema = z.object({
+  id: z.string().optional(),
+  duration: z.number().min(1, 'Duration must be at least 1 month'),
+  price: z.number().min(0, 'Price must be greater than or equal to 0'),
+  isDefault: z.boolean(),
+});
+
 const roomSchema = z.object({
   number: z.string().min(1, 'Room number is required'),
   type: z.nativeEnum(RoomType),
+  customTypeName: z.string().optional(),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
   propertyId: z.string().min(1, 'Property ID is required'),
+  priceTiers: z.array(priceTierSchema).optional(),
 });
 
 const bulkRoomSchema = z.object({
@@ -20,6 +30,7 @@ const bulkRoomSchema = z.object({
     .min(1, 'Number of rooms must be at least 1')
     .max(50, 'Maximum 50 rooms at once'),
   type: z.nativeEnum(RoomType),
+  customTypeName: z.string().optional(),
   size: z.number().min(1, 'Size must be greater than 0'),
   amenities: z.array(z.string()).min(1, 'At least one amenity is required'),
   price: z.number().min(0, 'Price must be greater than or equal to 0'),
@@ -27,6 +38,7 @@ const bulkRoomSchema = z.object({
   numberingPrefix: z.string().optional(),
   numberingSuffix: z.string().optional(),
   startingFloor: z.number().optional(),
+  priceTiers: z.array(priceTierSchema).optional(),
 });
 
 const maintenanceSchema = z.object({
@@ -42,11 +54,21 @@ interface OccupancyHistoryItem {
   label: string;
 }
 
+// Define custom Prisma includes to add priceTiers to typechecking
+type RoomWithPriceTiers = Prisma.RoomGetPayload<{
+  include: {
+    priceTiers: true;
+    property: true;
+  };
+}>;
+
 export const roomRouter = createTRPCRouter({
   create: protectedProcedure.input(roomSchema).mutation(async ({ input, ctx }) => {
-    // Check if property exists and user has access
+    const { propertyId, priceTiers, ...roomData } = input;
+
+    // Check if user has access to the property
     const property = await db.property.findUnique({
-      where: { id: input.propertyId },
+      where: { id: propertyId },
     });
 
     if (!property) {
@@ -59,31 +81,46 @@ export const roomRouter = createTRPCRouter({
     if (property.userId !== ctx.session.user.id) {
       throw new TRPCError({
         code: 'FORBIDDEN',
-        message: 'You do not have permission to add rooms to this property',
+        message: 'You do not have permission to create rooms for this property',
       });
     }
 
-    // Check if room number already exists in the property
-    const existingRoom = await db.room.findFirst({
-      where: {
-        propertyId: input.propertyId,
-        number: input.number,
-      },
-    });
+    // Create room with optional price tiers in a transaction
+    try {
+      return await prisma.$transaction(async tx => {
+        // Create the room
+        const room = await tx.room.create({
+          data: {
+            ...roomData,
+            propertyId,
+          },
+        });
 
-    if (existingRoom) {
+        // Create price tiers if provided
+        if (priceTiers && priceTiers.length > 0) {
+          await Promise.all(
+            priceTiers.map(tier =>
+              tx.roomPriceTier.create({
+                data: {
+                  roomId: room.id,
+                  duration: tier.duration,
+                  price: tier.price,
+                  isDefault: tier.isDefault,
+                },
+              })
+            )
+          );
+        }
+
+        return room;
+      });
+    } catch (error) {
+      console.error('Error creating room:', error);
       throw new TRPCError({
-        code: 'CONFLICT',
-        message: 'Room number already exists in this property',
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create room',
       });
     }
-
-    return db.room.create({
-      data: {
-        ...input,
-        status: RoomStatus.AVAILABLE,
-      },
-    });
   }),
 
   createBulk: protectedProcedure.input(bulkRoomSchema).mutation(async ({ input, ctx }) => {
@@ -98,6 +135,7 @@ export const roomRouter = createTRPCRouter({
       numberingPrefix = '',
       numberingSuffix = '',
       startingFloor = 1,
+      priceTiers,
     } = input;
 
     // Check if user has access to the property
@@ -138,13 +176,40 @@ export const roomRouter = createTRPCRouter({
     });
 
     // Create all rooms in a transaction
-    return db.$transaction(
-      rooms.map(room =>
-        db.room.create({
-          data: room,
-        })
-      )
-    );
+    try {
+      return await prisma.$transaction(async tx => {
+        const createdRooms = [];
+        for (const roomData of rooms) {
+          const room = await tx.room.create({
+            data: roomData,
+          });
+          createdRooms.push(room);
+
+          // Add price tiers if provided
+          if (priceTiers && priceTiers.length > 0) {
+            await Promise.all(
+              priceTiers.map(tier =>
+                tx.roomPriceTier.create({
+                  data: {
+                    roomId: room.id,
+                    duration: tier.duration,
+                    price: tier.price,
+                    isDefault: tier.isDefault,
+                  },
+                })
+              )
+            );
+          }
+        }
+        return createdRooms;
+      });
+    } catch (error) {
+      console.error('Error creating bulk rooms:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Failed to create rooms',
+      });
+    }
   }),
 
   list: protectedProcedure
@@ -161,10 +226,20 @@ export const roomRouter = createTRPCRouter({
           propertyId: input.propertyId,
           ...(input.showOnlyAvailable && {
             status: RoomStatus.AVAILABLE,
-          }),
-          ...(input.status === 'available' && {
             tenants: {
               none: {
+                status: TenantStatus.ACTIVE,
+                endDate: {
+                  gt: new Date(),
+                },
+              },
+            },
+          }),
+          ...(input.status === 'available' && {
+            status: RoomStatus.AVAILABLE,
+            tenants: {
+              none: {
+                status: TenantStatus.ACTIVE,
                 endDate: {
                   gt: new Date(),
                 },
@@ -172,8 +247,10 @@ export const roomRouter = createTRPCRouter({
             },
           }),
           ...(input.status === 'occupied' && {
+            status: RoomStatus.OCCUPIED,
             tenants: {
               some: {
+                status: TenantStatus.ACTIVE,
                 endDate: {
                   gt: new Date(),
                 },
@@ -197,6 +274,7 @@ export const roomRouter = createTRPCRouter({
               address: true,
             },
           },
+          priceTiers: true,
         },
         orderBy: {
           number: 'asc',
@@ -235,13 +313,35 @@ export const roomRouter = createTRPCRouter({
               location: true,
               facilities: true,
               images: true,
+              paymentFrequency: true,
+              dueDateOffset: true,
+              customPaymentDays: true,
             },
           },
+          priceTiers: true,
         },
       });
 
       if (!room) {
         throw new Error('Room not found');
+      }
+
+      // Ensure room status is consistent with active tenants
+      // If there are active tenants but status is AVAILABLE, this fixes display issues
+      if (room.tenants.length > 0 && room.status === RoomStatus.AVAILABLE) {
+        await prisma.room.update({
+          where: { id: input.id },
+          data: { status: RoomStatus.OCCUPIED },
+        });
+        room.status = RoomStatus.OCCUPIED;
+      }
+      // If no active tenants but status is OCCUPIED, update to AVAILABLE
+      else if (room.tenants.length === 0 && room.status === RoomStatus.OCCUPIED) {
+        await prisma.room.update({
+          where: { id: input.id },
+          data: { status: RoomStatus.AVAILABLE },
+        });
+        room.status = RoomStatus.AVAILABLE;
       }
 
       return room;
@@ -255,10 +355,13 @@ export const roomRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const room = await db.room.findUnique({
+      const { priceTiers, ...roomData } = input.data;
+
+      const room = await prisma.room.findUnique({
         where: { id: input.id },
         include: {
           property: true,
+          priceTiers: true,
         },
       });
 
@@ -276,10 +379,72 @@ export const roomRouter = createTRPCRouter({
         });
       }
 
-      return db.room.update({
-        where: { id: input.id },
-        data: input.data,
-      });
+      // Update room and price tiers in a transaction
+      try {
+        return await prisma.$transaction(async tx => {
+          // Update the room itself
+          const updatedRoom = await tx.room.update({
+            where: { id: input.id },
+            data: roomData,
+          });
+
+          // Handle price tiers if provided
+          if (priceTiers && priceTiers.length > 0) {
+            // Get existing tier IDs
+            const existingTierIds = room.priceTiers.map(tier => tier.id);
+            const newTierIds = priceTiers
+              .filter(tier => tier.id !== undefined)
+              .map(tier => tier.id as string);
+
+            // Find tiers to delete (existing but not in new list)
+            const tierIdsToDelete = existingTierIds.filter(id => !newTierIds.includes(id));
+
+            // Delete tiers that are no longer in the list
+            if (tierIdsToDelete.length > 0) {
+              await tx.roomPriceTier.deleteMany({
+                where: {
+                  id: {
+                    in: tierIdsToDelete,
+                  },
+                },
+              });
+            }
+
+            // Update or create each tier
+            for (const tier of priceTiers) {
+              if (tier.id) {
+                // Update existing tier
+                await tx.roomPriceTier.update({
+                  where: { id: tier.id },
+                  data: {
+                    duration: tier.duration,
+                    price: tier.price,
+                    isDefault: tier.isDefault,
+                  },
+                });
+              } else {
+                // Create new tier
+                await tx.roomPriceTier.create({
+                  data: {
+                    roomId: input.id,
+                    duration: tier.duration,
+                    price: tier.price,
+                    isDefault: tier.isDefault,
+                  },
+                });
+              }
+            }
+          }
+
+          return updatedRoom;
+        });
+      } catch (error) {
+        console.error('Error updating room:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update room',
+        });
+      }
     }),
 
   delete: protectedProcedure
@@ -657,4 +822,86 @@ export const roomRouter = createTRPCRouter({
         data: { status },
       });
     }),
+
+  getCustomTypes: protectedProcedure
+    .input(
+      z.object({
+        propertyId: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      // Find all rooms with CUSTOM type and return unique custom type names
+      const customRooms = await prisma.room.findMany({
+        where: {
+          type: RoomType.CUSTOM,
+          customTypeName: {
+            not: null,
+          },
+          ...(input.propertyId && {
+            propertyId: input.propertyId,
+          }),
+        },
+        select: {
+          customTypeName: true,
+        },
+        distinct: ['customTypeName'],
+      });
+
+      // Return only the customTypeName values
+      return customRooms
+        .filter(room => room.customTypeName) // Filter out null values
+        .map(room => room.customTypeName as string);
+    }),
+
+  syncRoomStatuses: protectedProcedure.mutation(async ({ ctx }) => {
+    // Get all rooms with their associated tenants
+    const rooms = await ctx.db.room.findMany({
+      include: {
+        tenants: {
+          where: {
+            status: TenantStatus.ACTIVE,
+            OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+          },
+        },
+      },
+    });
+
+    const updates = [];
+
+    // Process each room
+    for (const room of rooms) {
+      const hasActiveTenants = room.tenants.length > 0;
+
+      // If room has active tenants but status is not OCCUPIED, update it
+      if (hasActiveTenants && room.status !== RoomStatus.OCCUPIED) {
+        updates.push(
+          ctx.db.room.update({
+            where: { id: room.id },
+            data: { status: RoomStatus.OCCUPIED },
+          })
+        );
+      }
+      // If room has no active tenants but status is not AVAILABLE, update it
+      else if (
+        !hasActiveTenants &&
+        room.status !== RoomStatus.AVAILABLE &&
+        room.status !== RoomStatus.MAINTENANCE
+      ) {
+        updates.push(
+          ctx.db.room.update({
+            where: { id: room.id },
+            data: { status: RoomStatus.AVAILABLE },
+          })
+        );
+      }
+    }
+
+    // Execute all updates
+    await Promise.all(updates);
+
+    return {
+      success: true,
+      message: `Synchronized ${updates.length} room statuses`,
+    };
+  }),
 });

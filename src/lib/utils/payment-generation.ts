@@ -1,4 +1,12 @@
-import { PaymentMethod, PaymentStatus, PaymentType, Property, Room, Tenant } from '@prisma/client';
+import {
+  PaymentFrequency,
+  PaymentMethod,
+  PaymentStatus,
+  PaymentType,
+  Property,
+  Room,
+  Tenant,
+} from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { db } from '../db';
 import { sendInvoiceEmail } from '../email';
@@ -178,4 +186,107 @@ export async function generateBatchPayments({
     totalGenerated: payments.length,
     totalFailed: errors.length,
   };
+}
+
+/**
+ * Generate all payment records for a lease period
+ * This function creates payment records for the entire lease duration
+ */
+export async function generateLeasePayments({
+  tenant,
+  startDate,
+  endDate,
+  rentAmount,
+  paymentFrequency,
+  propertyId,
+  firstPaymentPaid = false,
+  customPaymentDays,
+  dueDateOffset,
+  transaction,
+}: {
+  tenant: { id: string; name: string; email: string };
+  startDate: Date;
+  endDate: Date;
+  rentAmount: number;
+  paymentFrequency: PaymentFrequency;
+  propertyId: string;
+  firstPaymentPaid?: boolean;
+  customPaymentDays?: number[];
+  dueDateOffset: number;
+  transaction?: any; // Transaction object from Prisma
+}) {
+  const payments = [];
+  const now = new Date();
+
+  // Generate payment periods based on frequency
+  const { generatePaymentPeriods } = await import('./payment-calculations');
+
+  const periods = generatePaymentPeriods(
+    startDate,
+    endDate,
+    rentAmount,
+    paymentFrequency,
+    customPaymentDays
+  );
+
+  // Use the provided transaction object or fallback to direct db
+  const dbClient = transaction || db;
+
+  // Create a payment record for each period
+  for (let i = 0; i < periods.length; i++) {
+    const period = periods[i];
+    const isFirstPayment = i === 0;
+
+    // Calculate due date
+    let dueDate: Date;
+
+    if (isFirstPayment) {
+      // First payment is due immediately
+      dueDate = new Date(now);
+    } else {
+      // For all recurring payments, we should use the property's due date setting
+      // Get the month and year from the period start
+      const periodMonth = period.startDate.getMonth();
+      const periodYear = period.startDate.getFullYear();
+
+      // Create the due date using the property's dueDateOffset (e.g., 5th of the month)
+      dueDate = new Date(periodYear, periodMonth, dueDateOffset);
+
+      // If the due date falls before the period start, move to the next month
+      // This can happen when tenant moves in after the due date (e.g., moves in on 13th, due date is 5th)
+      if (dueDate.getTime() < period.startDate.getTime()) {
+        dueDate = new Date(periodYear, periodMonth + 1, dueDateOffset);
+      }
+
+      // Ensure we don't create past due payments for immediate future periods
+      if (dueDate.getTime() < now.getTime()) {
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        // Only adjust the very next payment if it would be overdue
+        if (periodMonth === currentMonth && periodYear === currentYear) {
+          dueDate = new Date(now);
+          dueDate.setDate(dueDate.getDate() + 3); // Give a few days buffer
+        }
+      }
+    }
+
+    const payment = await dbClient.payment.create({
+      data: {
+        tenantId: tenant.id,
+        propertyId: propertyId,
+        amount: period.amount,
+        type: 'RENT',
+        status: isFirstPayment && firstPaymentPaid ? 'PAID' : 'PENDING',
+        dueDate: dueDate,
+        billingCycleStart: period.startDate,
+        billingCycleEnd: period.endDate,
+        ...(isFirstPayment && firstPaymentPaid ? { paidAt: now } : {}),
+      },
+    });
+
+    payments.push(payment);
+  }
+
+  return payments;
 }

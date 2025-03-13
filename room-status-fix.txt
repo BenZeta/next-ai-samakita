@@ -1,0 +1,11 @@
+// To fix all room statuses, run this in the browser console:
+
+await window.fetch('/api/trpc/room.syncRoomStatuses', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    json: {}
+  })
+}).then(r => r.json()).then(console.log)

@@ -134,6 +134,27 @@ export default function RoomDetailPage() {
 
   const currentTenant = room.tenants.length > 0 ? room.tenants[0] : null;
 
+  // Find the default price tier if available
+  const defaultPriceTier = room.priceTiers?.find(tier => tier.isDefault);
+  const priceAmount = defaultPriceTier?.price || room.price;
+  const priceDuration = defaultPriceTier?.duration || 1; // Default to monthly if no tier found
+
+  // Helper function to get frequency label
+  const getFrequencyLabel = (duration: number): string => {
+    switch (duration) {
+      case 1:
+        return t('form.frequency.monthly');
+      case 3:
+        return t('form.frequency.quarterly');
+      case 6:
+        return t('form.frequency.biannually');
+      case 12:
+        return t('form.frequency.annually');
+      default:
+        return t('form.frequency.monthly');
+    }
+  };
+
   return (
     <div className="container mx-auto min-h-screen px-2 py-4 sm:px-4 sm:py-8">
       <div className="mb-4 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
@@ -189,7 +210,10 @@ export default function RoomDetailPage() {
             <div>
               <p className="text-xs text-muted-foreground sm:text-sm">{t('form.price')}</p>
               <p className="mt-0.5 text-sm font-medium text-foreground sm:mt-1 sm:text-base">
-                {t('form.priceValue', { value: room.price })}
+                {t('form.priceWithFrequency', {
+                  value: priceAmount.toLocaleString(),
+                  frequency: getFrequencyLabel(priceDuration),
+                })}
               </p>
             </div>
           </div>

@@ -9,9 +9,13 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { z } from 'zod';
 
-import { useLoadScript } from '@react-google-maps/api';
+import { PaymentFrequency } from '@prisma/client';
+import { Libraries, useLoadScript } from '@react-google-maps/api';
 import Image from 'next/image';
 import { useTranslations } from 'use-intl';
+
+// Define libraries array as a constant outside component
+const GOOGLE_MAPS_LIBRARIES: Libraries = ['places'];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -31,7 +35,11 @@ const propertySchema = z.object({
   location: z.string().optional(),
   facilities: z.array(z.string()).default([]),
   images: z.array(z.string()).default([]),
-  dueDate: z.number().min(1, 'Due date is required').max(31, 'Due date must be between 1 and 31'),
+  dueDateOffset: z
+    .number()
+    .min(1, 'Due date is required')
+    .max(31, 'Due date must be between 1 and 31'),
+  paymentFrequency: z.nativeEnum(PaymentFrequency).default(PaymentFrequency.MONTHLY),
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
@@ -70,7 +78,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-    libraries: ['places'],
+    libraries: GOOGLE_MAPS_LIBRARIES,
   });
 
   const {
@@ -85,7 +93,8 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
     defaultValues: {
       facilities: [],
       images: [],
-      dueDate: 5, // Default due date is 5th of each month
+      dueDateOffset: 5, // Default due date is 5th of each month
+      paymentFrequency: 'MONTHLY' as PaymentFrequency,
     },
   });
 
@@ -114,7 +123,13 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         isValid = await trigger(['name', 'description', 'address']);
         break;
       case 2:
-        isValid = await trigger(['city', 'province', 'postalCode', 'dueDate']);
+        isValid = await trigger([
+          'city',
+          'province',
+          'postalCode',
+          'dueDateOffset',
+          'paymentFrequency',
+        ]);
         break;
       case 3:
       case 4:
@@ -187,7 +202,7 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
         ...data,
         images: imageUrls,
         location: selectedLocation ? `${selectedLocation.lat},${selectedLocation.lng}` : '',
-        dueDate: Number(data.dueDate), // Ensure dueDate is a number
+        dueDateOffset: Number(data.dueDateOffset), // Ensure dueDateOffset is a number
       });
     } catch (error) {
       toast.error('Failed to create property');
@@ -348,19 +363,43 @@ export function PropertyForm({ initialData }: PropertyFormProps) {
                 <label className="mb-1.5 block text-sm font-medium">{t('form.dueDate')}</label>
                 <input
                   type="number"
-                  id="dueDate"
+                  id="dueDateOffset"
                   min="1"
                   max="31"
                   placeholder={t('form.dueDatePlaceholder')}
-                  {...register('dueDate', { valueAsNumber: true })}
+                  {...register('dueDateOffset', { valueAsNumber: true })}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
                 />
-                {errors.dueDate && (
+                {errors.dueDateOffset && (
                   <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
-                    {errors.dueDate.message}
+                    {errors.dueDateOffset.message}
                   </p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                {t('form.paymentFrequency')}
+              </label>
+              <select
+                {...register('paymentFrequency')}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-ring sm:px-4 sm:py-2.5"
+              >
+                <option value="DAILY">{t('dashboard.calendar.frequencies.daily')}</option>
+                <option value="WEEKLY">{t('dashboard.calendar.frequencies.weekly')}</option>
+                <option value="BIWEEKLY">{t('dashboard.calendar.frequencies.biWeekly')}</option>
+                <option value="MONTHLY">{t('dashboard.calendar.frequencies.monthly')}</option>
+                <option value="QUARTERLY">{t('dashboard.calendar.frequencies.quarterly')}</option>
+                <option value="SEMIANNUAL">{t('dashboard.calendar.frequencies.semiAnnual')}</option>
+                <option value="ANNUAL">{t('dashboard.calendar.frequencies.annual')}</option>
+                <option value="CUSTOM">{t('dashboard.calendar.frequencies.custom')}</option>
+              </select>
+              {errors.paymentFrequency && (
+                <p className="mt-1 text-xs font-medium text-destructive sm:text-sm">
+                  {errors.paymentFrequency.message}
+                </p>
+              )}
             </div>
           </div>
         );

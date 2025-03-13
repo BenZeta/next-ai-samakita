@@ -2,7 +2,12 @@
 
 import { countryCodes } from '@/lib/constants/countryCodes';
 import { api } from '@/lib/trpc/react';
+import {
+  calculatePriceWithFrequency,
+  findAppropriateRoomPriceTier,
+} from '@/lib/utils/price-tier-calculations';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PaymentFrequency } from '@prisma/client';
 import { ChevronsUpDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -10,6 +15,14 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import { useTranslations } from 'use-intl';
 import { z } from 'zod';
+
+// Interface for price tier from the Room model
+interface PriceTier {
+  id: string;
+  duration: number;
+  price: number;
+  isDefault: boolean;
+}
 
 const tenantFormSchema = z.object({
   name: z.string().min(1, 'properties.tenant.form.validation.nameRequired'),
@@ -20,6 +33,7 @@ const tenantFormSchema = z.object({
   startDate: z.string().min(1, 'properties.tenant.form.validation.startDateRequired'),
   endDate: z.string().min(1, 'properties.tenant.form.validation.endDateRequired'),
   references: z.array(z.string()).optional(),
+  paymentFrequency: z.nativeEnum(PaymentFrequency).default(PaymentFrequency.MONTHLY),
 });
 
 type TenantFormData = z.infer<typeof tenantFormSchema>;
@@ -43,20 +57,120 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
   const createMutation = api.tenant.create.useMutation();
   const t = useTranslations();
 
-  // Fetch room details to get the price
+  // Fetch room details to get the price and the property info (for default payment frequency)
   const { data: room } = api.room.get.useQuery({ id: roomId });
+  const { data: property } = api.property.get.useQuery(
+    { id: room?.propertyId || '' },
+    { enabled: !!room?.propertyId }
+  );
+
+  // Calculate lease duration and selected price
+  const [leaseDuration, setLeaseDuration] = useState<number>(1); // Default to 1 month
+  const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
+  const [selectedPriceTier, setSelectedPriceTier] = useState<PriceTier | null>(null);
+  const [originalPriceTier, setOriginalPriceTier] = useState<PriceTier | null>(null);
+  const [originalFrequency, setOriginalFrequency] = useState<PaymentFrequency>(
+    PaymentFrequency.MONTHLY
+  );
+  const [originalDuration, setOriginalDuration] = useState<number>(1);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<TenantFormData>({
     resolver: zodResolver(tenantFormSchema),
     defaultValues: {
       references: [],
+      paymentFrequency: PaymentFrequency.MONTHLY,
     },
   });
+
+  // Watch the startDate, endDate, and paymentFrequency fields
+  const startDate = watch('startDate');
+  const endDate = watch('endDate');
+  const paymentFrequency = watch('paymentFrequency');
+
+  // Set property's default payment frequency when the property data is loaded
+  useEffect(() => {
+    if (property && property.paymentFrequency) {
+      setValue('paymentFrequency', property.paymentFrequency);
+    }
+  }, [property, setValue]);
+
+  // Set the original frequency and price tier based on the room's price tiers
+  useEffect(() => {
+    if (room) {
+      if (room.priceTiers && room.priceTiers.length > 0) {
+        // Find the default price tier for display purposes
+        const defaultTier = room.priceTiers.find(tier => tier.isDefault);
+        if (defaultTier) {
+          setOriginalPriceTier(defaultTier);
+
+          // Map tier duration to payment frequency
+          let frequency: PaymentFrequency = PaymentFrequency.MONTHLY;
+
+          if (defaultTier.duration === 1) frequency = PaymentFrequency.MONTHLY;
+          else if (defaultTier.duration === 3)
+            frequency = PaymentFrequency.QUARTERLY as PaymentFrequency;
+          else if (defaultTier.duration === 6)
+            frequency = PaymentFrequency.SEMIANNUAL as PaymentFrequency;
+          else if (defaultTier.duration === 12)
+            frequency = PaymentFrequency.ANNUAL as PaymentFrequency;
+
+          setOriginalFrequency(frequency);
+          setOriginalDuration(defaultTier.duration);
+        }
+      } else if (property && property.paymentFrequency) {
+        // If no price tiers, use property's default payment frequency
+        setOriginalFrequency(property.paymentFrequency);
+      }
+    }
+  }, [room, property]);
+
+  // Calculate the lease duration and update price when dates change
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Calculate months between dates
+      const months =
+        (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+      setLeaseDuration(months > 0 ? months : 1);
+    }
+  }, [startDate, endDate]);
+
+  // Update selected price based on lease duration, payment frequency, and room price tiers
+  useEffect(() => {
+    if (room) {
+      if (room.priceTiers && room.priceTiers.length > 0) {
+        // Find appropriate price tier based on lease duration
+        const priceTier = findAppropriateRoomPriceTier(room.priceTiers, leaseDuration);
+
+        setSelectedPriceTier(priceTier);
+
+        // Calculate price adjusted for payment frequency
+        const adjustedPrice = calculatePriceWithFrequency(
+          priceTier,
+          paymentFrequency,
+          leaseDuration
+        );
+
+        setSelectedPrice(adjustedPrice > 0 ? adjustedPrice : room.price);
+      } else {
+        // If no price tiers, use the default room price adjusted for payment frequency
+        // For frequency adjustment, we treat the room price as monthly price
+        import('@/lib/utils/payment-calculations').then(({ adjustAmountForFrequency }) => {
+          const adjustedPrice = adjustAmountForFrequency(room.price, paymentFrequency);
+          setSelectedPrice(adjustedPrice);
+        });
+      }
+    }
+  }, [room, leaseDuration, paymentFrequency]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -86,11 +200,18 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
         return;
       }
 
-      // Create tenant with room price
+      if (selectedPrice === null) {
+        toast.error('Could not determine rent amount');
+        return;
+      }
+
+      // Create tenant with selected price and payment frequency
       await createMutation.mutateAsync({
         ...data,
         roomId,
-        rentAmount: room.price,
+        rentAmount: selectedPrice,
+        paymentFrequency: data.paymentFrequency,
+        leaseDuration,
       });
 
       toast.success(t('rooms.tenants.new.form.success'));
@@ -215,17 +336,6 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
           )}
         </div>
 
-        {room && (
-          <div>
-            <label className="block text-sm font-medium text-foreground">
-              {t('rooms.tenants.new.form.rentAmount')}
-            </label>
-            <p className="mt-2 text-lg font-medium text-primary">
-              {t('properties.tenant.form.priceValue', { value: room.price.toLocaleString() })}
-            </p>
-          </div>
-        )}
-
         <div>
           <label htmlFor="depositAmount" className="block text-sm font-medium text-foreground">
             {t('rooms.tenants.new.form.depositAmount')}
@@ -276,12 +386,80 @@ export function TenantForm({ onSuccess, roomId }: TenantFormProps) {
             </p>
           )}
         </div>
+
+        <div>
+          <label htmlFor="paymentFrequency" className="block text-sm font-medium text-foreground">
+            {t('rooms.tenants.new.form.paymentFrequency')}
+          </label>
+          <select
+            id="paymentFrequency"
+            {...register('paymentFrequency')}
+            className="mt-1 block w-full rounded-lg border border-input bg-background px-4 py-2.5 text-foreground shadow-sm transition-colors placeholder:text-muted-foreground hover:border-primary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+          >
+            <option value="DAILY">{t('dashboard.calendar.frequencies.daily')}</option>
+            <option value="WEEKLY">{t('dashboard.calendar.frequencies.weekly')}</option>
+            <option value="BIWEEKLY">{t('dashboard.calendar.frequencies.biWeekly')}</option>
+            <option value="MONTHLY">{t('dashboard.calendar.frequencies.monthly')}</option>
+            <option value="QUARTERLY">{t('dashboard.calendar.frequencies.quarterly')}</option>
+            <option value="SEMIANNUAL">{t('dashboard.calendar.frequencies.semiAnnual')}</option>
+            <option value="ANNUAL">{t('dashboard.calendar.frequencies.annual')}</option>
+            <option value="CUSTOM">{t('dashboard.calendar.frequencies.custom')}</option>
+          </select>
+        </div>
+
+        <div className="col-span-full mt-4 p-4 bg-muted/30 rounded-lg">
+          <h3 className="text-lg font-medium mb-3">{t('rooms.tenants.new.form.priceSummary')}</h3>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {t('rooms.tenants.new.form.leaseDuration')}
+              </p>
+              <p className="font-medium">
+                {leaseDuration} {leaseDuration === 1 ? t('common.month') : t('common.months')}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {t('rooms.tenants.new.form.paymentFrequency')}
+              </p>
+              <p className="font-medium">
+                {t(`dashboard.calendar.frequencies.${paymentFrequency.toLowerCase()}`)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {t('rooms.tenants.new.form.basePrice')}
+              </p>
+              <p className="font-medium">
+                {originalPriceTier
+                  ? `Rp ${originalPriceTier.price.toLocaleString()} / ${t(`dashboard.calendar.frequencies.${originalFrequency.toLowerCase()}`)}`
+                  : room
+                    ? `Rp ${room.price.toLocaleString()} / ${t(`dashboard.calendar.frequencies.${originalFrequency.toLowerCase()}`)}`
+                    : '-'}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {t('rooms.tenants.new.form.adjustedPrice')}
+              </p>
+              <p className="font-medium text-primary">
+                {selectedPrice ? `Rp ${selectedPrice.toLocaleString()}` : '-'}
+                {paymentFrequency &&
+                  ` / ${t(`dashboard.calendar.frequencies.${paymentFrequency.toLowerCase()}`)}`}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8">
         <button
           type="submit"
-          disabled={isSubmitting || !room}
+          disabled={isSubmitting || !room || selectedPrice === null}
           className="inline-flex w-full justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
         >
           {isSubmitting

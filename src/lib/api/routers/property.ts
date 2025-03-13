@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+import { PaymentFrequency, Prisma } from '@prisma/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -19,7 +19,8 @@ const propertySchema = z.object({
   location: z.string().optional(),
   images: z.array(z.string()).optional(),
   facilities: z.array(z.string()).optional(),
-  dueDate: z.number().min(1).max(31).default(5),
+  dueDateOffset: z.number().min(1).max(31).default(5),
+  paymentFrequency: z.nativeEnum(PaymentFrequency).default(PaymentFrequency.MONTHLY),
 });
 
 export const propertyRouter = createTRPCRouter({
@@ -184,7 +185,7 @@ export const propertyRouter = createTRPCRouter({
         postalCode: z.string().min(1),
         description: z.string().optional(),
         location: z.string().optional(),
-        dueDate: z.number().min(1).max(31),
+        dueDateOffset: z.number().min(1).max(31),
       })
     )
     .mutation(async ({ input, ctx }) => {

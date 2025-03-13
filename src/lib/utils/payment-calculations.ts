@@ -23,7 +23,7 @@ export function calculateNextPaymentDate(
     case 'WEEKLY':
       nextDate.setDate(currentDate.getDate() + 7);
       break;
-    case 'BI_WEEKLY':
+    case 'BIWEEKLY':
       nextDate.setDate(currentDate.getDate() + 14);
       break;
     case 'MONTHLY':
@@ -32,7 +32,7 @@ export function calculateNextPaymentDate(
     case 'QUARTERLY':
       nextDate.setMonth(currentDate.getMonth() + 3);
       break;
-    case 'SEMI_ANNUAL':
+    case 'SEMIANNUAL':
       nextDate.setMonth(currentDate.getMonth() + 6);
       break;
     case 'ANNUAL':
@@ -83,13 +83,13 @@ function getDaysInPeriod(startDate: Date, frequency: PaymentFrequency): number {
       return 1;
     case 'WEEKLY':
       return 7;
-    case 'BI_WEEKLY':
+    case 'BIWEEKLY':
       return 14;
     case 'MONTHLY':
       return getDaysInMonth(startDate);
     case 'QUARTERLY':
       return getDaysInQuarter(startDate);
-    case 'SEMI_ANNUAL':
+    case 'SEMIANNUAL':
       return getDaysInSemiAnnual(startDate);
     case 'ANNUAL':
       return getDaysInYear(startDate.getFullYear());
@@ -185,13 +185,13 @@ export function adjustAmountForFrequency(
       return monthlyAmount / 30; // Approximate
     case 'WEEKLY':
       return (monthlyAmount * 12) / 52;
-    case 'BI_WEEKLY':
+    case 'BIWEEKLY':
       return (monthlyAmount * 12) / 26;
     case 'MONTHLY':
       return monthlyAmount;
     case 'QUARTERLY':
       return monthlyAmount * 3;
-    case 'SEMI_ANNUAL':
+    case 'SEMIANNUAL':
       return monthlyAmount * 6;
     case 'ANNUAL':
       return monthlyAmount * 12;
@@ -199,5 +199,59 @@ export function adjustAmountForFrequency(
       return monthlyAmount; // Base amount for custom frequency
     default:
       throw new Error('Invalid payment frequency');
+  }
+}
+
+export function calculatePaymentAmount(
+  baseAmount: number,
+  frequency: PaymentFrequency,
+  customDays?: number
+): number {
+  const monthlyAmount = baseAmount;
+
+  // Calculate amount based on frequency
+  switch (frequency) {
+    case 'DAILY':
+      return monthlyAmount / 30; // Approximate days in a month
+    case 'WEEKLY':
+      return monthlyAmount / 4.33; // Approximate weeks in a month
+    case 'BIWEEKLY':
+      return monthlyAmount / 2.17; // Approximate 2-week periods in a month
+    case 'MONTHLY':
+      return monthlyAmount;
+    case 'QUARTERLY':
+      return monthlyAmount * 3;
+    case 'SEMIANNUAL':
+      return monthlyAmount * 6;
+    case 'ANNUAL':
+      return monthlyAmount * 12;
+    case 'CUSTOM':
+      if (!customDays) return monthlyAmount;
+      return (monthlyAmount / 30) * customDays; // Calculate based on custom days
+    default:
+      return monthlyAmount;
+  }
+}
+
+export function getPaymentCycleDays(frequency: PaymentFrequency, customDays?: number): number {
+  switch (frequency) {
+    case 'DAILY':
+      return 1;
+    case 'WEEKLY':
+      return 7;
+    case 'BIWEEKLY':
+      return 14;
+    case 'MONTHLY':
+      return 30; // Approximation
+    case 'QUARTERLY':
+      return 90; // Approximation
+    case 'SEMIANNUAL':
+      return 182; // Approximation
+    case 'ANNUAL':
+      return 365;
+    case 'CUSTOM':
+      return customDays || 30;
+    default:
+      return 30;
   }
 }

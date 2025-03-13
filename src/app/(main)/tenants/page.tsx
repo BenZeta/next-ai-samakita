@@ -139,7 +139,11 @@ export default function TenantsPage() {
                 </div>
                 <div className="flex items-center text-muted-foreground">
                   <CreditCard className="mr-2 h-4 w-4" />
-                  {t('tenants.details.price', { price: tenant.room.price.toLocaleString() })}
+                  {tenant.leases && tenant.leases.length > 0 && tenant.rentAmount
+                    ? `Rp ${tenant.rentAmount.toLocaleString()} / ${t(
+                        `dashboard.calendar.frequencies.${tenant.leases[0].paymentFrequency.toLowerCase()}`
+                      )}`
+                    : t('tenants.details.price', { price: tenant.room.price.toLocaleString() })}
                 </div>
               </div>
 
